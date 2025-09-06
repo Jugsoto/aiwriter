@@ -10,10 +10,13 @@ function createWindow() {
   win = new BrowserWindow({
     width: 1200,
     height: 800,
+    frame: false,
+    transparent: false,
     webPreferences: {
-      nodeIntegration: true,
-      contextIsolation: false,
-      webSecurity: false
+      nodeIntegration: false,
+      contextIsolation: true,
+      webSecurity: true,
+      preload: path.join(__dirname, '../dist-electron/preload.js')
     },
     icon: path.join(__dirname, '../public/icon.ico')
   })
@@ -25,6 +28,7 @@ function createWindow() {
     win.loadFile(path.join(__dirname, '../dist/index.html'))
   }
 
+  
   win.webContents.setWindowOpenHandler(({ url }) => {
     shell.openExternal(url)
     return { action: 'deny' }
@@ -51,4 +55,20 @@ app.on('activate', () => {
 
 ipcMain.handle('get-app-version', () => {
   return app.getVersion()
+})
+
+ipcMain.handle('window-minimize', () => {
+  win?.minimize()
+})
+
+ipcMain.handle('window-maximize', () => {
+  if (win?.isMaximized()) {
+    win.unmaximize()
+  } else {
+    win?.maximize()
+  }
+})
+
+ipcMain.handle('window-close', () => {
+  win?.close()
 })
