@@ -1,0 +1,54 @@
+<template>
+  <div class="w-15 bg-[var(--sidebar-bg)] border-r border-[var(--border-color)] flex flex-col justify-between py-4">
+    <div class="flex flex-col gap-2">
+      <router-link to="/"
+        class="nav-item flex items-center justify-center p-3 no-underline rounded-lg mx-2 transition-all duration-200 cursor-pointer border-none bg-transparent text-sm font-medium w-11 h-11 text-gray-600 dark:text-gray-400 hover:bg-gray-200 hover:text-gray-700 dark:hover:bg-gray-700 dark:hover:text-gray-300"
+        title="首页">
+        <Home :size="20" class="text-gray-600 dark:text-gray-400" />
+      </router-link>
+      <router-link to="/tools"
+        class="nav-item flex items-center justify-center p-3 no-underline rounded-lg mx-2 transition-all duration-200 cursor-pointer border-none bg-transparent text-sm font-medium w-11 h-11 text-gray-600 dark:text-gray-400 hover:bg-gray-200 hover:text-gray-700 dark:hover:bg-gray-700 dark:hover:text-gray-300"
+        title="工具页">
+        <Wrench :size="20" class="text-gray-600 dark:text-gray-400" />
+      </router-link>
+    </div>
+
+    <div class="flex flex-col gap-2">
+      <button
+        class="flex items-center justify-center p-3 text-gray-600 dark:text-gray-400 no-underline rounded-lg mx-2 transition-all duration-200 cursor-pointer border-none bg-transparent text-sm font-medium w-11 h-11 hover:bg-gray-200 hover:text-gray-700 dark:hover:bg-gray-700 dark:hover:text-gray-300"
+        @click="toggleDarkMode" title="深色模式">
+        <Moon v-if="isDark" :size="20" class="text-gray-600 dark:text-gray-400" />
+        <Sun v-else :size="20" class="text-gray-600 dark:text-gray-400" />
+      </button>
+      <router-link to="/settings"
+        class="nav-item flex items-center justify-center p-3 no-underline rounded-lg mx-2 transition-all duration-200 cursor-pointer border-none bg-transparent text-sm font-medium w-11 h-11 text-gray-600 dark:text-gray-400 hover:bg-gray-200 hover:text-gray-700 dark:hover:bg-gray-700 dark:hover:text-gray-300"
+        title="设置">
+        <Settings :size="20" class="text-gray-600 dark:text-gray-400" />
+      </router-link>
+    </div>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { computed } from 'vue'
+import { Home, Wrench, Settings, Moon, Sun } from 'lucide-vue-next'
+import { useThemeStore } from '@/stores/theme'
+
+const themeStore = useThemeStore()
+const isDark = computed(() => themeStore.isDark)
+
+const toggleDarkMode = () => {
+  themeStore.toggleTheme()
+}
+</script>
+
+<style scoped>
+.nav-item.router-link-active {
+  background-color: var(--theme-bg) !important;
+  color: var(--theme-text) !important;
+}
+
+.nav-item.router-link-active svg {
+  color: var(--theme-text) !important;
+}
+</style>
