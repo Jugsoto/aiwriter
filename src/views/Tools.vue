@@ -1,17 +1,6 @@
 <template>
-  <div class="page">
-    <h1>工具页</h1>
+  <div class="p-6">
+    <h1 class="text-2xl font-semibold text-[var(--text-primary)]">工具页</h1>
   </div>
 </template>
 
-<style scoped>
-.page {
-  padding: 24px;
-}
-
-h1 {
-  font-size: 24px;
-  font-weight: 600;
-  color: var(--text-primary);
-}
-</style>

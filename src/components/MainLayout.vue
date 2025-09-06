@@ -1,9 +1,9 @@
 <template>
-  <div class="main-layout">
+  <div class="flex flex-col h-screen bg-[var(--bg-primary)]">
     <WindowControls />
-    <div class="main-content">
+    <div class="flex flex-1 overflow-hidden">
       <Sidebar />
-      <div class="page-content">
+      <div class="flex-1 overflow-y-auto bg-[var(--bg-primary)]">
         <router-view />
       </div>
     </div>
@@ -22,24 +22,3 @@ onMounted(() => {
   themeStore.initTheme()
 })
 </script>
-
-<style scoped>
-.main-layout {
-  display: flex;
-  flex-direction: column;
-  height: 100vh;
-  background: var(--bg-primary);
-}
-
-.main-content {
-  display: flex;
-  flex: 1;
-  overflow: hidden;
-}
-
-.page-content {
-  flex: 1;
-  overflow-y: auto;
-  background: var(--bg-primary);
-}
-</style>
