@@ -2,6 +2,7 @@
   "name": "aiwriter",
   "private": true,
   "version": "0.0.0",
+  "description": "神笔AI写作",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -9,7 +10,7 @@
     "preview": "vite preview",
     "electron:dev": "vite --mode electron",
     "electron:build": "vue-tsc -b && vite build && electron-builder",
-    "dist": "electron-builder"
+    "dist": "electron-builder --win nsis"
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.1.13",
@@ -38,7 +39,6 @@
     "name": "Your Name",
     "email": "your.email@example.com"
   },
-  "license": "MIT",
   "build": {
     "appId": "com.qgming.aiwriter",
     "productName": "神笔AI写作",
@@ -49,17 +49,26 @@
       "dist/**/*",
       "dist-electron/**/*"
     ],
-    "mac": {
-      "category": "public.app-category.productivity",
-      "icon": "public/logo.icns"
-    },
     "win": {
-      "target": "nsis",
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
       "icon": "public/logo.ico"
     },
-    "linux": {
-      "target": "AppImage",
-      "icon": "public/logo.png"
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "神笔AI写作",
+      "installerIcon": "public/logo.ico",
+      "uninstallerIcon": "public/logo.ico",
+      "installerHeaderIcon": "public/logo.ico"
     }
   }
 }

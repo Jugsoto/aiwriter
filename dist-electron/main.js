@@ -1,60 +1,39 @@
-import { app, BrowserWindow, ipcMain, shell } from "electron";
-import path from "path";
-import { fileURLToPath } from "url";
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-let win = null;
-function createWindow() {
-  win = new BrowserWindow({
+import { app as n, BrowserWindow as l, ipcMain as o, shell as d } from "electron";
+import i from "path";
+import { fileURLToPath as s } from "url";
+const t = i.dirname(s(import.meta.url));
+let e = null;
+function a() {
+  e = new l({
     width: 1200,
     height: 800,
-    frame: false,
-    transparent: false,
+    frame: !1,
+    transparent: !1,
     webPreferences: {
-      nodeIntegration: false,
-      contextIsolation: true,
-      webSecurity: true,
-      preload: path.join(__dirname, "../dist-electron/preload.js"),
+      nodeIntegration: !1,
+      contextIsolation: !0,
+      webSecurity: !0,
+      preload: i.join(t, "../dist-electron/preload.js")
     },
-    icon: path.join(__dirname, "../public/logo.ico"),
-  });
-  if (process.env.NODE_ENV === "development") {
-    win.loadURL("http://localhost:5173");
-    win.webContents.openDevTools();
-  } else {
-    win.loadFile(path.join(__dirname, "../dist/index.html"));
-  }
-  win.webContents.setWindowOpenHandler(({ url }) => {
-    shell.openExternal(url);
-    return { action: "deny" };
-  });
-  win.on("closed", () => {
-    win = null;
+    icon: i.join(t, "../public/logo.ico")
+  }), process.env.NODE_ENV === "development" ? (e.loadURL("http://localhost:5173"), e.webContents.openDevTools()) : e.loadFile(i.join(t, "../dist/index.html")), e.webContents.setWindowOpenHandler(({ url: r }) => (d.openExternal(r), { action: "deny" })), e.on("closed", () => {
+    e = null;
   });
 }
-app.whenReady().then(createWindow);
-app.on("window-all-closed", () => {
-  if (process.platform !== "darwin") {
-    app.quit();
-  }
+n.whenReady().then(a);
+n.on("window-all-closed", () => {
+  process.platform !== "darwin" && n.quit();
 });
-app.on("activate", () => {
-  if (BrowserWindow.getAllWindows().length === 0) {
-    createWindow();
-  }
+n.on("activate", () => {
+  l.getAllWindows().length === 0 && a();
 });
-ipcMain.handle("get-app-version", () => {
-  return app.getVersion();
+o.handle("get-app-version", () => n.getVersion());
+o.handle("window-minimize", () => {
+  e?.minimize();
 });
-ipcMain.handle("window-minimize", () => {
-  win?.minimize();
+o.handle("window-maximize", () => {
+  e?.isMaximized() ? e.unmaximize() : e?.maximize();
 });
-ipcMain.handle("window-maximize", () => {
-  if (win?.isMaximized()) {
-    win.unmaximize();
-  } else {
-    win?.maximize();
-  }
-});
-ipcMain.handle("window-close", () => {
-  win?.close();
+o.handle("window-close", () => {
+  e?.close();
 });
