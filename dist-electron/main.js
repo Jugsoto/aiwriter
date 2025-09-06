@@ -13,9 +13,9 @@ function createWindow() {
       nodeIntegration: false,
       contextIsolation: true,
       webSecurity: true,
-      preload: path.join(__dirname, "../dist-electron/preload.js")
+      preload: path.join(__dirname, "../dist-electron/preload.js"),
     },
-    icon: path.join(__dirname, "../public/logo.ico")
+    icon: path.join(__dirname, "../public/logo.ico"),
   });
   if (process.env.NODE_ENV === "development") {
     win.loadURL("http://localhost:5173");
