@@ -1,6 +1,6 @@
 <template>
-  <div
-    class="group relative bg-[var(--bg-primary)] rounded-lg  cursor-pointer border-1 border-[var(--border-color)] hover:border-[var(--theme-bg)]">
+  <div @click="handleView"
+    class="group relative bg-[var(--bg-primary)] rounded-lg cursor-pointer border-1 border-[var(--border-color)] hover:border-[var(--theme-bg)] transition-colors">
     <!-- 书籍封面 -->
     <div class="aspect-[3/4] bg-[var(--bg-tertiary)] rounded-lg flex items-center justify-center">
       <div class="text-center px-4">
@@ -37,6 +37,7 @@
 </template>
 
 <script setup lang="ts">
+import { useRouter } from 'vue-router'
 import type { Book } from '@/electron.d'
 import { Edit3, Trash2 } from 'lucide-vue-next'
 
@@ -49,6 +50,12 @@ const emit = defineEmits<{
   edit: [book: Book]
   delete: [book: Book]
 }>()
+
+const router = useRouter()
+
+function handleView() {
+  router.push(`/book/${props.book.id}`)
+}
 
 function handleEdit() {
   emit('edit', props.book)
