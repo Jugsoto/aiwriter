@@ -4,10 +4,12 @@
   :root {
     --bg-primary: #ffffff;
     --bg-secondary: #f8f9fa;
+    --bg-tertiary: #f3f4f6;
     --sidebar-bg: #ffffff;
     --window-bg: #f8f9fa;
     --text-primary: #1a1a1a;
     --text-secondary: #666666;
+    --text-tertiary: #888888;
     --border-color: #e5e5e5;
     --hover-bg: #f0f0f0;
     --active-bg: #e0f2fe;
@@ -17,15 +19,19 @@
     --sky-100: #e0f2fe;
     --sky-500: #0ea5e9;
     --sky-600: #0284c7;
+    --icon-color: #000000;
+    --icon-color-dark: #ffffff;
   }
 
   .dark {
     --bg-primary: #1a1a1a;
     --bg-secondary: #2d2d2d;
+    --bg-tertiary: #1f1f1f;
     --sidebar-bg: #1a1a1a;
     --window-bg: #2d2d2d;
     --text-primary: #ffffff;
     --text-secondary: #cccccc;
+    --text-tertiary: #999999;
     --border-color: #404040;
     --hover-bg: #333333;
     --active-bg: #1e3a8a;
@@ -35,6 +41,8 @@
     --sky-100: #1e3a8a;
     --sky-500: #0ea5e9;
     --sky-600: #0284c7;
+    --icon-color: #ffffff;
+    --icon-color-dark: #ffffff;
   }
 }
 

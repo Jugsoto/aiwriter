@@ -1,13 +1,10 @@
 <template>
   <div class="h-full flex flex-col">
     <!-- 顶部栏 -->
-    <div class="flex items-center justify-between px-6 py-4 border-b border-[var(--border-color)]">
+    <div class="flex items-center justify-between px-6 py-3 border-b border-[var(--border-color)]">
       <h1 class="text-2xl font-semibold text-[var(--text-primary)]">我的书架</h1>
       <button @click="showAddModal = true"
         class="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-        </svg>
         新增书籍
       </button>
     </div>
@@ -39,7 +36,7 @@
       </div>
 
       <!-- 书籍网格 -->
-      <div v-else class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+      <div v-else class="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6">
         <BookCard v-for="book in booksStore.books" :key="book.id" :book="book" @edit="handleEdit"
           @delete="handleDelete" />
       </div>

@@ -1,8 +1,8 @@
 <template>
   <div
-    class="group relative bg-[var(--bg-primary)] rounded-lg shadow-md hover:shadow-lg transition-all duration-200 cursor-pointer border-1 border-transparent hover:border-[var(--theme-bg)]">
-    <!-- 书籍封面 - 3:4宽高比 -->
-    <div class="aspect-[3/4] bg-[var(--bg-secondary)] rounded-lg flex items-center justify-center">
+    class="group relative bg-[var(--bg-primary)] rounded-lg  cursor-pointer border-1 border-[var(--border-color)] hover:border-[var(--theme-bg)]">
+    <!-- 书籍封面 -->
+    <div class="aspect-[3/4] bg-[var(--bg-tertiary)] rounded-lg flex items-center justify-center">
       <div class="text-center px-4">
         <h3 class="font-semibold text-[var(--text-primary)] text-lg leading-tight">
           {{ book.name }}
