@@ -18,7 +18,15 @@ export default defineConfig({
         },
         vite: {
           build: {
-            outDir: 'dist-electron'
+            outDir: 'dist-electron',
+            rollupOptions: {
+              external: ['better-sqlite3', 'electron', 'path', 'fs', 'util']
+            },
+            target: 'node18',
+            lib: {
+              entry: 'electron/main.ts',
+              formats: ['es']
+            }
           }
         }
       },
@@ -29,7 +37,29 @@ export default defineConfig({
         },
         vite: {
           build: {
-            outDir: 'dist-electron'
+            outDir: 'dist-electron',
+            rollupOptions: {
+              external: ['electron']
+            }
+          }
+        }
+      },
+      {
+        entry: 'electron/database.ts',
+        onstart(options) {
+          options.reload()
+        },
+        vite: {
+          build: {
+            outDir: 'dist-electron',
+            rollupOptions: {
+              external: ['better-sqlite3', 'electron', 'path', 'fs', 'util']
+            },
+            target: 'node18',
+            lib: {
+              entry: 'electron/database.ts',
+              formats: ['es']
+            }
           }
         }
       }

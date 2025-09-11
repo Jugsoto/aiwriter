@@ -1,6 +1,7 @@
 import { app, BrowserWindow, shell, ipcMain } from 'electron'
 import path from 'path'
 import { fileURLToPath } from 'url'
+import { initDatabase, getAllBooks, createBook, updateBook, deleteBook, closeDatabase } from './database.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
@@ -39,7 +40,10 @@ function createWindow() {
   })
 }
 
-app.whenReady().then(createWindow)
+app.whenReady().then(() => {
+  initDatabase()
+  createWindow()
+})
 
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
@@ -71,4 +75,27 @@ ipcMain.handle('window-maximize', () => {
 
 ipcMain.handle('window-close', () => {
   win?.close()
+})
+
+// 书籍相关IPC处理
+ipcMain.handle('get-books', () => {
+  return getAllBooks()
+})
+
+ipcMain.handle('create-book', (event, data: { name: string }) => {
+  return createBook(data)
+})
+
+ipcMain.handle('update-book', (event, id: number, data: { name: string }) => {
+  return updateBook(id, data)
+})
+
+ipcMain.handle('delete-book', (event, id: number) => {
+  deleteBook(id)
+  return { success: true }
+})
+
+// 应用退出时关闭数据库
+app.on('before-quit', () => {
+  closeDatabase()
 })

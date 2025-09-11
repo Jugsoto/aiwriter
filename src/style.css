@@ -59,4 +59,42 @@
     height: 100vh;
     overflow: hidden;
   }
+
+  /* 滑动条样式优化 - 适配 Electron/Chromium */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: var(--bg-secondary);
+    border-radius: 4px;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: var(--border-color);
+    border-radius: 4px;
+    transition: background 0.2s ease;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--hover-bg);
+  }
+
+  ::-webkit-scrollbar-corner {
+    background: var(--bg-secondary);
+  }
+
+  /* Firefox 滑动条样式 */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--border-color) var(--bg-secondary);
+  }
+
+  /* 确保滚动区域有平滑过渡 */
+  .overflow-auto,
+  .overflow-y-auto,
+  .overflow-x-auto {
+    transition: scrollbar-color 0.2s ease;
+  }
 }

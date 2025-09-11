@@ -1,60 +1,89 @@
-import { app, BrowserWindow, ipcMain, shell } from "electron";
-import path from "path";
-import { fileURLToPath } from "url";
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-let win = null;
-function createWindow() {
-  win = new BrowserWindow({
+import { app as i, BrowserWindow as d, ipcMain as a, shell as m } from "electron";
+import r from "path";
+import { fileURLToPath as p } from "url";
+import T from "better-sqlite3";
+const c = r.join(i.getPath("userData"), "aiwriter.db"), n = new T(c);
+function b() {
+  try {
+    console.log("Initializing database at:", c), n.exec(`
+      CREATE TABLE IF NOT EXISTS books (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+    const e = n.prepare("SELECT COUNT(*) as count FROM books").get();
+    console.log(`Database initialized successfully with ${e.count} existing books`);
+  } catch (e) {
+    throw console.error("Failed to initialize database:", e), e;
+  }
+}
+function w() {
+  return n.prepare("SELECT * FROM books ORDER BY updated_at DESC").all();
+}
+function E(e) {
+  return n.prepare("SELECT * FROM books WHERE id = ?").get(e);
+}
+function f(e) {
+  const s = n.prepare(`
+    INSERT INTO books (name) VALUES (?)
+  `).run(e.name);
+  return E(s.lastInsertRowid);
+}
+function h(e, o) {
+  return n.prepare(`
+    UPDATE books SET name = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?
+  `).run(o.name, e), E(e);
+}
+function R(e) {
+  n.prepare("DELETE FROM books WHERE id = ?").run(e);
+}
+function g() {
+  n.close();
+}
+const l = r.dirname(p(import.meta.url));
+let t = null;
+function u() {
+  t = new d({
     width: 1200,
     height: 800,
-    frame: false,
-    transparent: false,
+    frame: !1,
+    transparent: !1,
     webPreferences: {
-      nodeIntegration: false,
-      contextIsolation: true,
-      webSecurity: true,
-      preload: path.join(__dirname, "../dist-electron/preload.js")
+      nodeIntegration: !1,
+      contextIsolation: !0,
+      webSecurity: !0,
+      preload: r.join(l, "../dist-electron/preload.js")
     },
-    icon: path.join(__dirname, "../public/logo.ico")
-  });
-  if (process.env.NODE_ENV === "development") {
-    win.loadURL("http://localhost:5173");
-    win.webContents.openDevTools();
-  } else {
-    win.loadFile(path.join(__dirname, "../dist/index.html"));
-  }
-  win.webContents.setWindowOpenHandler(({ url }) => {
-    shell.openExternal(url);
-    return { action: "deny" };
-  });
-  win.on("closed", () => {
-    win = null;
+    icon: r.join(l, "../public/logo.ico")
+  }), process.env.NODE_ENV === "development" ? (t.loadURL("http://localhost:5173"), t.webContents.openDevTools()) : t.loadFile(r.join(l, "../dist/index.html")), t.webContents.setWindowOpenHandler(({ url: e }) => (m.openExternal(e), { action: "deny" })), t.on("closed", () => {
+    t = null;
   });
 }
-app.whenReady().then(createWindow);
-app.on("window-all-closed", () => {
-  if (process.platform !== "darwin") {
-    app.quit();
-  }
+i.whenReady().then(() => {
+  b(), u();
 });
-app.on("activate", () => {
-  if (BrowserWindow.getAllWindows().length === 0) {
-    createWindow();
-  }
+i.on("window-all-closed", () => {
+  process.platform !== "darwin" && i.quit();
 });
-ipcMain.handle("get-app-version", () => {
-  return app.getVersion();
+i.on("activate", () => {
+  d.getAllWindows().length === 0 && u();
 });
-ipcMain.handle("window-minimize", () => {
-  win?.minimize();
+a.handle("get-app-version", () => i.getVersion());
+a.handle("window-minimize", () => {
+  t?.minimize();
 });
-ipcMain.handle("window-maximize", () => {
-  if (win?.isMaximized()) {
-    win.unmaximize();
-  } else {
-    win?.maximize();
-  }
+a.handle("window-maximize", () => {
+  t?.isMaximized() ? t.unmaximize() : t?.maximize();
 });
-ipcMain.handle("window-close", () => {
-  win?.close();
+a.handle("window-close", () => {
+  t?.close();
+});
+a.handle("get-books", () => w());
+a.handle("create-book", (e, o) => f(o));
+a.handle("update-book", (e, o, s) => h(o, s));
+a.handle("delete-book", (e, o) => (R(o), { success: !0 }));
+i.on("before-quit", () => {
+  g();
 });
