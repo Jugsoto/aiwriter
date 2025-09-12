@@ -1,10 +1,12 @@
-import r from "better-sqlite3";
-import E from "path";
-import { app as i } from "electron";
-const n = E.join(i.getPath("userData"), "aiwriter.db"), o = new r(n);
-function p() {
+import Database from "better-sqlite3";
+import path from "path";
+import { app } from "electron";
+const dbPath = path.join(app.getPath("userData"), "aiwriter.db");
+const db = new Database(dbPath);
+function initDatabase() {
   try {
-    console.log("Initializing database at:", n), o.exec(`
+    console.log("Initializing database at:", dbPath);
+    db.exec(`
       CREATE TABLE IF NOT EXISTS books (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         name TEXT NOT NULL,
@@ -12,41 +14,48 @@ function p() {
         updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
       )
     `);
-    const t = o.prepare("SELECT COUNT(*) as count FROM books").get();
-    console.log(`Database initialized successfully with ${t.count} existing books`);
-  } catch (t) {
-    throw console.error("Failed to initialize database:", t), t;
+    const count = db.prepare("SELECT COUNT(*) as count FROM books").get();
+    console.log(`Database initialized successfully with ${count.count} existing books`);
+  } catch (error) {
+    console.error("Failed to initialize database:", error);
+    throw error;
   }
 }
-function R() {
-  return o.prepare("SELECT * FROM books ORDER BY updated_at DESC").all();
+function getAllBooks() {
+  const stmt = db.prepare("SELECT * FROM books ORDER BY updated_at DESC");
+  return stmt.all();
 }
-function s(t) {
-  return o.prepare("SELECT * FROM books WHERE id = ?").get(t);
+function getBookById(id) {
+  const stmt = db.prepare("SELECT * FROM books WHERE id = ?");
+  return stmt.get(id);
 }
-function d(t) {
-  const a = o.prepare(`
+function createBook(data) {
+  const stmt = db.prepare(`
     INSERT INTO books (name) VALUES (?)
-  `).run(t.name);
-  return s(a.lastInsertRowid);
+  `);
+  const result = stmt.run(data.name);
+  return getBookById(result.lastInsertRowid);
 }
-function m(t, e) {
-  return o.prepare(`
+function updateBook(id, data) {
+  const stmt = db.prepare(`
     UPDATE books SET name = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?
-  `).run(e.name, t), s(t);
+  `);
+  stmt.run(data.name, id);
+  return getBookById(id);
 }
-function l(t) {
-  o.prepare("DELETE FROM books WHERE id = ?").run(t);
+function deleteBook(id) {
+  const stmt = db.prepare("DELETE FROM books WHERE id = ?");
+  stmt.run(id);
 }
-function b() {
-  o.close();
+function closeDatabase() {
+  db.close();
 }
 export {
-  b as closeDatabase,
-  d as createBook,
-  l as deleteBook,
-  R as getAllBooks,
-  s as getBookById,
-  p as initDatabase,
-  m as updateBook
+  closeDatabase,
+  createBook,
+  deleteBook,
+  getAllBooks,
+  getBookById,
+  initDatabase,
+  updateBook
 };

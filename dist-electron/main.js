@@ -1,11 +1,13 @@
-import { app as i, BrowserWindow as d, ipcMain as a, shell as m } from "electron";
-import r from "path";
-import { fileURLToPath as p } from "url";
-import T from "better-sqlite3";
-const c = r.join(i.getPath("userData"), "aiwriter.db"), n = new T(c);
-function b() {
+import { app, BrowserWindow, ipcMain, shell } from "electron";
+import path from "path";
+import { fileURLToPath } from "url";
+import Database from "better-sqlite3";
+const dbPath = path.join(app.getPath("userData"), "aiwriter.db");
+const db = new Database(dbPath);
+function initDatabase() {
   try {
-    console.log("Initializing database at:", c), n.exec(`
+    console.log("Initializing database at:", dbPath);
+    db.exec(`
       CREATE TABLE IF NOT EXISTS books (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         name TEXT NOT NULL,
@@ -13,79 +15,117 @@ function b() {
         updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
       )
     `);
-    const e = n.prepare("SELECT COUNT(*) as count FROM books").get();
-    console.log(`Database initialized successfully with ${e.count} existing books`);
-  } catch (e) {
-    throw console.error("Failed to initialize database:", e), e;
+    const count = db.prepare("SELECT COUNT(*) as count FROM books").get();
+    console.log(`Database initialized successfully with ${count.count} existing books`);
+  } catch (error) {
+    console.error("Failed to initialize database:", error);
+    throw error;
   }
 }
-function h() {
-  return n.prepare("SELECT * FROM books ORDER BY updated_at DESC").all();
+function getAllBooks() {
+  const stmt = db.prepare("SELECT * FROM books ORDER BY updated_at DESC");
+  return stmt.all();
 }
-function E(e) {
-  return n.prepare("SELECT * FROM books WHERE id = ?").get(e);
+function getBookById(id) {
+  const stmt = db.prepare("SELECT * FROM books WHERE id = ?");
+  return stmt.get(id);
 }
-function w(e) {
-  const s = n.prepare(`
+function createBook(data) {
+  const stmt = db.prepare(`
     INSERT INTO books (name) VALUES (?)
-  `).run(e.name);
-  return E(s.lastInsertRowid);
+  `);
+  const result = stmt.run(data.name);
+  return getBookById(result.lastInsertRowid);
 }
-function f(e, o) {
-  return n.prepare(`
+function updateBook(id, data) {
+  const stmt = db.prepare(`
     UPDATE books SET name = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?
-  `).run(o.name, e), E(e);
+  `);
+  stmt.run(data.name, id);
+  return getBookById(id);
 }
-function R(e) {
-  n.prepare("DELETE FROM books WHERE id = ?").run(e);
+function deleteBook(id) {
+  const stmt = db.prepare("DELETE FROM books WHERE id = ?");
+  stmt.run(id);
 }
-function g() {
-  n.close();
+function closeDatabase() {
+  db.close();
 }
-const l = r.dirname(p(import.meta.url));
-let t = null;
-function u() {
-  t = new d({
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+let win = null;
+function createWindow() {
+  win = new BrowserWindow({
     width: 1200,
     height: 800,
     minWidth: 800,
     minHeight: 600,
-    frame: !1,
-    transparent: !1,
+    frame: false,
+    transparent: false,
     webPreferences: {
-      nodeIntegration: !1,
-      contextIsolation: !0,
-      webSecurity: !0,
-      preload: r.join(l, "../dist-electron/preload.js")
+      nodeIntegration: false,
+      contextIsolation: true,
+      webSecurity: true,
+      preload: path.join(__dirname, "../dist-electron/preload.js")
     },
-    icon: r.join(l, "../public/logo.ico")
-  }), process.env.NODE_ENV === "development" ? (t.loadURL("http://localhost:5173"), t.webContents.openDevTools()) : t.loadFile(r.join(l, "../dist/index.html")), t.webContents.setWindowOpenHandler(({ url: e }) => (m.openExternal(e), { action: "deny" })), t.on("closed", () => {
-    t = null;
+    icon: path.join(__dirname, "../public/logo.ico")
+  });
+  if (process.env.NODE_ENV === "development") {
+    win.loadURL("http://localhost:5173");
+    win.webContents.openDevTools();
+  } else {
+    win.loadFile(path.join(__dirname, "../dist/index.html"));
+  }
+  win.webContents.setWindowOpenHandler(({ url }) => {
+    shell.openExternal(url);
+    return { action: "deny" };
+  });
+  win.on("closed", () => {
+    win = null;
   });
 }
-i.whenReady().then(() => {
-  b(), u();
+app.whenReady().then(() => {
+  initDatabase();
+  createWindow();
 });
-i.on("window-all-closed", () => {
-  process.platform !== "darwin" && i.quit();
+app.on("window-all-closed", () => {
+  if (process.platform !== "darwin") {
+    app.quit();
+  }
 });
-i.on("activate", () => {
-  d.getAllWindows().length === 0 && u();
+app.on("activate", () => {
+  if (BrowserWindow.getAllWindows().length === 0) {
+    createWindow();
+  }
 });
-a.handle("get-app-version", () => i.getVersion());
-a.handle("window-minimize", () => {
-  t?.minimize();
+ipcMain.handle("get-app-version", () => {
+  return app.getVersion();
 });
-a.handle("window-maximize", () => {
-  t?.isMaximized() ? t.unmaximize() : t?.maximize();
+ipcMain.handle("window-minimize", () => {
+  win?.minimize();
 });
-a.handle("window-close", () => {
-  t?.close();
+ipcMain.handle("window-maximize", () => {
+  if (win?.isMaximized()) {
+    win.unmaximize();
+  } else {
+    win?.maximize();
+  }
 });
-a.handle("get-books", () => h());
-a.handle("create-book", (e, o) => w(o));
-a.handle("update-book", (e, o, s) => f(o, s));
-a.handle("delete-book", (e, o) => (R(o), { success: !0 }));
-i.on("before-quit", () => {
-  g();
+ipcMain.handle("window-close", () => {
+  win?.close();
+});
+ipcMain.handle("get-books", () => {
+  return getAllBooks();
+});
+ipcMain.handle("create-book", (event, data) => {
+  return createBook(data);
+});
+ipcMain.handle("update-book", (event, id, data) => {
+  return updateBook(id, data);
+});
+ipcMain.handle("delete-book", (event, id) => {
+  deleteBook(id);
+  return { success: true };
+});
+app.on("before-quit", () => {
+  closeDatabase();
 });

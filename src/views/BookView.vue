@@ -1,91 +1,50 @@
 <template>
   <div class="h-full flex flex-col">
-    <!-- 顶部操作栏 -->
-    <div class="flex items-center justify-between px-6 py-3 border-b border-[var(--border-color)]">
-      <!-- 左侧：返回按钮 + 书名 -->
-      <div class="flex items-center gap-2">
-        <button @click="goBack"
-          class="flex items-center gap-2 px-1 py-1.5 text-[var(--text-primary)] hover:bg-[var(--hover-bg)] rounded-md transition-colors">
-          <ChevronLeft class="w-6 h-6" />
-        </button>
-        <h1 class="text-xl font-semibold text-[var(--text-primary)]">
-          {{ book?.name || '加载中...' }}
-        </h1>
+    <BookHeader :book-name="book?.name" @back="goBack" />
+
+    <!-- 主要内容区 - 三栏布局 -->
+    <div class="flex-1 flex overflow-hidden">
+      <!-- 左侧章节管理 -->
+      <div ref="leftPanel" class="bg-[var(--bg-secondary)] relative" :style="{ width: leftWidth + 'px' }">
+        <ChapterManager />
       </div>
 
-      <!-- 右侧：占位按钮 -->
-      <div class="flex items-center gap-2">
-        <button
-          class="flex items-center gap-2 px-3 py-1.5 text-[var(--text-primary)] hover:bg-[var(--hover-bg)] rounded-md transition-colors">
-          <Settings class="w-4 h-4" />
-          <span>设置</span>
-        </button>
-        <button
-          class="flex items-center gap-2 px-3 py-1.5 text-[var(--text-primary)] hover:bg-[var(--hover-bg)] rounded-md transition-colors">
-          <Share2 class="w-4 h-4" />
-          <span>分享</span>
-        </button>
-        <button
-          class="flex items-center gap-2 px-3 py-1.5 text-[var(--text-primary)] hover:bg-[var(--hover-bg)] rounded-md transition-colors">
-          <Download class="w-4 h-4" />
-          <span>导出</span>
-        </button>
-        <button
-          class="flex items-center gap-2 px-3 py-1.5 text-[var(--text-primary)] hover:bg-[var(--hover-bg)] rounded-md transition-colors">
-          <MoreVertical class="w-4 h-4" />
-          <span>更多</span>
-        </button>
-      </div>
-    </div>
-
-    <!-- 主要内容区 -->
-    <div class="flex-1 overflow-auto p-6">
-      <!-- 加载状态 -->
-      <div v-if="loading" class="flex items-center justify-center h-64">
-        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+      <!-- 左侧分隔条 -->
+      <div class="border-r border-[var(--border-color)]  cursor-col-resize relative group transition-all duration-200"
+        :style="{ borderWidth: isHoveringLeft ? '2px' : '1px' }" @mousedown="startResize('left', $event)"
+        @mouseenter="isHoveringLeft = true" @mouseleave="isHoveringLeft = false">
+        <div class="absolute inset-0 group-hover:bg-blue-500/20"></div>
       </div>
 
-      <!-- 错误状态 -->
-      <div v-else-if="error" class="flex flex-col items-center justify-center h-64 text-red-500">
-        <p class="mb-2">{{ error }}</p>
-        <button @click="loadBook"
-          class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors">
-          重试
-        </button>
+      <!-- 中间正文编辑器 -->
+      <div ref="middlePanel" class="flex-1 bg-[var(--bg-primary)] relative" :style="{ width: middleWidth + 'px' }">
+        <Editor />
       </div>
 
-      <!-- 书籍详情 -->
-      <div v-else-if="book" class="max-w-4xl mx-auto">
-        <div class="bg-[var(--bg-primary)] rounded-lg p-6 border border-[var(--border-color)]">
-          <h2 class="text-2xl font-bold text-[var(--text-primary)] mb-4">{{ book.name }}</h2>
-          <div class="text-sm text-[var(--text-secondary)]">
-            <p>创建时间：{{ formatDate(book.created_at) }}</p>
-            <p>ID：{{ book.id }}</p>
-          </div>
-
-          <!-- 预留内容区域 -->
-          <div class="mt-8 p-8 border-2 border-dashed border-[var(--border-color)] rounded-lg">
-            <p class="text-center text-[var(--text-secondary)]">
-              书籍内容编辑区域（待实现）
-            </p>
-          </div>
-        </div>
+      <!-- 右侧分隔条 -->
+      <div class="border-l border-[var(--border-color)] cursor-col-resize relative group transition-all duration-200"
+        :style="{ borderWidth: isHoveringRight ? '2px' : '1px' }" @mousedown="startResize('right', $event)"
+        @mouseenter="isHoveringRight = true" @mouseleave="isHoveringRight = false">
+        <div class="absolute inset-0 group-hover:bg-blue-500/20"></div>
       </div>
 
-      <!-- 空状态 -->
-      <div v-else class="flex flex-col items-center justify-center h-64 text-gray-500">
-        <p>未找到书籍信息</p>
+      <!-- 右侧AI助手 -->
+      <div ref="rightPanel" class="bg-[var(--bg-secondary)] relative" :style="{ width: rightWidth + 'px' }">
+        <WriteCopilot />
       </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, watch } from 'vue'
+import { ref, onMounted, watch, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useBooksStore } from '@/stores/books'
 import type { Book } from '@/electron.d'
-import { ChevronLeft, Settings, Share2, Download, MoreVertical } from 'lucide-vue-next'
+import ChapterManager from '@/components/write/ChapterManager.vue'
+import Editor from '@/components/write/Editor.vue'
+import WriteCopilot from '@/components/write/WriteCopilot.vue'
+import BookHeader from '@/components/write/BookHeader.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -95,8 +54,50 @@ const book = ref<Book | null>(null)
 const loading = ref(false)
 const error = ref('')
 
+// 三栏布局相关
+const leftPanel = ref<HTMLElement>()
+const middlePanel = ref<HTMLElement>()
+const rightPanel = ref<HTMLElement>()
+
+// hover状态
+const isHoveringLeft = ref(false)
+const isHoveringRight = ref(false)
+
+// 统一最小宽度
+const MIN_WIDTH = 150 // 所有面板最小宽度
+
+// 计算初始宽度比例1:2:1
+const totalWidth = ref(window.innerWidth - 40) // 留出边距
+const leftWidth = ref(0)
+const middleWidth = ref(0)
+const rightWidth = ref(0)
+
+const isResizing = ref(false)
+const resizeType = ref<'left' | 'right'>('left')
+const startX = ref(0)
+const startLeftWidth = ref(0)
+const startMiddleWidth = ref(0)
+const startRightWidth = ref(0)
+
+// 初始化宽度
+function initWidths() {
+  totalWidth.value = window.innerWidth - 40
+  const unitWidth = totalWidth.value / 4 // 1+2+1=4份
+  leftWidth.value = Math.max(MIN_WIDTH, unitWidth * 1)
+  middleWidth.value = Math.max(MIN_WIDTH, unitWidth * 2)
+  rightWidth.value = Math.max(MIN_WIDTH, unitWidth * 1)
+
+  // 确保总宽度正确
+  const currentTotal = leftWidth.value + middleWidth.value + rightWidth.value
+  if (currentTotal !== totalWidth.value) {
+    middleWidth.value += totalWidth.value - currentTotal
+  }
+}
+
 onMounted(async () => {
+  initWidths()
   await loadBook()
+  window.addEventListener('resize', initWidths)
 })
 
 // 监听路由变化，当ID改变时重新加载
@@ -139,14 +140,137 @@ function goBack() {
   router.push('/')
 }
 
-function formatDate(dateString: string) {
-  const date = new Date(dateString)
-  return date.toLocaleDateString('zh-CN', {
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit'
-  })
+// 拖动调整大小功能
+function startResize(type: 'left' | 'right', event: MouseEvent) {
+  isResizing.value = true
+  resizeType.value = type
+  startX.value = event.clientX
+  startLeftWidth.value = leftWidth.value
+  startMiddleWidth.value = middleWidth.value
+  startRightWidth.value = rightWidth.value
+
+  document.addEventListener('mousemove', handleMouseMove)
+  document.addEventListener('mouseup', stopResize)
+  document.body.style.cursor = 'col-resize'
+  document.body.style.userSelect = 'none'
+
+  // 阻止默认行为，防止文本选择等干扰
+  event.preventDefault()
 }
+
+function handleMouseMove(event: MouseEvent) {
+  if (!isResizing.value) return
+
+  const deltaX = event.clientX - startX.value
+
+  if (resizeType.value === 'left') {
+    resizePanel('left', deltaX)
+  } else {
+    resizePanel('right', deltaX)
+  }
+
+  // 确保所有宽度都不小于最小值
+  leftWidth.value = Math.max(MIN_WIDTH, leftWidth.value)
+  middleWidth.value = Math.max(MIN_WIDTH, middleWidth.value)
+  rightWidth.value = Math.max(MIN_WIDTH, rightWidth.value)
+
+  // 确保总宽度不变
+  const total = leftWidth.value + middleWidth.value + rightWidth.value
+  if (total !== totalWidth.value) {
+    middleWidth.value += totalWidth.value - total
+  }
+}
+
+function resizePanel(type: 'left' | 'right', deltaX: number) {
+  if (type === 'left') {
+    // 左侧拖动：影响左侧和中间
+    if (deltaX > 0) {
+      const availableMiddle = startMiddleWidth.value - MIN_WIDTH
+      if (deltaX <= availableMiddle) {
+        // 阶段1：只减少中间区域
+        leftWidth.value = startLeftWidth.value + deltaX
+        middleWidth.value = startMiddleWidth.value - deltaX
+        rightWidth.value = startRightWidth.value
+      } else {
+        // 阶段2：中间已达最小，开始减少右侧
+        const remainingDelta = deltaX - availableMiddle
+        const availableRight = startRightWidth.value - MIN_WIDTH
+        if (remainingDelta <= availableRight) {
+          leftWidth.value = startLeftWidth.value + availableMiddle + remainingDelta
+          middleWidth.value = MIN_WIDTH
+          rightWidth.value = startRightWidth.value - remainingDelta
+        } else {
+          // 达到极限
+          leftWidth.value = startLeftWidth.value + availableMiddle + availableRight
+          middleWidth.value = MIN_WIDTH
+          rightWidth.value = MIN_WIDTH
+        }
+      }
+    } else {
+      // 向左拖动：减少左侧，增加中间
+      const availableLeft = startLeftWidth.value - MIN_WIDTH
+      const actualDelta = Math.min(-deltaX, availableLeft)
+
+      leftWidth.value = startLeftWidth.value - actualDelta
+      middleWidth.value = startMiddleWidth.value + actualDelta
+      rightWidth.value = startRightWidth.value
+    }
+  } else {
+    // 右侧拖动：影响右侧和中间
+    if (deltaX < 0) {
+      // 向左拖动：增加右侧宽度，减少中间宽度
+      const maxIncrease = (startMiddleWidth.value - MIN_WIDTH) + (startLeftWidth.value - MIN_WIDTH)
+      const desiredIncrease = -deltaX
+
+      if (desiredIncrease <= maxIncrease) {
+        // 未达到极限
+        if (desiredIncrease <= (startMiddleWidth.value - MIN_WIDTH)) {
+          // 阶段1：只减少中间区域
+          rightWidth.value = startRightWidth.value + desiredIncrease
+          middleWidth.value = startMiddleWidth.value - desiredIncrease
+          leftWidth.value = startLeftWidth.value
+        } else {
+          // 阶段2：中间已达最小，开始减少左侧
+          const remaining = desiredIncrease - (startMiddleWidth.value - MIN_WIDTH)
+          rightWidth.value = startRightWidth.value + desiredIncrease
+          middleWidth.value = MIN_WIDTH
+          leftWidth.value = startLeftWidth.value - remaining
+        }
+      } else {
+        // 达到极限：中间和左侧都已最小，不能再增加右侧
+        rightWidth.value = startRightWidth.value + maxIncrease
+        middleWidth.value = MIN_WIDTH
+        leftWidth.value = MIN_WIDTH
+      }
+    } else {
+      // 向右拖动：减少右侧，增加中间
+      const availableRight = startRightWidth.value - MIN_WIDTH
+      const actualDelta = Math.min(deltaX, availableRight)
+
+      rightWidth.value = startRightWidth.value - actualDelta
+      middleWidth.value = startMiddleWidth.value + actualDelta
+      leftWidth.value = startLeftWidth.value
+    }
+  }
+}
+
+function stopResize() {
+  isResizing.value = false
+  document.removeEventListener('mousemove', handleMouseMove)
+  document.removeEventListener('mouseup', stopResize)
+  document.body.style.cursor = ''
+  document.body.style.userSelect = ''
+}
+
+onUnmounted(() => {
+  document.removeEventListener('mousemove', handleMouseMove)
+  document.removeEventListener('mouseup', stopResize)
+  window.removeEventListener('resize', initWidths)
+})
 </script>
+
+<style scoped>
+.cursor-col-resize {
+  cursor: col-resize;
+}
+</style>
