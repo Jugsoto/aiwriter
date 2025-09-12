@@ -24,3 +24,7 @@ dist-electron
 *.njsproj
 *.sln
 *.sw?
+
+# Custom ignores
+CLAUDE.md
+.claude/
