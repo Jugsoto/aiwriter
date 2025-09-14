@@ -20,7 +20,10 @@ export default defineConfig({
           build: {
             outDir: 'dist-electron',
             rollupOptions: {
-              external: ['better-sqlite3', 'electron', 'path', 'fs', 'util']
+              external: ['better-sqlite3', 'electron', 'path', 'fs', 'util'],
+              output: {
+                format: 'es'
+              }
             },
             target: 'node18',
             lib: {
@@ -39,7 +42,14 @@ export default defineConfig({
           build: {
             outDir: 'dist-electron',
             rollupOptions: {
-              external: ['electron']
+              external: ['electron'],
+              output: {
+                format: 'es'
+              }
+            },
+            lib: {
+              entry: 'electron/preload.ts',
+              formats: ['es']
             }
           }
         }
@@ -53,12 +63,15 @@ export default defineConfig({
           build: {
             outDir: 'dist-electron',
             rollupOptions: {
-              external: ['better-sqlite3', 'electron', 'path', 'fs', 'util']
+              external: ['better-sqlite3', 'electron', 'path', 'fs', 'util'],
+              output: {
+                format: 'cjs'
+              }
             },
             target: 'node18',
             lib: {
               entry: 'electron/database.ts',
-              formats: ['es']
+              formats: ['cjs']
             }
           }
         }

@@ -1,6 +1,7 @@
 <template>
-  <div class="fixed inset-0 bg-opacity-50 bg-black flex items-center justify-center z-50">
-    <div class="bg-[var(--bg-primary)] rounded-lg p-6 w-full max-w-md mx-4">
+  <div class="fixed inset-0 flex items-center justify-center z-50">
+    <div
+      class="bg-[var(--bg-primary)] rounded-xl p-6 w-full max-w-md mx-4 border-2 border-[var(--border-color)] shadow-lg">
       <h2 class="text-xl font-semibold mb-4 text-[var(--text-primary)]">
         {{ isEdit ? '编辑书籍' : '新增书籍' }}
       </h2>

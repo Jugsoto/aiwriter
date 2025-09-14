@@ -1,11 +1,25 @@
 import { app, BrowserWindow, shell, ipcMain } from 'electron'
 import path from 'path'
 import { fileURLToPath } from 'url'
-import { initDatabase, getAllBooks, createBook, updateBook, deleteBook, closeDatabase } from './database.js'
+import {
+  initDatabase,
+  getAllBooks,
+  createBook,
+  updateBook,
+  deleteBook,
+  closeDatabase,
+  getChaptersByBookId,
+  getChapterById,
+  createChapter,
+  updateChapter,
+  updateChapterOrder,
+  deleteChapter
+} from './database'
 
+let win: InstanceType<typeof BrowserWindow> | null = null
+
+// ES模块中创建__dirname等效变量
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
-
-let win: BrowserWindow | null = null
 
 function createWindow() {
   win = new BrowserWindow({
@@ -32,7 +46,7 @@ function createWindow() {
   }
 
   
-  win.webContents.setWindowOpenHandler(({ url }) => {
+  win.webContents.setWindowOpenHandler(({ url }: { url: string }) => {
     shell.openExternal(url)
     return { action: 'deny' }
   })
@@ -84,16 +98,42 @@ ipcMain.handle('get-books', () => {
   return getAllBooks()
 })
 
-ipcMain.handle('create-book', (event, data: { name: string }) => {
+ipcMain.handle('create-book', (_event: any, data: { name: string }) => {
   return createBook(data)
 })
 
-ipcMain.handle('update-book', (event, id: number, data: { name: string }) => {
+ipcMain.handle('update-book', (_event: any, id: number, data: { name: string }) => {
   return updateBook(id, data)
 })
 
-ipcMain.handle('delete-book', (event, id: number) => {
+ipcMain.handle('delete-book', (_event: any, id: number) => {
   deleteBook(id)
+  return { success: true }
+})
+
+// 章节相关IPC处理
+ipcMain.handle('get-chapters', (_event: any, bookId: number) => {
+  return getChaptersByBookId(bookId)
+})
+
+ipcMain.handle('get-chapter', (_event: any, id: number) => {
+  return getChapterById(id)
+})
+
+ipcMain.handle('create-chapter', (_event: any, data: { book_id: number; title: string; content?: string; summary?: string; order_index?: number }) => {
+  return createChapter(data)
+})
+
+ipcMain.handle('update-chapter', (_event: any, id: number, data: { title?: string; content?: string; summary?: string; order_index?: number }) => {
+  return updateChapter(id, data)
+})
+
+ipcMain.handle('update-chapter-order', (_event: any, id: number, orderIndex: number) => {
+  return updateChapterOrder(id, orderIndex)
+})
+
+ipcMain.handle('delete-chapter', (_event: any, id: number) => {
+  deleteChapter(id)
   return { success: true }
 })
 

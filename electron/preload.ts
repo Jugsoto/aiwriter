@@ -10,7 +10,15 @@ const api = {
   getBooks: () => ipcRenderer.invoke('get-books'),
   createBook: (data: { name: string }) => ipcRenderer.invoke('create-book', data),
   updateBook: (id: number, data: { name: string }) => ipcRenderer.invoke('update-book', id, data),
-  deleteBook: (id: number) => ipcRenderer.invoke('delete-book', id)
+  deleteBook: (id: number) => ipcRenderer.invoke('delete-book', id),
+  
+  // 章节相关API
+  getChapters: (bookId: number) => ipcRenderer.invoke('get-chapters', bookId),
+  getChapter: (id: number) => ipcRenderer.invoke('get-chapter', id),
+  createChapter: (data: { book_id: number; title: string; content?: string; summary?: string; order_index?: number }) => ipcRenderer.invoke('create-chapter', data),
+  updateChapter: (id: number, data: { title?: string; content?: string; summary?: string; order_index?: number }) => ipcRenderer.invoke('update-chapter', id, data),
+  updateChapterOrder: (id: number, orderIndex: number) => ipcRenderer.invoke('update-chapter-order', id, orderIndex),
+  deleteChapter: (id: number) => ipcRenderer.invoke('delete-chapter', id)
 }
 
 contextBridge.exposeInMainWorld('electronAPI', api)

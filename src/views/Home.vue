@@ -52,7 +52,7 @@
 import { ref, onMounted } from 'vue'
 import { useBooksStore } from '@/stores/books'
 import BookCard from '../components/BookCard.vue'
-import BookModal from '../components/BookModal.vue'
+import BookModal from '../components/modal/BookModal.vue'
 import type { Book } from '@/electron.d'
 
 const booksStore = useBooksStore()

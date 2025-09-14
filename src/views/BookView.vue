@@ -6,7 +6,7 @@
     <div class="flex-1 flex overflow-hidden">
       <!-- 左侧章节管理 -->
       <div ref="leftPanel" class="bg-[var(--bg-secondary)] relative" :style="{ width: leftWidth + 'px' }">
-        <ChapterManager />
+        <ChapterManager :book-id="bookId" />
       </div>
 
       <!-- 左侧分隔条 -->
@@ -37,7 +37,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, watch, onUnmounted } from 'vue'
+import { ref, computed, onMounted, watch, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useBooksStore } from '@/stores/books'
 import type { Book } from '@/electron.d'
@@ -53,6 +53,12 @@ const booksStore = useBooksStore()
 const book = ref<Book | null>(null)
 const loading = ref(false)
 const error = ref('')
+
+// 计算属性
+const bookId = computed(() => {
+  const id = route.params.id as string
+  return id ? Number(id) : 0
+})
 
 // 三栏布局相关
 const leftPanel = ref<HTMLElement>()
@@ -82,10 +88,10 @@ const startRightWidth = ref(0)
 // 初始化宽度
 function initWidths() {
   totalWidth.value = window.innerWidth - 40
-  const unitWidth = totalWidth.value / 4 // 1+2+1=4份
-  leftWidth.value = Math.max(MIN_WIDTH, unitWidth * 1)
-  middleWidth.value = Math.max(MIN_WIDTH, unitWidth * 2)
-  rightWidth.value = Math.max(MIN_WIDTH, unitWidth * 1)
+  const unitWidth = totalWidth.value / 10
+  leftWidth.value = Math.max(MIN_WIDTH, unitWidth * 2)
+  middleWidth.value = Math.max(MIN_WIDTH, unitWidth * 5)
+  rightWidth.value = Math.max(MIN_WIDTH, unitWidth * 3)
 
   // 确保总宽度正确
   const currentTotal = leftWidth.value + middleWidth.value + rightWidth.value
