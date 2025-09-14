@@ -27,7 +27,7 @@
       </div>
       <div v-else class="space-y-2">
         <div v-for="(chapter, index) in chapters" :key="chapter.id" @click="selectChapter(chapter)"
-          class="group relative p-3 bg-[var(--bg-primary)] rounded-xl border border-[var(--border-color)] cursor-pointer transition-all hover:border-blue-500"
+          class="group relative px-3 py-2 bg-[var(--bg-primary)] rounded-xl border border-[var(--border-color)] cursor-pointer transition-all hover:border-blue-500"
           :class="{ 'border-blue-500': currentChapter?.id === chapter.id }">
           <!-- 章节信息 -->
           <div class="flex items-center">
@@ -43,7 +43,7 @@
 
           <!-- 操作按钮（hover时显示在右上角） -->
           <div
-            class="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-all duration-200 flex items-center gap-1 bg-[var(--bg-secondary)] px-1.5 py-1 rounded-full border border-[var(--border-color)] shadow-sm">
+            class="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-all duration-200 flex items-center gap-1 bg-[var(--bg-secondary)] px-1.5 py-1 rounded-full border border-[var(--border-color)] shadow-sm">
             <button @click.stop="openSummaryModal(chapter)"
               class="p-1 text-[var(--text-secondary)] hover:text-blue-600 hover:bg-blue-100 rounded-full transition-all"
               title="编辑梗概">
@@ -107,15 +107,27 @@ const showSummaryModalFlag = ref(false)
 const editingChapter = ref<Chapter | null>(null)
 const sortOrder = ref<'asc' | 'desc'>('asc')
 
-// 切换排序顺序
+// 切换排序顺序（占位按钮，无实际功能）
 const toggleSortOrder = () => {
-  sortOrder.value = sortOrder.value === 'asc' ? 'desc' : 'asc'
-  // 这里可以添加实际的排序逻辑
+  // 占位按钮，不需要实际功能
 }
 
 // 加载章节数据
 const loadChapters = async () => {
   await chaptersStore.loadChapters(props.bookId)
+
+  // 自动选择最新编辑的章节
+  if (chaptersStore.chapters.length > 0) {
+    // 按更新时间降序排序，选择最新编辑的章节
+    const sortedChapters = [...chaptersStore.chapters].sort((a, b) =>
+      new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
+    )
+    const latestChapter = sortedChapters[0]
+    chaptersStore.setCurrentChapter(latestChapter)
+  } else {
+    // 如果没有章节，清空当前章节
+    chaptersStore.setCurrentChapter(null)
+  }
 }
 
 // 选择章节
