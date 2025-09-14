@@ -2,10 +2,10 @@
   <div class="flex h-full bg-[var(--bg-primary)]">
     <!-- 左侧导航栏 -->
     <div class="w-60 bg-[var(--bg-primary)] border-r border-[var(--border-color)] p-4">
-      <h2 class="text-lg font-semibold text-[var(--text-primary)] mb-4">设置</h2>
+      <h2 class="text-2xl font-semibold text-[var(--text-primary)] mb-4">设置</h2>
       <nav class="space-y-2">
         <button v-for="item in menuItems" :key="item.key" @click="activeTab = item.key" :class="[
-          'w-full flex items-center px-3 py-2 rounded-lg border border-[var(--border-color)] text-left transition-all duration-200',
+          'w-full flex items-center bg-[var(--bg-secondary)] px-3 py-3 rounded-xl border border-[var(--border-color)] text-left transition-all duration-200',
           activeTab === item.key
             ? 'bg-[var(--theme-bg)] text-[var(--theme-text)] border-[var(--theme-bg)]'
             : 'text-[var(--text-secondary)] hover:bg-[var(--hover-bg)] hover:text-[var(--text-primary)]'
@@ -17,7 +17,7 @@
     </div>
 
     <!-- 右侧内容区 -->
-    <div class="flex-1 p-6 overflow-y-auto">
+    <div class="flex-1 p-6 overflow-y-auto bg-[var(--bg-secondary)]">
       <component :is="currentComponent" />
     </div>
   </div>

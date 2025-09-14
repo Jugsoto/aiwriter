@@ -1,6 +1,7 @@
 import { app, BrowserWindow, shell, ipcMain } from 'electron'
 import path from 'path'
 import { fileURLToPath } from 'url'
+import fs from 'fs'
 import {
   initDatabase,
   getAllBooks,
@@ -75,6 +76,28 @@ app.on('activate', () => {
 
 ipcMain.handle('get-app-version', () => {
   return app.getVersion()
+})
+
+// 获取应用数据目录路径
+ipcMain.handle('get-app-data-path', () => {
+  return app.getPath('userData')
+})
+
+// 打开文件夹
+ipcMain.handle('open-folder', (_event: any, folderPath: string) => {
+  shell.openPath(folderPath)
+  return { success: true }
+})
+
+// 获取文件大小
+ipcMain.handle('get-file-size', (_event: any, filePath: string) => {
+  try {
+    const stats = fs.statSync(filePath)
+    return { size: stats.size, success: true }
+  } catch (error) {
+    console.error('Failed to get file size:', error)
+    return { size: 0, success: false }
+  }
 })
 
 ipcMain.handle('window-minimize', () => {
