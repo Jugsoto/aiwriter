@@ -26,7 +26,6 @@
 </template>
 
 <script setup lang="ts">
-import { defineProps, defineEmits } from 'vue'
 import type { Chapter } from '@/electron.d'
 
 // 定义props

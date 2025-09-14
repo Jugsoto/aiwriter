@@ -5,7 +5,7 @@
       <button @click="toggleSortOrder"
         class="flex items-center gap-1 px-2 py-1.5 text-sm border border-[var(--border-color)] bg-[var(--bg-primary)] rounded-full hover:bg-[var(--bg-secondary)] transition-colors">
         <ArrowUpDown class="w-4 h-4" />
-        章节排序
+        切换排序
       </button>
       <button @click="showCreateModal = true"
         class="flex items-center gap-1 px-2 py-1.5 text-sm border border-[var(--border-color)] bg-[var(--bg-primary)] rounded-full hover:bg-[var(--bg-secondary)] transition-colors">
@@ -26,14 +26,14 @@
         暂无章节，点击上方按钮创建
       </div>
       <div v-else class="space-y-2">
-        <div v-for="(chapter, index) in chapters" :key="chapter.id" @click="selectChapter(chapter)"
+        <div v-for="(chapter, index) in sortedChapters" :key="chapter.id" @click="selectChapter(chapter)"
           class="group relative px-3 py-2 bg-[var(--bg-primary)] rounded-xl border border-[var(--border-color)] cursor-pointer transition-all hover:border-blue-500"
           :class="{ 'border-blue-500': currentChapter?.id === chapter.id }">
           <!-- 章节信息 -->
           <div class="flex items-center">
             <div class="flex items-center gap-2 flex-1 min-w-0">
               <span class="text-base text-[var(--text-primary)] font-bold">
-                {{ index + 1 }}
+                {{ getChapterDisplayNumber(index) }}
               </span>
               <span class="text-base text-[var(--text-primary)] truncate font-medium">
                 {{ chapter.title }}
@@ -100,16 +100,27 @@ const currentChapter = computed(() => chaptersStore.currentChapter)
 const loading = computed(() => chaptersStore.loading)
 const error = computed(() => chaptersStore.error)
 
+// 排序后的章节列表
+const sortedChapters = computed(() => {
+  return [...chapters.value].sort((a, b) => {
+    if (sortOrder.value === 'asc') {
+      return a.id - b.id // 正序：ID 从小到大
+    } else {
+      return b.id - a.id // 逆序：ID 从大到小
+    }
+  })
+})
+
 // 模态窗口状态
 const showCreateModal = ref(false)
 const showEditModalFlag = ref(false)
 const showSummaryModalFlag = ref(false)
 const editingChapter = ref<Chapter | null>(null)
-const sortOrder = ref<'asc' | 'desc'>('asc')
+const sortOrder = ref<'asc' | 'desc'>('desc') // 默认逆序
 
-// 切换排序顺序（占位按钮，无实际功能）
+// 切换排序顺序
 const toggleSortOrder = () => {
-  // 占位按钮，不需要实际功能
+  sortOrder.value = sortOrder.value === 'asc' ? 'desc' : 'asc'
 }
 
 // 加载章节数据
@@ -127,6 +138,15 @@ const loadChapters = async () => {
   } else {
     // 如果没有章节，清空当前章节
     chaptersStore.setCurrentChapter(null)
+  }
+}
+
+// 获取章节显示编号
+const getChapterDisplayNumber = (index: number) => {
+  if (sortOrder.value === 'asc') {
+    return index + 1 // 正序：从1开始
+  } else {
+    return sortedChapters.value.length - index // 逆序：从总长度开始递减
   }
 }
 

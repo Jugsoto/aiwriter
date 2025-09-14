@@ -6,15 +6,8 @@
 
     <!-- 编辑器区域 - 精确填充可用空间，无外部滚动 -->
     <div class="flex-1 min-h-0">
-      <div v-if="!currentChapter" class="text-center text-[var(--text-secondary)] py-12">
-        <p class="text-lg mb-2">请选择一个章节开始编辑</p>
-        <p class="text-sm">在左侧章节管理中选择章节后，即可开始编写内容</p>
-      </div>
-      <div v-else class="h-full">
-        <textarea v-model="content" @input="handleContentChange"
-          class="w-full h-full px-4 py-3 bg-[var(--bg-secondary)] text-[var(--text-primary)] outline-none  resize-none font-mono leading-relaxed overflow-y-auto"
-          placeholder="在这里编写您的章节内容..."></textarea>
-      </div>
+      <ContentEditor :current-chapter="currentChapter" :content="content" :original-content="originalContent"
+        @update:content="updateContent" @content-change="handleContentChange" />
     </div>
 
     <!-- 底部状态栏 -->
@@ -28,6 +21,7 @@ import { ref, computed, watch } from 'vue'
 import { useChaptersStore } from '@/stores/chapters'
 import HeaderToolbar from './editor/HeaderToolbar.vue'
 import StatusBar from './editor/StatusBar.vue'
+import ContentEditor from './editor/ContentEditor.vue'
 
 // 简单的防抖函数实现
 function debounce<T extends (...args: any[]) => any>(func: T, wait: number): T {
@@ -67,6 +61,11 @@ watch(currentChapter, (newChapter) => {
     lastSavedTime.value = null
   }
 }, { immediate: true })
+
+// 更新内容
+const updateContent = (newContent: string) => {
+  content.value = newContent
+}
 
 // 监听内容变化
 watch(content, (newContent) => {
@@ -122,11 +121,4 @@ const debouncedAutoSave = debounce(() => {
   }
 }, 2000) // 2秒后自动保存
 
-// 监听章节变化，确保内容同步
-watch(() => currentChapter.value?.content, (newContent) => {
-  if (currentChapter.value && newContent !== content.value && !hasChanges.value) {
-    content.value = newContent || ''
-    originalContent.value = newContent || ''
-  }
-})
 </script>
