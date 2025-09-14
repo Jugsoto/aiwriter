@@ -82,6 +82,7 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { Plus, Edit, Trash2, FileText, ArrowUpDown } from 'lucide-vue-next'
 import { useChaptersStore } from '@/stores/chapters'
+import { showConfirm } from '@/composables'
 import type { Chapter } from '@/electron.d'
 import ChapterModal from '@/components/modal/ChapterModal.vue'
 import SummaryModal from '@/components/modal/SummaryModal.vue'
@@ -206,8 +207,16 @@ const handleUpdateSummary = async (data: { summary: string }) => {
 }
 
 // 删除确认
-const confirmDelete = (chapter: Chapter) => {
-  if (confirm(`确定要删除章节"${chapter.title}"吗？此操作不可恢复。`)) {
+const confirmDelete = async (chapter: Chapter) => {
+  const confirmed = await showConfirm({
+    title: '删除章节',
+    message: `确定要删除章节"${chapter.title}"吗？`,
+    description: '此操作不可恢复，章节内容将被永久删除。',
+    dangerous: true,
+    confirmText: '删除'
+  })
+
+  if (confirmed) {
     handleDeleteChapter(chapter.id)
   }
 }

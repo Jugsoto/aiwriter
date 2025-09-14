@@ -51,6 +51,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { useBooksStore } from '@/stores/books'
+import { showConfirm } from '@/composables'
 import BookCard from '../components/BookCard.vue'
 import BookModal from '../components/modal/BookModal.vue'
 import type { Book } from '@/electron.d'
@@ -70,12 +71,21 @@ function handleEdit(book: Book) {
 }
 
 async function handleDelete(book: Book) {
-  if (confirm(`确定要删除《${book.name}》吗？`)) {
+  const confirmed = await showConfirm({
+    title: '删除书籍',
+    message: `确定要删除《${book.name}》吗？`,
+    description: '此操作将永久删除该书籍及其所有章节，不可恢复。',
+    dangerous: true,
+    confirmText: '删除'
+  })
+
+  if (confirmed) {
     try {
       await booksStore.removeBook(book.id)
       console.log('Book deleted successfully')
     } catch (err) {
       console.error('Failed to delete book:', err)
+      // 这里可以添加错误提示，但alert暂时保留用于兼容性
       alert('删除书籍失败，请重试')
     }
   }
