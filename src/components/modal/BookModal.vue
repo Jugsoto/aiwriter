@@ -18,11 +18,11 @@
 
         <div class="flex gap-3 justify-end">
           <button type="button" @click="$emit('close')"
-            class="px-4 py-2 text-[var(--text-secondary)] border border-[var(--border-color)] rounded-md hover:bg-[var(--hover-bg)] transition-colors">
+            class="px-4 py-1.5 text-[var(--text-secondary)] border border-[var(--border-color)] rounded-lg hover:bg-[var(--hover-bg)] transition-colors">
             取消
           </button>
           <button type="submit" :disabled="!bookName.trim() || saving"
-            class="px-4 py-2 bg-[var(--theme-bg)] text-[var(--theme-text)] rounded-md hover:bg-[var(--theme-hover)] disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
+            class="px-4 py-1.5 bg-[var(--theme-bg)] text-[var(--theme-text)] rounded-lg hover:bg-[var(--theme-hover)] disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
             {{ saving ? '保存中...' : '保存' }}
           </button>
         </div>

@@ -18,12 +18,12 @@
 
       <div class="flex gap-3 justify-end">
         <button type="button" @click="handleCancel"
-          class="px-4 py-2 text-[var(--text-secondary)] border border-[var(--border-color)] rounded-md hover:bg-[var(--hover-bg)] transition-colors"
+          class="px-4 py-1.5 text-[var(--text-secondary)] border border-[var(--border-color)] rounded-lg hover:bg-[var(--hover-bg)] transition-colors"
           :disabled="loading">
           {{ cancelText }}
         </button>
         <button type="button" @click="handleConfirm" :disabled="loading"
-          class="px-4 py-2 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed" :class="dangerous
+          class="px-4 py-1.5 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed" :class="dangerous
             ? 'bg-red-600 text-white hover:bg-red-700'
             : 'bg-[var(--theme-bg)] text-[var(--theme-text)] hover:bg-[var(--theme-hover)]'">
           {{ loading ? confirmLoadingText : confirmText }}
@@ -34,7 +34,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, onMounted, onUnmounted } from 'vue'
+import { watch, onMounted, onUnmounted } from 'vue'
 
 interface Props {
   visible: boolean

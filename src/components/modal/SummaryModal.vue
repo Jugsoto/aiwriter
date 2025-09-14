@@ -17,11 +17,11 @@
 
       <div class="flex justify-end gap-3">
         <button @click="handleCancel"
-          class="px-4 py-2 text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors">
+          class="px-4 py-1.5 text-[var(--text-secondary)] border border-[var(--border-color)] rounded-lg hover:bg-[var(--hover-bg)] transition-colors">
           取消
         </button>
         <button @click="handleConfirm"
-          class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors">
+          class="px-4 py-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
           保存
         </button>
       </div>
