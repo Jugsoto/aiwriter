@@ -29,7 +29,7 @@
 import type { Chapter } from '@/electron.d'
 
 // 定义props
-const props = defineProps({
+defineProps({
   currentChapter: {
     type: Object as () => Chapter | null,
     default: null

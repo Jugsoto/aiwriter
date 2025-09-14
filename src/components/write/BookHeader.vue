@@ -11,34 +11,34 @@
       </h1>
     </div>
 
-    <!-- 右侧：占位按钮 -->
+    <!-- 右侧：功能按钮 -->
     <div class="flex items-center gap-2">
       <button
-        class="flex items-center gap-2 px-3 py-1.5 text-[var(--text-primary)] hover:bg-[var(--hover-bg)] rounded-md transition-colors">
+        class="flex items-center gap-1 px-3 py-1.5 text-sm border border-[var(--border-color)] bg-[var(--bg-primary)] rounded-full hover:bg-[var(--bg-secondary)] transition-colors">
+        <User class="w-4 h-4" />
+        <span>人物档案</span>
+      </button>
+      <button
+        class="flex items-center gap-1 px-3 py-1.5 text-sm border border-[var(--border-color)] bg-[var(--bg-primary)] rounded-full hover:bg-[var(--bg-secondary)] transition-colors">
+        <Globe class="w-4 h-4" />
+        <span>世界观</span>
+      </button>
+      <button
+        class="flex items-center gap-1 px-3 py-1.5 text-sm border border-[var(--border-color)] bg-[var(--bg-primary)] rounded-full hover:bg-[var(--bg-secondary)] transition-colors">
+        <FileText class="w-4 h-4" />
+        <span>词条设定</span>
+      </button>
+      <button
+        class="flex items-center gap-1 px-3 py-1.5 text-sm border border-[var(--border-color)] bg-[var(--bg-primary)] rounded-full hover:bg-[var(--bg-secondary)] transition-colors">
         <Settings class="w-4 h-4" />
-        <span>设置</span>
-      </button>
-      <button
-        class="flex items-center gap-2 px-3 py-1.5 text-[var(--text-primary)] hover:bg-[var(--hover-bg)] rounded-md transition-colors">
-        <Share2 class="w-4 h-4" />
-        <span>分享</span>
-      </button>
-      <button
-        class="flex items-center gap-2 px-3 py-1.5 text-[var(--text-primary)] hover:bg-[var(--hover-bg)] rounded-md transition-colors">
-        <Download class="w-4 h-4" />
-        <span>导出</span>
-      </button>
-      <button
-        class="flex items-center gap-2 px-3 py-1.5 text-[var(--text-primary)] hover:bg-[var(--hover-bg)] rounded-md transition-colors">
-        <MoreVertical class="w-4 h-4" />
-        <span>更多</span>
+        <span>全局设定</span>
       </button>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ChevronLeft, Settings, Share2, Download, MoreVertical } from 'lucide-vue-next'
+import { ChevronLeft, Settings, User, Globe, FileText } from 'lucide-vue-next'
 
 defineProps<{
   bookName?: string

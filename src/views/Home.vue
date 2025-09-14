@@ -4,7 +4,7 @@
     <div class="flex items-center justify-between px-6 py-3 border-b border-[var(--border-color)]">
       <h1 class="text-2xl font-semibold text-[var(--text-primary)]">我的书架</h1>
       <button @click="showAddModal = true"
-        class="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+        class="flex items-center gap-2 px-4 py-2 bg-[var(--theme-bg)] text-white rounded-lg hover:bg-blue-700 transition-colors">
         新增书籍
       </button>
     </div>
@@ -20,7 +20,7 @@
       <div v-else-if="booksStore.error" class="text-center text-red-500">
         <p class="mb-2">{{ booksStore.error }}</p>
         <button @click="retryLoad"
-          class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors">
+          class="px-4 py-2 bg-[var(--theme-bg)] text-white rounded-md hover:bg-blue-700 transition-colors">
           重试
         </button>
       </div>
