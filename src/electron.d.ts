@@ -20,6 +20,15 @@ declare global {
       updateChapterOrder: (id: number, orderIndex: number) => Promise<Chapter>
       deleteChapter: (id: number) => Promise<{ success: boolean }>
       
+      // 设定相关API
+      getSettings: (bookId: number) => Promise<Setting[]>
+      getSettingsByType: (bookId: number, type: string) => Promise<Setting[]>
+      getSetting: (id: number) => Promise<Setting | undefined>
+      createSetting: (data: { book_id: number; type: string; name: string; content?: string; status?: string; starred?: boolean }) => Promise<Setting>
+      updateSetting: (id: number, data: { type?: string; name?: string; content?: string; status?: string; starred?: boolean }) => Promise<Setting>
+      deleteSetting: (id: number) => Promise<{ success: boolean }>
+      toggleSettingStar: (id: number) => Promise<Setting>
+      
       // 数据设置相关API
       getAppDataPath: () => Promise<string>
       openFolder: (folderPath: string) => Promise<{ success: boolean }>
@@ -47,6 +56,19 @@ export interface Chapter {
   content: string
   summary: string
   order_index: number
+  created_at: string
+  updated_at: string
+}
+
+// 设定类型定义
+export interface Setting {
+  id: number
+  book_id: number
+  type: string
+  name: string
+  content: string
+  status: string
+  starred: boolean
   created_at: string
   updated_at: string
 }

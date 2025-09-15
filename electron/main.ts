@@ -14,7 +14,14 @@ import {
   createChapter,
   updateChapter,
   updateChapterOrder,
-  deleteChapter
+  deleteChapter,
+  getSettingsByBookId,
+  getSettingsByType,
+  getSettingById,
+  createSetting,
+  updateSetting,
+  deleteSetting,
+  toggleSettingStar
 } from './database'
 
 let win: InstanceType<typeof BrowserWindow> | null = null
@@ -190,6 +197,36 @@ ipcMain.handle('update-chapter-order', (_event: any, id: number, orderIndex: num
 ipcMain.handle('delete-chapter', (_event: any, id: number) => {
   deleteChapter(id)
   return { success: true }
+})
+
+// 设定相关IPC处理
+ipcMain.handle('get-settings', (_event: any, bookId: number) => {
+  return getSettingsByBookId(bookId)
+})
+
+ipcMain.handle('get-settings-by-type', (_event: any, bookId: number, type: string) => {
+  return getSettingsByType(bookId, type)
+})
+
+ipcMain.handle('get-setting', (_event: any, id: number) => {
+  return getSettingById(id)
+})
+
+ipcMain.handle('create-setting', (_event: any, data: { book_id: number; type: string; name: string; content?: string; status?: string; starred?: boolean }) => {
+  return createSetting(data)
+})
+
+ipcMain.handle('update-setting', (_event: any, id: number, data: { type?: string; name?: string; content?: string; status?: string; starred?: boolean }) => {
+  return updateSetting(id, data)
+})
+
+ipcMain.handle('delete-setting', (_event: any, id: number) => {
+  deleteSetting(id)
+  return { success: true }
+})
+
+ipcMain.handle('toggle-setting-star', (_event: any, id: number) => {
+  return toggleSettingStar(id)
 })
 
 // 重置数据 - 只删除数据库文件，保留软件本身数据

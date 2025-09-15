@@ -13,17 +13,17 @@
 
     <!-- 右侧：功能按钮 -->
     <div class="flex items-center gap-2">
-      <button
+      <button @click="$emit('open-settings', 'character')"
         class="flex items-center gap-1 px-3 py-1.5 text-sm border border-[var(--border-color)] bg-[var(--bg-primary)] rounded-full hover:bg-[var(--bg-secondary)] transition-colors">
         <User class="w-4 h-4" />
         <span>人物档案</span>
       </button>
-      <button
+      <button @click="$emit('open-settings', 'worldview')"
         class="flex items-center gap-1 px-3 py-1.5 text-sm border border-[var(--border-color)] bg-[var(--bg-primary)] rounded-full hover:bg-[var(--bg-secondary)] transition-colors">
         <Globe class="w-4 h-4" />
         <span>世界观</span>
       </button>
-      <button
+      <button @click="$emit('open-settings', 'entry')"
         class="flex items-center gap-1 px-3 py-1.5 text-sm border border-[var(--border-color)] bg-[var(--bg-primary)] rounded-full hover:bg-[var(--bg-secondary)] transition-colors">
         <FileText class="w-4 h-4" />
         <span>词条设定</span>
@@ -47,5 +47,6 @@ defineProps<{
 defineEmits<{
   (e: 'back'): void
   (e: 'global-settings'): void
+  (e: 'open-settings', type: 'character' | 'worldview' | 'entry'): void
 }>()
 </script>

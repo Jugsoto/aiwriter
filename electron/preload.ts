@@ -20,6 +20,15 @@ const api = {
   updateChapterOrder: (id: number, orderIndex: number) => ipcRenderer.invoke('update-chapter-order', id, orderIndex),
   deleteChapter: (id: number) => ipcRenderer.invoke('delete-chapter', id),
   
+  // 设定相关API
+  getSettings: (bookId: number) => ipcRenderer.invoke('get-settings', bookId),
+  getSettingsByType: (bookId: number, type: string) => ipcRenderer.invoke('get-settings-by-type', bookId, type),
+  getSetting: (id: number) => ipcRenderer.invoke('get-setting', id),
+  createSetting: (data: { book_id: number; type: string; name: string; content?: string; status?: string; starred?: boolean }) => ipcRenderer.invoke('create-setting', data),
+  updateSetting: (id: number, data: { type?: string; name?: string; content?: string; status?: string; starred?: boolean }) => ipcRenderer.invoke('update-setting', id, data),
+  deleteSetting: (id: number) => ipcRenderer.invoke('delete-setting', id),
+  toggleSettingStar: (id: number) => ipcRenderer.invoke('toggle-setting-star', id),
+  
   // 数据设置相关API
   getAppDataPath: () => ipcRenderer.invoke('get-app-data-path'),
   openFolder: (folderPath: string) => ipcRenderer.invoke('open-folder', folderPath),

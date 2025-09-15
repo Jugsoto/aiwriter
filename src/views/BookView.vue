@@ -1,6 +1,7 @@
 <template>
   <div class="h-full flex flex-col">
-    <BookHeader :book-name="book?.name" @back="goBack" @global-settings="showGlobalSettingsModal = true" />
+    <BookHeader :book-name="book?.name" @back="goBack" @global-settings="showGlobalSettingsModal = true"
+      @open-settings="handleOpenSettings" />
 
     <!-- 主要内容区 - 三栏布局 -->
     <div class="flex-1 flex overflow-hidden">
@@ -35,11 +36,11 @@
     </div>
 
     <!-- 全局设定模态框 -->
-    <GlobalSettingsModal
-      v-model:visible="showGlobalSettingsModal"
-      :initial-data="{ global_settings: book?.global_settings || '' }"
-      @confirm="handleGlobalSettingsSave"
-    />
+    <GlobalSettingsModal v-model:visible="showGlobalSettingsModal"
+      :initial-data="{ global_settings: book?.global_settings || '' }" @confirm="handleGlobalSettingsSave" />
+
+    <!-- 设定管理模态框 -->
+    <SettingsModal v-model:visible="showSettingsModal" :book-id="bookId" :setting-type="currentSettingType" />
   </div>
 </template>
 
@@ -53,6 +54,7 @@ import Editor from '@/components/write/Editor.vue'
 import WriteCopilot from '@/components/write/WriteCopilot.vue'
 import BookHeader from '@/components/write/BookHeader.vue'
 import GlobalSettingsModal from '@/components/modal/GlobalSettingsModal.vue'
+import SettingsModal from '@/components/modal/SettingsModal.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -62,6 +64,8 @@ const book = ref<Book | null>(null)
 const loading = ref(false)
 const error = ref('')
 const showGlobalSettingsModal = ref(false)
+const showSettingsModal = ref(false)
+const currentSettingType = ref<'character' | 'worldview' | 'entry'>('character')
 
 // 计算属性
 const bookId = computed(() => {
@@ -167,6 +171,11 @@ async function handleGlobalSettingsSave(data: { global_settings: string }) {
     console.error('Failed to save global settings:', err)
     alert('保存全局设定失败，请重试')
   }
+}
+
+function handleOpenSettings(type: 'character' | 'worldview' | 'entry') {
+  currentSettingType.value = type
+  showSettingsModal.value = true
 }
 
 // 拖动调整大小功能

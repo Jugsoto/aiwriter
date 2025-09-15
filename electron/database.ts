@@ -52,9 +52,28 @@ function initDatabase() {
       )
     `)
     
+    // 创建设定表
+    db.exec(`
+      CREATE TABLE IF NOT EXISTS settings (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        book_id INTEGER NOT NULL,
+        type TEXT NOT NULL,
+        name TEXT NOT NULL,
+        content TEXT DEFAULT '',
+        status TEXT DEFAULT '',
+        starred INTEGER DEFAULT 0,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (book_id) REFERENCES books (id) ON DELETE CASCADE
+      )
+    `)
+    
     // 创建索引以提高查询性能
     db.exec('CREATE INDEX IF NOT EXISTS idx_chapters_book_id ON chapters (book_id)')
     db.exec('CREATE INDEX IF NOT EXISTS idx_chapters_order ON chapters (book_id, order_index)')
+    db.exec('CREATE INDEX IF NOT EXISTS idx_settings_book_id ON settings (book_id)')
+    db.exec('CREATE INDEX IF NOT EXISTS idx_settings_type ON settings (book_id, type)')
+    db.exec('CREATE INDEX IF NOT EXISTS idx_settings_starred ON settings (book_id, starred)')
     
     // 检查现有数据
     const count = db.prepare('SELECT COUNT(*) as count FROM books').get() as { count: number }
@@ -82,6 +101,66 @@ interface CreateBookData {
 interface UpdateBookData {
   name?: string
   global_settings?: string
+}
+
+// 设定相关操作
+interface Setting {
+  id: number
+  book_id: number
+  type: string
+  name: string
+  content: string
+  status: string
+  starred: boolean
+  created_at: string
+  updated_at: string
+}
+
+interface CreateSettingData {
+  book_id: number
+  type: string
+  name: string
+  content?: string
+  status?: string
+  starred?: boolean
+}
+
+interface UpdateSettingData {
+  type?: string
+  name?: string
+  content?: string
+  status?: string
+  starred?: boolean
+}
+
+// 设定相关操作
+interface Setting {
+  id: number
+  book_id: number
+  type: string
+  name: string
+  content: string
+  status: string
+  starred: boolean
+  created_at: string
+  updated_at: string
+}
+
+interface CreateSettingData {
+  book_id: number
+  type: string
+  name: string
+  content?: string
+  status?: string
+  starred?: boolean
+}
+
+interface UpdateSettingData {
+  type?: string
+  name?: string
+  content?: string
+  status?: string
+  starred?: boolean
 }
 
 // 章节相关操作
@@ -282,8 +361,11 @@ function resetDatabase(): void {
     // 删除所有书籍
     db.exec('DELETE FROM books')
     
+    // 删除所有设定
+    db.exec('DELETE FROM settings')
+    
     // 重置自增ID
-    db.exec('DELETE FROM sqlite_sequence WHERE name IN ("books", "chapters")')
+    db.exec('DELETE FROM sqlite_sequence WHERE name IN ("books", "chapters", "settings")')
     
     console.log('Database reset successfully')
   } catch (error) {
@@ -300,6 +382,116 @@ function closeDatabase() {
   }
 }
 
+// 设定相关操作函数
+
+// 根据书籍ID获取所有设定
+function getSettingsByBookId(bookId: number): Setting[] {
+  const db = getDatabase()
+  const stmt = db.prepare(`
+    SELECT * FROM settings
+    WHERE book_id = ?
+    ORDER BY starred DESC, updated_at DESC
+  `)
+  return stmt.all(bookId) as Setting[]
+}
+
+// 根据书籍ID和类型获取设定
+function getSettingsByType(bookId: number, type: string): Setting[] {
+  const db = getDatabase()
+  const stmt = db.prepare(`
+    SELECT * FROM settings
+    WHERE book_id = ? AND type = ?
+    ORDER BY starred DESC, updated_at DESC
+  `)
+  return stmt.all(bookId, type) as Setting[]
+}
+
+// 根据ID获取设定
+function getSettingById(id: number): Setting | undefined {
+  const db = getDatabase()
+  const stmt = db.prepare('SELECT * FROM settings WHERE id = ?')
+  return stmt.get(id) as Setting | undefined
+}
+
+// 创建新设定
+function createSetting(data: CreateSettingData): Setting {
+  const db = getDatabase()
+  const stmt = db.prepare(`
+    INSERT INTO settings (book_id, type, name, content, status, starred)
+    VALUES (?, ?, ?, ?, ?, ?)
+  `)
+  const result = stmt.run(
+    data.book_id,
+    data.type,
+    data.name,
+    data.content || '',
+    data.status || '',
+    data.starred ? 1 : 0
+  )
+  
+  return getSettingById(result.lastInsertRowid as number)!
+}
+
+// 更新设定
+function updateSetting(id: number, data: UpdateSettingData): Setting {
+  const db = getDatabase()
+  const fields: string[] = []
+  const values: any[] = []
+
+  if (data.type !== undefined) {
+    fields.push('type = ?')
+    values.push(data.type)
+  }
+  if (data.name !== undefined) {
+    fields.push('name = ?')
+    values.push(data.name)
+  }
+  if (data.content !== undefined) {
+    fields.push('content = ?')
+    values.push(data.content)
+  }
+  if (data.status !== undefined) {
+    fields.push('status = ?')
+    values.push(data.status)
+  }
+  if (data.starred !== undefined) {
+    fields.push('starred = ?')
+    values.push(data.starred ? 1 : 0)
+  }
+
+  if (fields.length > 0) {
+    fields.push('updated_at = CURRENT_TIMESTAMP')
+    values.push(id)
+
+    const stmt = db.prepare(`
+      UPDATE settings SET ${fields.join(', ')} WHERE id = ?
+    `)
+    stmt.run(...values)
+  }
+
+  return getSettingById(id)!
+}
+
+// 删除设定
+function deleteSetting(id: number): void {
+  const db = getDatabase()
+  const stmt = db.prepare('DELETE FROM settings WHERE id = ?')
+  stmt.run(id)
+}
+
+// 切换设定星标状态
+function toggleSettingStar(id: number): Setting {
+  const db = getDatabase()
+  const stmt = db.prepare(`
+    UPDATE settings
+    SET starred = CASE WHEN starred = 1 THEN 0 ELSE 1 END, updated_at = CURRENT_TIMESTAMP
+    WHERE id = ?
+  `)
+  stmt.run(id)
+  
+  return getSettingById(id)!
+}
+
 export {
   initDatabase,
   getAllBooks,
@@ -314,5 +506,12 @@ export {
   updateChapter,
   updateChapterOrder,
   deleteChapter,
-  resetDatabase
+  resetDatabase,
+  getSettingsByBookId,
+  getSettingsByType,
+  getSettingById,
+  createSetting,
+  updateSetting,
+  deleteSetting,
+  toggleSettingStar
 }
