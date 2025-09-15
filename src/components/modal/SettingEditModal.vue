@@ -42,7 +42,7 @@
           取消
         </button>
         <button @click="handleConfirm"
-          class="px-4 py-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+          class="px-4 py-1.5 bg-[var(--theme-bg)] text-white rounded-lg hover:bg-blue-700 transition-colors">
           保存
         </button>
       </div>

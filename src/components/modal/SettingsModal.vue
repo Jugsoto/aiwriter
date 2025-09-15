@@ -16,7 +16,7 @@
       <div class="flex items-center justify-between mb-4">
         <div class="flex items-center gap-2">
           <button @click="showCreateModal = true"
-            class="flex items-center gap-1 px-3 py-1.5 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+            class="flex items-center gap-1 px-3 py-1.5 text-sm bg-[var(--theme-bg)] text-white rounded-lg hover:bg-blue-700 transition-colors">
             <Plus class="w-4 h-4" />
             <span>新增设定</span>
           </button>
@@ -124,7 +124,8 @@ const filteredSettings = computed(() => {
     const query = searchQuery.value.toLowerCase()
     result = result.filter(setting =>
       setting.name.toLowerCase().includes(query) ||
-      setting.content.toLowerCase().includes(query)
+      setting.content.toLowerCase().includes(query) ||
+      setting.status.toLowerCase().includes(query)
     )
   }
 
@@ -178,13 +179,14 @@ function handleEdit(setting: Setting) {
 }
 
 // 处理编辑确认
-async function handleEditConfirm(data: { name: string; content: string }) {
+async function handleEditConfirm(data: { name: string; content: string; status?: string }) {
   if (!editingSetting.value) return
 
   try {
     await settingsStore.updateSetting(editingSetting.value.id, {
       name: data.name,
-      content: data.content
+      content: data.content,
+      status: data.status
     })
     showEditModal.value = false
     editingSetting.value = null
