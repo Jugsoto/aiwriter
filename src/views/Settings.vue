@@ -8,7 +8,7 @@
           'w-full flex items-center bg-[var(--bg-secondary)] px-3 py-3 rounded-xl border border-[var(--border-color)] text-left transition-all duration-200',
           activeTab === item.key
             ? 'bg-[var(--theme-bg)] text-[var(--theme-text)] border-[var(--theme-bg)]'
-            : 'text-[var(--text-secondary)] hover:bg-[var(--hover-bg)] hover:text-[var(--text-primary)]'
+            : 'text-[var(--text-primary)] hover:bg-[var(--hover-bg)]'
         ]">
           <component :is="item.icon" :size="18" class="mr-3" />
           <span>{{ item.label }}</span>

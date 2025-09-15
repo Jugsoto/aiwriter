@@ -4,72 +4,129 @@ import {
   createModel
 } from './database'
 
-/**
- * 默认供应商和模型数据
- * 直接写在代码中，不依赖外部文件
- */
+//默认供应商和模型数据
 const DEFAULT_PROVIDERS_DATA = {
   providers: [
     {
-      name: "OpenAI",
-      url: "https://api.openai.com/v1",
-      key: "your-openai-api-key-here",
-      models: [
-        { model: "gpt-4", tags: "最新,强大,多模态" },
-        { model: "gpt-4-turbo", tags: "快速,经济,高效" },
-        { model: "gpt-3.5-turbo", tags: "经济,快速,轻量" }
-      ]
-    },
-    {
-      name: "Anthropic Claude",
-      url: "https://api.anthropic.com/v1",
-      key: "your-anthropic-api-key-here",
-      models: [
-        { model: "claude-3-5-sonnet-20241022", tags: "最新,智能,代码" },
-        { model: "claude-3-opus-20240229", tags: "强大,复杂任务" },
-        { model: "claude-3-sonnet-20240229", tags: "平衡,快速" },
-        { model: "claude-3-haiku-20240307", tags: "快速,经济,轻量" }
-      ]
-    },
-    {
-      name: "Google Gemini",
-      url: "https://generativelanguage.googleapis.com/v1",
-      key: "your-google-api-key-here",
-      models: [
-        { model: "gemini-1.5-pro", tags: "最新,多模态,长文本" },
-        { model: "gemini-1.5-flash", tags: "快速,经济,多模态" },
-        { model: "gemini-pro", tags: "平衡,通用" }
-      ]
-    },
-    {
-      name: "Moonshot AI",
-      url: "https://api.moonshot.cn/v1",
-      key: "your-moonshot-api-key-here",
-      models: [
-        { model: "moonshot-v1-8k", tags: "轻量,经济" },
-        { model: "moonshot-v1-32k", tags: "中等,平衡" },
-        { model: "moonshot-v1-128k", tags: "长文本,强大" }
-      ]
-    },
-    {
       name: "DeepSeek",
       url: "https://api.deepseek.com/v1",
-      key: "your-deepseek-api-key-here",
+      key: "",
       models: [
-        { model: "deepseek-chat", tags: "对话,通用" },
-        { model: "deepseek-coder", tags: "代码,编程" }
+        { model: "deepseek-chat", tags: "tool" },
+        { model: "deepseek-reasoner", tags: "tool,think" }
       ]
     },
     {
-      name: "Zhipu AI",
-      url: "https://open.bigmodel.cn/api/paas/v4",
-      key: "your-zhipu-api-key-here",
+      name: "Gemini",
+      url: "https://generativelanguage.googleapis.com/v1",
+      key: "",
       models: [
-        { model: "glm-4", tags: "最新,强大,中文" },
-        { model: "glm-4v", tags: "多模态,视觉" },
-        { model: "glm-3-turbo", tags: "快速,经济,中文" }
+        { model: "gemini-2.5-pro", tags: "eye,tool" },
+        { model: "gemini-2.5-flash", tags: "eye,tool" },
+        { model: "gemini-2.5-flash-lite", tags: "eye,tool" }
       ]
-    }
+    },
+   {
+      name: "Kimi",
+      url: "https://api.moonshot.cn/v1",
+      key: "",
+      models: [
+        { model: "kimi-k2-0905-preview", tags: "tool" },
+        { model: "kimi-k2-turbo-preview", tags: "tool" },
+        { model: "kimi-thinking-preview", tags: "tool,think" },
+      ]
+    },
+    {
+      name: "硅基流动",
+      url: "https://api.siliconflow.cn",
+      key: "",
+      models: [
+        { model: "deepseek-ai/DeepSeek-V3.1", tags: "tool,think" },
+        { model: "deepseek-ai/DeepSeek-V3", tags: "tool" },
+        { model: "deepseek-ai/DeepSeek-R1", tags: "tool,think" },
+        { model: "moonshotai/Kimi-K2-Instruct-0905", tags: "tool" },
+        { model: "zai-org/GLM-4.5", tags: "tool,think" },
+        { model: "zai-org/GLM-4.5V", tags: "eye,tool,think" },
+        { model: "Qwen/Qwen3-235B-A22B-Thinking-2507", tags: "tool,think" },
+        { model: "Qwen/Qwen3-235B-A22B-Instruct-2507", tags: "tool" },
+        { model: "Qwen/Qwen3-8B", tags: "tool,free" },
+        { model: "Qwen/Qwen3-Embedding-0.6B", tags: "embedding" },
+        { model: "BAAI/bge-m3", tags: "embedding,free" },
+        { model: "BAAI/bge-reranker-v2-m3", tags: "reranker,free" },
+      ]
+    },
+    {
+      name: "AiHubMix",
+      url: "https://aihubmix.com/v1",
+      key: "",
+      models: [
+        { model: "gpt-5", tags: "eye,tool,think" },
+        { model: "gpt-5-mini", tags: "eye,tool,think" },
+        { model: "gpt-5-nano", tags: "eye,tool,think" },
+        { model: "gemini-2.5-pro", tags: "eye,tool,think" },
+        { model: "gemini-2.5-flash", tags: "eye,tool,think" },
+        { model: "claude-sonnet-4-20250514", tags: "eye,tool,think" },
+      ]
+    },
+    {
+      name: "OpenAI",
+      url: "https://api.openai.com/v1",
+      key: "",
+      models: [
+        { model: "gpt-5", tags: "eye,tool,think" },
+        { model: "gpt-5-mini", tags: "eye,tool,think" },
+        { model: "gpt-5-nano", tags: "eye,tool,think" },
+      ]
+    },
+    {
+      name: "Claude",
+      url: "https://api.anthropic.com/v1",
+      key: "",
+      models: [
+        { model: "claude-sonnet-4-20250514", tags: "eye,tool,think" },
+        { model: "claude-opus-4-20250514", tags: "eye,tool,think" },
+      ]
+    },
+
+    {
+      name: "智谱AI",
+      url: "https://open.bigmodel.cn/api/paas/v4",
+      key: "",
+      models: [
+        { model: "glm-4.5", tags: "tool,think" },
+        { model: "glm-4.5-air", tags: "tool,think" },
+        { model: "glm-4.5-flash", tags: "tool,think,free" },
+        { model: "glm-4.5v", tags: "eye,tool,think" },
+        { model: "embedding-3", tags: "embedding" }
+      ]
+    },
+    {
+      name: "Qwen",
+      url: "https://dashscope.aliyuncs.com/compatible-mode/v1",
+      key: "",
+      models: [
+        { model: "qwen-plus", tags: "tool,think" },
+        { model: "qwen-flash", tags: "tool,think" },
+        { model: "qwen-max", tags: "tool" }
+      ]
+    },
+    {
+      name: "OpenRouter",
+      url: "https://openrouter.ai/api/v1",
+      key: "",
+      models: [
+        { model: "deepseek/deepseek-chat-v3.1:free", tags: "tool,think,free" },
+        { model: "deepseek/deepseek-chat:free", tags: "tool,free" },
+        { model: "deepseek/deepseek-r1:free", tags: "tool,think,free" },
+        { model: "moonshotai/kimi-k2:free", tags: "tool,free" },
+        { model: "openai/gpt-oss-120b:free", tags: "tool,think,free" },
+        { model: "qwen/qwen2.5-vl-72b-instruct:free", tags: "eye,free" },
+        { model: "qwen/qwen3-235b-a22b:free", tags: "tool,think,free" },
+        { model: "qwen/qwen3-coder:free", tags: "tool,think,free" },
+        { model: "z-ai/glm-4.5-air:free", tags: "tool,think,free" },
+
+      ]
+    },
   ]
 }
 

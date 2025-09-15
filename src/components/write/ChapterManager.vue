@@ -28,16 +28,14 @@
       <div v-else class="space-y-2">
         <div v-for="(chapter, index) in sortedChapters" :key="chapter.id" @click="selectChapter(chapter)"
           class="group relative px-3 py-2 bg-[var(--bg-primary)] rounded-xl border border-[var(--border-color)] cursor-pointer transition-all hover:border-[var(--theme-bg)]"
-          :class="{ 'border-[var(--theme-bg)] bg-[var(--theme-bg)]': currentChapter?.id === chapter.id }">
+          :class="{ 'border-[var(--theme-bg)] bg-[var(--blue-100)]': currentChapter?.id === chapter.id }">
           <!-- 章节信息 -->
           <div class="flex items-center">
             <div class="flex items-center gap-2 flex-1 min-w-0">
-              <span class="text-base font-bold"
-                :class="currentChapter?.id === chapter.id ? 'text-[var(--theme-text)]' : 'text-[var(--text-primary)]'">
+              <span class="text-base font-bold ">
                 {{ getChapterDisplayNumber(index) }}
               </span>
-              <span class="text-base truncate font-medium"
-                :class="currentChapter?.id === chapter.id ? 'text-[var(--theme-text)]' : 'text-[var(--text-primary)]'">
+              <span class="text-base truncate  font-medium">
                 {{ chapter.title }}
               </span>
             </div>

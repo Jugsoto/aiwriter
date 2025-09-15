@@ -12,12 +12,13 @@
     --border-color: #e5e5e5;
     --hover-bg: #f0f0f0;
     --active-bg: #e0f2fe;
-    --theme-bg: #3b82f6;
+    --theme-bg: #0078d4;
     --theme-text: #ffffff;
     --theme-hover: #2563eb;
     --sky-100: #e0f2fe;
     --sky-500: #0ea5e9;
     --sky-600: #0284c7;
+    --blue-100: #dbeafe;
     --icon-color: #000000;
     --icon-color-dark: #ffffff;
   }
@@ -32,13 +33,14 @@
     --text-tertiary: #999999;
     --border-color: #404040;
     --hover-bg: #333333;
-    --active-bg: #1e3a8a;
-    --theme-bg: #3b82f6;
+    --active-bg: #2563eb;
+    --theme-bg: #0078d4;
     --theme-text: #ffffff;
     --theme-hover: #2563eb;
     --sky-100: #1e3a8a;
     --sky-500: #0ea5e9;
     --sky-600: #0284c7;
+    --blue-100: #0078d4;
     --icon-color: #ffffff;
     --icon-color-dark: #ffffff;
   }

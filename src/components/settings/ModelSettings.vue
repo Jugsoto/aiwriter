@@ -16,9 +16,10 @@
             <button @click="selectProvider(provider.id)" :class="[
               'w-full flex items-center bg-[var(--bg-secondary)] px-3 py-3 rounded-xl border border-[var(--border-color)] text-left transition-all duration-200',
               providersStore.selectedProviderId === provider.id
-                ? 'bg-[var(--theme-bg)] text-[var(--theme-text)] border-[var(--theme-bg)]'
-                : 'text-[var(--text-secondary)] hover:bg-[var(--hover-bg)] hover:text-[var(--text-primary)]'
+                ? ' bg-[var(--blue-100)] border-[var(--theme-bg)]'
+                : 'text-[var(--text-primary)] hover:bg-[var(--hover-bg)]'
             ]">
+              <img :src="getProviderIcon(provider.name)" :alt="provider.name" class="w-6 h-6 mr-3 flex-shrink-0" />
               <div class="flex-1 min-w-0">
                 <div class="font-medium truncate">{{ provider.name }}</div>
               </div>
@@ -60,7 +61,7 @@
               </div>
               <div class="md:col-span-2">
                 <label class="block text-sm font-medium text-[var(--text-secondary)] mb-2">
-                  API Key (多个key用逗号分隔)
+                  Key
                 </label>
                 <input v-model="currentProvider.key" type="password"
                   class="w-full px-3 py-2 bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-lg text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--theme-bg)] transition-colors" />
@@ -168,6 +169,30 @@ const sortedModels = computed(() => {
     return b.id - a.id
   })
 })
+
+// 获取供应商图标
+const getProviderIcon = (providerName: string): string => {
+  // 定义供应商图标映射（直接匹配初始化器中的确切名称）
+  const iconMap: Record<string, string> = {
+    // 直接匹配初始化器中的供应商名称
+    'OpenAI': 'openai',
+    'Claude': 'claude',
+    'Kimi': 'kimi',
+    'Gemini': 'gemini',
+    'DeepSeek': 'deepseek',
+    'Qwen': 'qwen',
+    '智谱AI': 'zhipu',
+    'AiHubMix': 'aihubmix',
+    'OpenRouter': 'openrouter',
+    '硅基流动': 'siliconflow'
+  }
+
+  // 直接查找匹配的图标
+  const matchedIcon = iconMap[providerName] || 'other'
+
+  // 返回图标路径
+  return new URL(`../../assets/providers/${matchedIcon}.png`, import.meta.url).href
+}
 
 // 解析标签字符串为数组
 const parseTags = (tags: string): string[] => {
