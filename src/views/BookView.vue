@@ -1,6 +1,6 @@
 <template>
   <div class="h-full flex flex-col">
-    <BookHeader :book-name="book?.name" @back="goBack" />
+    <BookHeader :book-name="book?.name" @back="goBack" @global-settings="showGlobalSettingsModal = true" />
 
     <!-- 主要内容区 - 三栏布局 -->
     <div class="flex-1 flex overflow-hidden">
@@ -33,6 +33,13 @@
         <WriteCopilot />
       </div>
     </div>
+
+    <!-- 全局设定模态框 -->
+    <GlobalSettingsModal
+      v-model:visible="showGlobalSettingsModal"
+      :initial-data="{ global_settings: book?.global_settings || '' }"
+      @confirm="handleGlobalSettingsSave"
+    />
   </div>
 </template>
 
@@ -45,6 +52,7 @@ import ChapterManager from '@/components/write/ChapterManager.vue'
 import Editor from '@/components/write/Editor.vue'
 import WriteCopilot from '@/components/write/WriteCopilot.vue'
 import BookHeader from '@/components/write/BookHeader.vue'
+import GlobalSettingsModal from '@/components/modal/GlobalSettingsModal.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -53,6 +61,7 @@ const booksStore = useBooksStore()
 const book = ref<Book | null>(null)
 const loading = ref(false)
 const error = ref('')
+const showGlobalSettingsModal = ref(false)
 
 // 计算属性
 const bookId = computed(() => {
@@ -144,6 +153,20 @@ async function loadBook() {
 
 function goBack() {
   router.push('/')
+}
+
+async function handleGlobalSettingsSave(data: { global_settings: string }) {
+  if (!book.value) return
+
+  try {
+    await booksStore.updateBookGlobalSettings(book.value.id, data.global_settings)
+    // 更新本地书籍数据
+    book.value.global_settings = data.global_settings
+    console.log('Global settings saved successfully')
+  } catch (err) {
+    console.error('Failed to save global settings:', err)
+    alert('保存全局设定失败，请重试')
+  }
 }
 
 // 拖动调整大小功能

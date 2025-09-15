@@ -9,7 +9,7 @@ const api = {
   // 书籍相关API
   getBooks: () => ipcRenderer.invoke('get-books'),
   createBook: (data: { name: string }) => ipcRenderer.invoke('create-book', data),
-  updateBook: (id: number, data: { name: string }) => ipcRenderer.invoke('update-book', id, data),
+  updateBook: (id: number, data: { name?: string; global_settings?: string }) => ipcRenderer.invoke('update-book', id, data),
   deleteBook: (id: number) => ipcRenderer.invoke('delete-book', id),
   
   // 章节相关API
@@ -23,7 +23,9 @@ const api = {
   // 数据设置相关API
   getAppDataPath: () => ipcRenderer.invoke('get-app-data-path'),
   openFolder: (folderPath: string) => ipcRenderer.invoke('open-folder', folderPath),
-  getFileSize: (filePath: string) => ipcRenderer.invoke('get-file-size', filePath)
+  getFileSize: (filePath: string) => ipcRenderer.invoke('get-file-size', filePath),
+  getFolderSize: (folderPath: string) => ipcRenderer.invoke('get-folder-size', folderPath),
+  resetData: () => ipcRenderer.invoke('reset-data')
 }
 
 contextBridge.exposeInMainWorld('electronAPI', api)

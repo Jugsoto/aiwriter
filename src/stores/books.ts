@@ -13,7 +13,10 @@ export const useBooksStore = defineStore('books', () => {
       loading.value = true
       error.value = null
       const loadedBooks = await window.electronAPI.getBooks()
-      books.value = loadedBooks
+      // 按创建时间排序，最新的在前面
+      books.value = loadedBooks.sort((a, b) => {
+        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      })
     } catch (err) {
       error.value = err instanceof Error ? err.message : '加载书籍失败'
       console.error('Failed to load books:', err)
@@ -65,6 +68,19 @@ export const useBooksStore = defineStore('books', () => {
     }
   }
 
+  // 更新书籍全局设定
+  async function updateBookGlobalSettings(id: number, global_settings: string) {
+    try {
+      error.value = null
+      const updatedBook = await window.electronAPI.updateBook(id, { global_settings })
+      await refreshBooks()
+      return updatedBook
+    } catch (err) {
+      error.value = err instanceof Error ? err.message : '更新书籍全局设定失败'
+      throw err
+    }
+  }
+
   return {
     books,
     loading,
@@ -73,6 +89,7 @@ export const useBooksStore = defineStore('books', () => {
     refreshBooks,
     addBook,
     updateBook,
-    removeBook
+    removeBook,
+    updateBookGlobalSettings
   }
 })

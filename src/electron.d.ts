@@ -9,7 +9,7 @@ declare global {
       // 书籍相关API
       getBooks: () => Promise<Book[]>
       createBook: (data: { name: string }) => Promise<Book>
-      updateBook: (id: number, data: { name: string }) => Promise<Book>
+      updateBook: (id: number, data: { name?: string; global_settings?: string }) => Promise<Book>
       deleteBook: (id: number) => Promise<{ success: boolean }>
       
       // 章节相关API
@@ -24,6 +24,8 @@ declare global {
       getAppDataPath: () => Promise<string>
       openFolder: (folderPath: string) => Promise<{ success: boolean }>
       getFileSize: (filePath: string) => Promise<{ size: number; success: boolean }>
+      getFolderSize: (folderPath: string) => Promise<{ size: number; success: boolean }>
+      resetData: () => Promise<{ success: boolean; error?: string }>
     }
   }
 }
@@ -32,6 +34,7 @@ declare global {
 export interface Book {
   id: number
   name: string
+  global_settings: string
   created_at: string
   updated_at: string
 }

@@ -100,6 +100,38 @@ ipcMain.handle('get-file-size', (_event: any, filePath: string) => {
   }
 })
 
+// 递归计算文件夹大小
+function getFolderSize(folderPath: string): number {
+  let totalSize = 0
+  try {
+    const files = fs.readdirSync(folderPath)
+    for (const file of files) {
+      const filePath = path.join(folderPath, file)
+      const stats = fs.statSync(filePath)
+      if (stats.isDirectory()) {
+        totalSize += getFolderSize(filePath)
+      } else {
+        totalSize += stats.size
+      }
+    }
+  } catch (error) {
+    console.error('Failed to calculate folder size:', error)
+  }
+  return totalSize
+}
+
+// 获取文件夹大小
+ipcMain.handle('get-folder-size', (_event: any, folderPath: string) => {
+  try {
+    const size = getFolderSize(folderPath)
+    return { size, success: true }
+  } catch (error) {
+    console.error('Failed to get folder size:', error)
+    return { size: 0, success: false }
+  }
+})
+
+
 ipcMain.handle('window-minimize', () => {
   win?.minimize()
 })
@@ -158,6 +190,42 @@ ipcMain.handle('update-chapter-order', (_event: any, id: number, orderIndex: num
 ipcMain.handle('delete-chapter', (_event: any, id: number) => {
   deleteChapter(id)
   return { success: true }
+})
+
+// 重置数据 - 只删除数据库文件，保留软件本身数据
+ipcMain.handle('reset-data', async () => {
+  try {
+    // 关闭数据库连接
+    closeDatabase()
+    
+    // 获取数据库文件路径
+    const dbPath = path.join(app.getPath('userData'), 'aiwriter.db')
+    
+    // 检查数据库文件是否存在
+    if (fs.existsSync(dbPath)) {
+      // 删除数据库文件
+      fs.unlinkSync(dbPath)
+      console.log('Database file deleted successfully:', dbPath)
+    } else {
+      console.log('Database file not found:', dbPath)
+    }
+    
+    // 重新初始化数据库（这会重新创建空的数据库文件）
+    initDatabase()
+    
+    console.log('Data reset completed successfully - only user data cleared')
+    
+    // 延迟重启，确保数据库操作完成
+    setTimeout(() => {
+      app.relaunch()
+      app.quit()
+    }, 1000)
+    
+    return { success: true }
+  } catch (error) {
+    console.error('Failed to reset data:', error)
+    return { success: false, error: error instanceof Error ? error.message : String(error) }
+  }
 })
 
 // 应用退出时关闭数据库

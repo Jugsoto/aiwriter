@@ -28,7 +28,7 @@
         <FileText class="w-4 h-4" />
         <span>词条设定</span>
       </button>
-      <button
+      <button @click="$emit('global-settings')"
         class="flex items-center gap-1 px-3 py-1.5 text-sm border border-[var(--border-color)] bg-[var(--bg-primary)] rounded-full hover:bg-[var(--bg-secondary)] transition-colors">
         <Settings class="w-4 h-4" />
         <span>全局设定</span>
@@ -46,5 +46,6 @@ defineProps<{
 
 defineEmits<{
   (e: 'back'): void
+  (e: 'global-settings'): void
 }>()
 </script>

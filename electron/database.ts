@@ -31,6 +31,7 @@ function initDatabase() {
       CREATE TABLE IF NOT EXISTS books (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         name TEXT NOT NULL,
+        global_settings TEXT DEFAULT '',
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
       )
@@ -69,6 +70,7 @@ function initDatabase() {
 interface Book {
   id: number
   name: string
+  global_settings: string
   created_at: string
   updated_at: string
 }
@@ -78,7 +80,8 @@ interface CreateBookData {
 }
 
 interface UpdateBookData {
-  name: string
+  name?: string
+  global_settings?: string
 }
 
 // 章节相关操作
@@ -126,10 +129,10 @@ function getBookById(id: number): Book | undefined {
 function createBook(data: CreateBookData): Book {
   const db = getDatabase()
   const stmt = db.prepare(`
-    INSERT INTO books (name) VALUES (?)
+    INSERT INTO books (name, global_settings) VALUES (?, ?)
   `)
-  const result = stmt.run(data.name)
-  
+  const result = stmt.run(data.name, '')
+
   // 返回新创建的书籍
   return getBookById(result.lastInsertRowid as number)!
 }
@@ -137,11 +140,28 @@ function createBook(data: CreateBookData): Book {
 // 更新书籍
 function updateBook(id: number, data: UpdateBookData): Book {
   const db = getDatabase()
-  const stmt = db.prepare(`
-    UPDATE books SET name = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?
-  `)
-  stmt.run(data.name, id)
-  
+  const fields: string[] = []
+  const values: any[] = []
+
+  if (data.name !== undefined) {
+    fields.push('name = ?')
+    values.push(data.name)
+  }
+  if (data.global_settings !== undefined) {
+    fields.push('global_settings = ?')
+    values.push(data.global_settings)
+  }
+
+  if (fields.length > 0) {
+    fields.push('updated_at = CURRENT_TIMESTAMP')
+    values.push(id)
+
+    const stmt = db.prepare(`
+      UPDATE books SET ${fields.join(', ')} WHERE id = ?
+    `)
+    stmt.run(...values)
+  }
+
   return getBookById(id)!
 }
 
@@ -251,6 +271,27 @@ function deleteChapter(id: number): void {
   stmt.run(id)
 }
 
+// 重置数据库 - 删除所有数据
+function resetDatabase(): void {
+  try {
+    const db = getDatabase()
+    
+    // 删除所有章节
+    db.exec('DELETE FROM chapters')
+    
+    // 删除所有书籍
+    db.exec('DELETE FROM books')
+    
+    // 重置自增ID
+    db.exec('DELETE FROM sqlite_sequence WHERE name IN ("books", "chapters")')
+    
+    console.log('Database reset successfully')
+  } catch (error) {
+    console.error('Failed to reset database:', error)
+    throw error
+  }
+}
+
 // 关闭数据库连接
 function closeDatabase() {
   if (db) {
@@ -272,5 +313,6 @@ export {
   createChapter,
   updateChapter,
   updateChapterOrder,
-  deleteChapter
+  deleteChapter,
+  resetDatabase
 }

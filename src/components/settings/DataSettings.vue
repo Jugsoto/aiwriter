@@ -24,17 +24,44 @@
             {{ databaseSize }}
           </div>
         </div>
+
+        <div
+          class="flex items-center justify-between p-4 bg-[var(--bg-secondary)] rounded-lg border border-[var(--border-color)]">
+          <div class="flex-1">
+            <h5 class="text-sm font-medium text-[var(--text-primary)]">重置数据</h5>
+          </div>
+          <button @click="showResetConfirm"
+            class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-red-600 border-1 border-red-600 rounded-full hover:bg-red-50 transition-all duration-200">
+            <Trash2 class="w-3.5 h-3.5" />
+            重置数据
+          </button>
+        </div>
       </div>
     </div>
   </div>
+  <!-- 重置数据确认对话框 -->
+  <ConfirmModal v-model:visible="resetConfirmVisible" title="确认重置数据" message="此操作将删除所有用户数据（包括所有书籍和章节），但会保留软件本身的配置和设置。"
+    description="重置后应用将自动重启，所有创作内容将被清空且无法恢复。" confirm-text="确认重置" cancel-text="取消" :dangerous="true"
+    :loading="isResetting" confirm-loading-text="正在重置数据..." @confirm="handleResetData" @cancel="handleResetCancel" />
+
+  <!-- 错误提示模态窗 -->
+  <ErrorModal v-model:visible="errorModalVisible" title="重置数据失败" message="重置数据时发生错误，请查看错误详情或重试。"
+    :error-details="resetError" @close="handleErrorModalClose" />
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
+import ConfirmModal from '../shared/ConfirmModal.vue'
+import ErrorModal from '../shared/ErrorModal.vue'
+import { Trash2 } from 'lucide-vue-next'
 
 // 响应式数据
 const appDataPath = ref('')
 const databaseSize = ref('0 MB')
+const resetConfirmVisible = ref(false)
+const isResetting = ref(false)
+const resetError = ref('')
+const errorModalVisible = ref(false)
 
 // 获取应用数据路径
 const getAppDataPath = async () => {
@@ -61,6 +88,52 @@ const openDataFolder = async () => {
   }
 }
 
+// 显示重置数据确认对话框
+const showResetConfirm = () => {
+  resetConfirmVisible.value = true
+  resetError.value = ''
+}
+
+// 处理重置数据取消
+const handleResetCancel = () => {
+  resetConfirmVisible.value = false
+  resetError.value = ''
+}
+
+// 处理错误模态窗关闭
+const handleErrorModalClose = () => {
+  errorModalVisible.value = false
+  resetError.value = ''
+}
+
+// 处理重置数据
+const handleResetData = async () => {
+  try {
+    isResetting.value = true
+    resetError.value = ''
+
+    const result = await window.electronAPI.resetData()
+
+    if (result.success) {
+      // 重置成功，对话框保持打开状态直到应用重启
+      // 不需要手动关闭对话框，因为应用会重启
+      console.log('数据重置成功，应用即将重启...')
+    } else {
+      // 重置失败，显示错误信息
+      resetError.value = result.error || '重置数据失败'
+      isResetting.value = false
+      errorModalVisible.value = true
+      console.error('重置数据失败:', result.error)
+    }
+  } catch (error) {
+    // 处理异常情况
+    resetError.value = error instanceof Error ? error.message : '重置数据时发生未知错误'
+    isResetting.value = false
+    errorModalVisible.value = true
+    console.error('重置数据失败:', error)
+  }
+}
+
 // 格式化文件大小
 const formatFileSize = (bytes: number): string => {
   if (bytes === 0) return '0 MB'
@@ -68,19 +141,17 @@ const formatFileSize = (bytes: number): string => {
   return `${mb.toFixed(2)} MB`
 }
 
-// 获取数据库文件大小
+// 获取数据文件夹大小
 const getDatabaseSize = async (dataPath: string) => {
   try {
-    // 在Windows上构建数据库文件路径
-    const dbPath = dataPath + '\\aiwriter.db'
-    const result = await window.electronAPI.getFileSize(dbPath)
+    const result = await window.electronAPI.getFolderSize(dataPath)
     if (result.success) {
       databaseSize.value = formatFileSize(result.size)
     } else {
       databaseSize.value = '无法获取大小'
     }
   } catch (error) {
-    console.error('获取数据库大小失败:', error)
+    console.error('获取数据文件夹大小失败:', error)
     databaseSize.value = '无法获取大小'
   }
 }
