@@ -17,7 +17,7 @@
     </div>
 
     <!-- 右侧内容区 -->
-    <div class="flex-1 p-6 overflow-y-auto bg-[var(--bg-secondary)]">
+    <div class="flex-1 overflow-y-auto bg-[var(--bg-secondary)]">
       <component :is="currentComponent" />
     </div>
   </div>

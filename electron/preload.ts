@@ -29,6 +29,20 @@ const api = {
   deleteSetting: (id: number) => ipcRenderer.invoke('delete-setting', id),
   toggleSettingStar: (id: number) => ipcRenderer.invoke('toggle-setting-star', id),
   
+  // 供应商相关API
+  getProviders: () => ipcRenderer.invoke('get-providers'),
+  getProvider: (id: number) => ipcRenderer.invoke('get-provider', id),
+  createProvider: (data: { name: string; url: string; key: string; is_builtin?: number }) => ipcRenderer.invoke('create-provider', data),
+  updateProvider: (id: number, data: { name?: string; url?: string; key?: string; is_builtin?: number }) => ipcRenderer.invoke('update-provider', id, data),
+  deleteProvider: (id: number) => ipcRenderer.invoke('delete-provider', id),
+  
+  // 模型相关API
+  getModels: (providerId: number) => ipcRenderer.invoke('get-models', providerId),
+  getModel: (id: number) => ipcRenderer.invoke('get-model', id),
+  createModel: (data: { provider_id: number; model: string; tags?: string }) => ipcRenderer.invoke('create-model', data),
+  updateModel: (id: number, data: { provider_id?: number; model?: string; tags?: string }) => ipcRenderer.invoke('update-model', id, data),
+  deleteModel: (id: number) => ipcRenderer.invoke('delete-model', id),
+  
   // 数据设置相关API
   getAppDataPath: () => ipcRenderer.invoke('get-app-data-path'),
   openFolder: (folderPath: string) => ipcRenderer.invoke('open-folder', folderPath),

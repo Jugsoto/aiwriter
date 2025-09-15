@@ -29,6 +29,20 @@ declare global {
       deleteSetting: (id: number) => Promise<{ success: boolean }>
       toggleSettingStar: (id: number) => Promise<Setting>
       
+      // 供应商相关API
+      getProviders: () => Promise<Provider[]>
+      getProvider: (id: number) => Promise<Provider | undefined>
+      createProvider: (data: { name: string; url: string; key: string; is_builtin?: number }) => Promise<Provider>
+      updateProvider: (id: number, data: { name?: string; url?: string; key?: string; is_builtin?: number }) => Promise<Provider>
+      deleteProvider: (id: number) => Promise<{ success: boolean }>
+      
+      // 模型相关API
+      getModels: (providerId: number) => Promise<Model[]>
+      getModel: (id: number) => Promise<Model | undefined>
+      createModel: (data: { provider_id: number; model: string; tags?: string }) => Promise<Model>
+      updateModel: (id: number, data: { provider_id?: number; model?: string; tags?: string }) => Promise<Model>
+      deleteModel: (id: number) => Promise<{ success: boolean }>
+      
       // 数据设置相关API
       getAppDataPath: () => Promise<string>
       openFolder: (folderPath: string) => Promise<{ success: boolean }>
@@ -69,6 +83,27 @@ export interface Setting {
   content: string
   status: string
   starred: boolean
+  created_at: string
+  updated_at: string
+}
+
+// 供应商类型定义
+export interface Provider {
+  id: number
+  name: string
+  url: string
+  key: string
+  is_builtin: number
+  created_at: string
+  updated_at: string
+}
+
+// 模型类型定义
+export interface Model {
+  id: number
+  provider_id: number
+  model: string
+  tags: string
   created_at: string
   updated_at: string
 }

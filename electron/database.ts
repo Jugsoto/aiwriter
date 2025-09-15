@@ -75,9 +75,39 @@ function initDatabase() {
     db.exec('CREATE INDEX IF NOT EXISTS idx_settings_type ON settings (book_id, type)')
     db.exec('CREATE INDEX IF NOT EXISTS idx_settings_starred ON settings (book_id, starred)')
     
+    // 创建供应商表
+    db.exec(`
+      CREATE TABLE IF NOT EXISTS providers (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL,
+        url TEXT NOT NULL,
+        key TEXT NOT NULL,
+        is_builtin INTEGER DEFAULT 0,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      )
+    `)
+    
+    // 创建模型表
+    db.exec(`
+      CREATE TABLE IF NOT EXISTS models (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        provider_id INTEGER NOT NULL,
+        model TEXT NOT NULL,
+        tags TEXT DEFAULT '',
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (provider_id) REFERENCES providers (id) ON DELETE CASCADE
+      )
+    `)
+    
+    // 创建模型表索引
+    db.exec('CREATE INDEX IF NOT EXISTS idx_models_provider_id ON models (provider_id)')
+    
     // 检查现有数据
     const count = db.prepare('SELECT COUNT(*) as count FROM books').get() as { count: number }
     console.log(`Database initialized successfully with ${count.count} existing books`)
+    
     
   } catch (error) {
     console.error('Failed to initialize database:', error)
@@ -161,6 +191,53 @@ interface UpdateSettingData {
   content?: string
   status?: string
   starred?: boolean
+}
+
+// 供应商相关操作
+interface Provider {
+  id: number
+  name: string
+  url: string
+  key: string
+  is_builtin: number
+  created_at: string
+  updated_at: string
+}
+
+interface CreateProviderData {
+  name: string
+  url: string
+  key: string
+  is_builtin?: number
+}
+
+interface UpdateProviderData {
+  name?: string
+  url?: string
+  key?: string
+  is_builtin?: number
+}
+
+// 模型相关操作
+interface Model {
+  id: number
+  provider_id: number
+  model: string
+  tags: string
+  created_at: string
+  updated_at: string
+}
+
+interface CreateModelData {
+  provider_id: number
+  model: string
+  tags?: string
+}
+
+interface UpdateModelData {
+  provider_id?: number
+  model?: string
+  tags?: string
 }
 
 // 章节相关操作
@@ -492,6 +569,151 @@ function toggleSettingStar(id: number): Setting {
   return getSettingById(id)!
 }
 
+// 供应商相关操作函数
+
+// 获取所有供应商
+function getAllProviders(): Provider[] {
+  const db = getDatabase()
+  const stmt = db.prepare('SELECT * FROM providers ORDER BY name ASC')
+  return stmt.all() as Provider[]
+}
+
+// 根据ID获取供应商
+function getProviderById(id: number): Provider | undefined {
+  const db = getDatabase()
+  const stmt = db.prepare('SELECT * FROM providers WHERE id = ?')
+  return stmt.get(id) as Provider | undefined
+}
+
+// 创建新供应商
+function createProvider(data: CreateProviderData): Provider {
+  const db = getDatabase()
+  const stmt = db.prepare(`
+    INSERT INTO providers (name, url, key, is_builtin) VALUES (?, ?, ?, ?)
+  `)
+  const result = stmt.run(data.name, data.url, data.key, data.is_builtin ?? 0)
+  
+  return getProviderById(result.lastInsertRowid as number)!
+}
+
+// 更新供应商
+function updateProvider(id: number, data: UpdateProviderData): Provider {
+  const db = getDatabase()
+  const fields: string[] = []
+  const values: any[] = []
+
+  if (data.name !== undefined) {
+    fields.push('name = ?')
+    values.push(data.name)
+  }
+  if (data.url !== undefined) {
+    fields.push('url = ?')
+    values.push(data.url)
+  }
+  if (data.key !== undefined) {
+    fields.push('key = ?')
+    values.push(data.key)
+  }
+  if (data.is_builtin !== undefined) {
+    fields.push('is_builtin = ?')
+    values.push(data.is_builtin)
+  }
+
+  if (fields.length > 0) {
+    fields.push('updated_at = CURRENT_TIMESTAMP')
+    values.push(id)
+
+    const stmt = db.prepare(`
+      UPDATE providers SET ${fields.join(', ')} WHERE id = ?
+    `)
+    stmt.run(...values)
+  }
+
+  return getProviderById(id)!
+}
+
+// 删除供应商
+function deleteProvider(id: number): void {
+  const db = getDatabase()
+  const stmt = db.prepare('DELETE FROM providers WHERE id = ?')
+  stmt.run(id)
+}
+
+// 模型相关操作函数
+
+// 根据供应商ID获取所有模型
+function getModelsByProviderId(providerId: number): Model[] {
+  const db = getDatabase()
+  const stmt = db.prepare(`
+    SELECT * FROM models
+    WHERE provider_id = ?
+    ORDER BY model ASC
+  `)
+  return stmt.all(providerId) as Model[]
+}
+
+// 根据ID获取模型
+function getModelById(id: number): Model | undefined {
+  const db = getDatabase()
+  const stmt = db.prepare('SELECT * FROM models WHERE id = ?')
+  return stmt.get(id) as Model | undefined
+}
+
+// 创建新模型
+function createModel(data: CreateModelData): Model {
+  const db = getDatabase()
+  const stmt = db.prepare(`
+    INSERT INTO models (provider_id, model, tags)
+    VALUES (?, ?, ?)
+  `)
+  const result = stmt.run(
+    data.provider_id,
+    data.model,
+    data.tags || ''
+  )
+  
+  return getModelById(result.lastInsertRowid as number)!
+}
+
+// 更新模型
+function updateModel(id: number, data: UpdateModelData): Model {
+  const db = getDatabase()
+  const fields: string[] = []
+  const values: any[] = []
+
+  if (data.provider_id !== undefined) {
+    fields.push('provider_id = ?')
+    values.push(data.provider_id)
+  }
+  if (data.model !== undefined) {
+    fields.push('model = ?')
+    values.push(data.model)
+  }
+  if (data.tags !== undefined) {
+    fields.push('tags = ?')
+    values.push(data.tags)
+  }
+
+  if (fields.length > 0) {
+    fields.push('updated_at = CURRENT_TIMESTAMP')
+    values.push(id)
+
+    const stmt = db.prepare(`
+      UPDATE models SET ${fields.join(', ')} WHERE id = ?
+    `)
+    stmt.run(...values)
+  }
+
+  return getModelById(id)!
+}
+
+// 删除模型
+function deleteModel(id: number): void {
+  const db = getDatabase()
+  const stmt = db.prepare('DELETE FROM models WHERE id = ?')
+  stmt.run(id)
+}
+
 export {
   initDatabase,
   getAllBooks,
@@ -513,5 +735,15 @@ export {
   createSetting,
   updateSetting,
   deleteSetting,
-  toggleSettingStar
+  toggleSettingStar,
+  getAllProviders,
+  getProviderById,
+  createProvider,
+  updateProvider,
+  deleteProvider,
+  getModelsByProviderId,
+  getModelById,
+  createModel,
+  updateModel,
+  deleteModel
 }

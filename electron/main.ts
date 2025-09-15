@@ -21,8 +21,19 @@ import {
   createSetting,
   updateSetting,
   deleteSetting,
-  toggleSettingStar
+  toggleSettingStar,
+  getAllProviders,
+  getProviderById,
+  createProvider,
+  updateProvider,
+  deleteProvider,
+  getModelsByProviderId,
+  getModelById,
+  createModel,
+  updateModel,
+  deleteModel
 } from './database'
+import { initializeDefaultProviders } from './initializer'
 
 let win: InstanceType<typeof BrowserWindow> | null = null
 
@@ -64,9 +75,28 @@ function createWindow() {
   })
 }
 
-app.whenReady().then(() => {
-  initDatabase()
-  createWindow()
+app.whenReady().then(async () => {
+  try {
+    // 初始化数据库
+    initDatabase()
+    
+    // 初始化默认供应商和模型数据
+    console.log('Initializing default providers and models...')
+    const initSuccess = await initializeDefaultProviders()
+    
+    if (initSuccess) {
+      console.log('Default providers initialization completed')
+    } else {
+      console.log('Default providers initialization skipped or failed')
+    }
+    
+    // 创建窗口
+    createWindow()
+  } catch (error) {
+    console.error('Failed to initialize application:', error)
+    // 即使初始化失败，也尝试创建窗口
+    createWindow()
+  }
 })
 
 app.on('window-all-closed', () => {
@@ -227,6 +257,50 @@ ipcMain.handle('delete-setting', (_event: any, id: number) => {
 
 ipcMain.handle('toggle-setting-star', (_event: any, id: number) => {
   return toggleSettingStar(id)
+})
+
+// 供应商相关IPC处理
+ipcMain.handle('get-providers', () => {
+  return getAllProviders()
+})
+
+ipcMain.handle('get-provider', (_event: any, id: number) => {
+  return getProviderById(id)
+})
+
+ipcMain.handle('create-provider', (_event: any, data: { name: string; url: string; key: string }) => {
+  return createProvider(data)
+})
+
+ipcMain.handle('update-provider', (_event: any, id: number, data: { name?: string; url?: string; key?: string }) => {
+  return updateProvider(id, data)
+})
+
+ipcMain.handle('delete-provider', (_event: any, id: number) => {
+  deleteProvider(id)
+  return { success: true }
+})
+
+// 模型相关IPC处理
+ipcMain.handle('get-models', (_event: any, providerId: number) => {
+  return getModelsByProviderId(providerId)
+})
+
+ipcMain.handle('get-model', (_event: any, id: number) => {
+  return getModelById(id)
+})
+
+ipcMain.handle('create-model', (_event: any, data: { provider_id: number; model: string; tags?: string }) => {
+  return createModel(data)
+})
+
+ipcMain.handle('update-model', (_event: any, id: number, data: { provider_id?: number; model?: string; tags?: string }) => {
+  return updateModel(id, data)
+})
+
+ipcMain.handle('delete-model', (_event: any, id: number) => {
+  deleteModel(id)
+  return { success: true }
 })
 
 // 重置数据 - 只删除数据库文件，保留软件本身数据

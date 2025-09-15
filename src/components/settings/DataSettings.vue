@@ -1,40 +1,42 @@
 <template>
-  <div class="space-y-6 bg-[var(--bg-primary)] p-6 rounded-xl border border-[var(--border-color)]">
-    <div>
-      <h3 class="text-lg font-semibold text-[var(--text-primary)] mb-4">数据设置</h3>
-      <!-- 数据目录卡片 -->
-      <div class="space-y-4">
-        <div
-          class="flex items-center justify-between p-4 bg-[var(--bg-secondary)] rounded-lg border border-[var(--border-color)]">
-          <div class="flex-1">
-            <h4 class="text-sm font-medium text-[var(--text-primary)]">应用数据</h4>
+  <div class="p-6">
+    <div class="space-y-6 bg-[var(--bg-primary)] p-6 rounded-xl border border-[var(--border-color)]">
+      <div>
+        <h3 class="text-lg font-semibold text-[var(--text-primary)] mb-4">数据设置</h3>
+        <!-- 数据目录卡片 -->
+        <div class="space-y-4">
+          <div
+            class="flex items-center justify-between p-4 bg-[var(--bg-secondary)] rounded-lg border border-[var(--border-color)]">
+            <div class="flex-1">
+              <h4 class="text-sm font-medium text-[var(--text-primary)]">应用数据</h4>
+            </div>
+            <button @click="openDataFolder"
+              class="ml-4 px-3 py-1.5 text-xs text-white bg-[var(--theme-bg)] hover:bg-primary transition-all rounded-lg">
+              {{ appDataPath }}
+            </button>
           </div>
-          <button @click="openDataFolder"
-            class="ml-4 px-3 py-1.5 text-xs text-white bg-[var(--theme-bg)] hover:bg-primary transition-all rounded-lg">
-            {{ appDataPath }}
-          </button>
-        </div>
 
-        <div
-          class="flex items-center justify-between p-4 bg-[var(--bg-secondary)] rounded-lg border border-[var(--border-color)]">
-          <div class="flex-1">
-            <h4 class="text-sm font-medium text-[var(--text-primary)]">数据大小</h4>
+          <div
+            class="flex items-center justify-between p-4 bg-[var(--bg-secondary)] rounded-lg border border-[var(--border-color)]">
+            <div class="flex-1">
+              <h4 class="text-sm font-medium text-[var(--text-primary)]">数据大小</h4>
+            </div>
+            <div class="px-3 py-1.5 text-sm font-medium text-white bg-[var(--theme-bg)] rounded-lg">
+              {{ databaseSize }}
+            </div>
           </div>
-          <div class="px-3 py-1.5 text-sm font-medium text-white bg-[var(--theme-bg)] rounded-lg">
-            {{ databaseSize }}
-          </div>
-        </div>
 
-        <div
-          class="flex items-center justify-between p-4 bg-[var(--bg-secondary)] rounded-lg border border-[var(--border-color)]">
-          <div class="flex-1">
-            <h5 class="text-sm font-medium text-[var(--text-primary)]">重置数据</h5>
+          <div
+            class="flex items-center justify-between p-4 bg-[var(--bg-secondary)] rounded-lg border border-[var(--border-color)]">
+            <div class="flex-1">
+              <h5 class="text-sm font-medium text-[var(--text-primary)]">重置数据</h5>
+            </div>
+            <button @click="showResetConfirm"
+              class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-red-600 border-1 border-red-600 rounded-full hover:bg-red-50 transition-all duration-200">
+              <Trash2 class="w-3.5 h-3.5" />
+              重置数据
+            </button>
           </div>
-          <button @click="showResetConfirm"
-            class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-red-600 border-1 border-red-600 rounded-full hover:bg-red-50 transition-all duration-200">
-            <Trash2 class="w-3.5 h-3.5" />
-            重置数据
-          </button>
         </div>
       </div>
     </div>
