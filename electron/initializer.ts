@@ -3,11 +3,11 @@ import {
   createProvider,
   createModel,
   getFeatureConfigByName,
-  getModelsByProviderId,
-  createFeatureConfig
+  createFeatureConfig,
+  getModelsByProviderId
 } from './database'
 
-//默认供应商和模型数据
+// 默认供应商和模型数据
 const DEFAULT_PROVIDERS_DATA = {
   providers: [
     {
@@ -133,7 +133,7 @@ const DEFAULT_PROVIDERS_DATA = {
   ]
 }
 
-// 默认功能配置数据 - 与数据库feature_configs表结构完全对应
+// 默认功能配置数据
 const DEFAULT_FEATURE_CONFIGS_DATA = {
   configs: [
     {
@@ -164,32 +164,27 @@ const DEFAULT_FEATURE_CONFIGS_DATA = {
   ]
 }
 
-/**
- * 检查是否需要初始化默认数据
- */
+// 检查是否需要初始化默认数据
 function shouldInitializeDefaults(): boolean {
   try {
     const existingProviders = getAllProviders()
     return existingProviders.length === 0
   } catch (error) {
-    console.error('Error checking existing providers:', error)
+    console.error('检查现有供应商失败:', error)
     return false
   }
 }
 
-/**
- * 初始化默认供应商和模型
- * 仅在第一次启动时自动执行
- */
+// 初始化默认供应商和模型
 export async function initializeDefaultProviders(): Promise<boolean> {
   try {
     // 检查是否需要初始化
     if (!shouldInitializeDefaults()) {
-      console.log('Providers already exist, skipping default initialization')
+      // 已存在供应商，跳过初始化
       return true
     }
     
-    console.log('Initializing default providers and models...')
+    // 开始初始化默认供应商和模型
     
     // 创建供应商和模型
     for (const providerData of DEFAULT_PROVIDERS_DATA.providers) {
@@ -202,7 +197,7 @@ export async function initializeDefaultProviders(): Promise<boolean> {
           is_builtin: 1
         })
         
-        console.log(`Created provider: ${provider.name}`)
+        // 供应商创建成功
         
         // 创建模型
         if (providerData.models && providerData.models.length > 0) {
@@ -214,44 +209,51 @@ export async function initializeDefaultProviders(): Promise<boolean> {
             })
           }
           
-          console.log(`Created ${providerData.models.length} models for provider: ${provider.name}`)
+          // 模型创建完成
         }
       } catch (error) {
-        console.error(`Failed to create provider ${providerData.name}:`, error)
+        console.error(`创建供应商 ${providerData.name} 失败:`, error)
         // 继续处理其他供应商，不中断整个初始化过程
       }
-    }
-    
-    console.log('Default providers initialization completed successfully')
+    } 
     
     // 初始化功能配置（使用默认数据）
     try {
-      console.log('Initializing feature configs with default values...')
+      // 开始初始化功能配置
       initializeFeatureConfigsWithDefaults()
-      console.log('Feature configs initialization completed successfully')
+      // 功能配置初始化完成
     } catch (error) {
-      console.error('Failed to initialize feature configs:', error)
-      // 不中断整个初始化过程
+      console.error('功能配置初始化失败:', error)
     }
     
     return true
     
   } catch (error) {
-    console.error('Failed to initialize default providers:', error)
+    console.error('默认供应商初始化失败:', error)
     return false
   }
 }
 
-/**
- * 获取初始化状态信息
- */
-/**
- * 使用默认数据初始化功能配置
- * 根据供应商和模型的实际创建情况来设置功能配置
- */
+// 获取初始化状态信息
+// 使用默认数据初始化功能配置
 function initializeFeatureConfigsWithDefaults(): void {
   try {
-    const providers = getAllProviders()
+    // 获取第一个供应商和模型作为默认配置
+    const allProviders = getAllProviders()
+    if (allProviders.length === 0) {
+      console.log('没有可用的供应商，跳过功能配置初始化')
+      return
+    }
+    
+    const firstProvider = allProviders[0]
+    const providerModels = getModelsByProviderId(firstProvider.id)
+    
+    if (providerModels.length === 0) {
+      console.log(`供应商 ${firstProvider.name} 没有可用的模型，跳过功能配置初始化`)
+      return
+    }
+    
+    const firstModel = providerModels[0]
     
     // 为每个默认功能配置创建或更新配置
     for (const defaultConfig of DEFAULT_FEATURE_CONFIGS_DATA.configs) {
@@ -260,42 +262,25 @@ function initializeFeatureConfigsWithDefaults(): void {
         const existingConfig = getFeatureConfigByName(defaultConfig.feature_name)
         
         if (!existingConfig) {
-          // 查找推荐的供应商和模型
-          let providerId = 0
-          let modelId = 0
-          
-          // 尝试找到合适的供应商和模型
-          for (const provider of providers) {
-            const models = getModelsByProviderId(provider.id)
-            if (models.length > 0) {
-              providerId = provider.id
-              modelId = models[0].id // 使用第一个模型作为默认
-              break
-            }
-          }
-          
-          // 创建功能配置，使用默认的温度和top_p值
+          // 使用第一个供应商和模型作为默认配置
           createFeatureConfig({
             feature_name: defaultConfig.feature_name,
-            provider_id: providerId,
-            model_id: modelId,
+            provider_id: firstProvider.id,
+            model_id: firstModel.id,
             temperature: defaultConfig.temperature,
             top_p: defaultConfig.top_p
           })
-          
-          console.log(`Created feature config: ${defaultConfig.feature_name} with temperature: ${defaultConfig.temperature}, top_p: ${defaultConfig.top_p}`)
-        } else {
-          console.log(`Feature config already exists: ${defaultConfig.feature_name}`)
+          console.log(`为功能 ${defaultConfig.feature_name} 创建默认配置: 供应商=${firstProvider.name}, 模型=${firstModel.model}`)
         }
       } catch (error) {
-        console.error(`Failed to initialize feature config ${defaultConfig.feature_name}:`, error)
+        console.error(`功能配置 ${defaultConfig.feature_name} 初始化失败:`, error)
         // 继续处理其他功能配置
       }
     }
     
-    console.log('Feature configs initialization completed')
+    console.log('功能配置初始化完成')
   } catch (error) {
-    console.error('Failed to initialize feature configs:', error)
+    console.error('功能配置初始化失败:', error)
     throw error
   }
 }
@@ -314,7 +299,7 @@ export function getInitializationStatus(): {
       isFirstRun: providers.length === 0
     }
   } catch (error) {
-    console.error('Failed to get initialization status:', error)
+    console.error('获取初始化状态失败:', error)
     return {
       hasProviders: false,
       providerCount: 0,

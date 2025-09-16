@@ -10,7 +10,7 @@ export const useFeatureConfigsStore = defineStore('featureConfigs', () => {
   // 功能名称映射和默认配置
   const featureNames = {
     'basic_model': '基础模型',
-    'chapter_planning': '章节规划',
+    'chapter_planning': '章节细纲',
     'content_writing': '正文写作',
     'editing_review': '编辑审核',
     'embedding_model': '嵌入模型'
@@ -21,7 +21,7 @@ export const useFeatureConfigsStore = defineStore('featureConfigs', () => {
     'basic_model': {
       temperature: 0.7,
       top_p: 0.9,
-      description: '用于基本的文本生成和理解任务'
+      description: '用于基础操作，如章节梗概，词条维护，工具页面等'
     },
     'chapter_planning': {
       temperature: 0.8,
@@ -31,12 +31,12 @@ export const useFeatureConfigsStore = defineStore('featureConfigs', () => {
     'content_writing': {
       temperature: 0.9,
       top_p: 0.95,
-      description: '用于创作书籍的正文内容，需要较高的创造性'
+      description: '用于创作书籍的正文内容'
     },
     'editing_review': {
       temperature: 0.3,
       top_p: 0.7,
-      description: '用于内容的编辑、校对和审核工作'
+      description: '用于内容的评价、校对和审核工作'
     },
     'embedding_model': {
       temperature: 0.1,

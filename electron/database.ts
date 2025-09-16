@@ -623,7 +623,7 @@ function toggleSettingStar(id: number): Setting {
 // 获取所有供应商
 function getAllProviders(): Provider[] {
   const db = getDatabase()
-  const stmt = db.prepare('SELECT * FROM providers ORDER BY name ASC')
+  const stmt = db.prepare('SELECT * FROM providers')
   return stmt.all() as Provider[]
 }
 
@@ -696,7 +696,6 @@ function getModelsByProviderId(providerId: number): Model[] {
   const stmt = db.prepare(`
     SELECT * FROM models
     WHERE provider_id = ?
-    ORDER BY model ASC
   `)
   return stmt.all(providerId) as Model[]
 }
@@ -799,32 +798,10 @@ export {
   getFeatureConfigByName,
   createFeatureConfig,
   updateFeatureConfig,
-  initializeFeatureNames,
   getFeatureConfigById
 }
 
 // 功能配置相关操作函数
-
-// 初始化功能名称（只创建不存在的功能配置，供应商和模型为空）
-function initializeFeatureNames(featureNames: string[]): void {
-  // 检查每个功能名称是否存在，如果不存在则创建空配置
-  for (const featureName of featureNames) {
-    const existingConfig = getFeatureConfigByName(featureName)
-    if (!existingConfig) {
-      // 创建空配置，供应商和模型ID为0，使用默认参数
-      createFeatureConfig({
-        feature_name: featureName,
-        provider_id: 0,  // 空供应商
-        model_id: 0,     // 空模型
-        temperature: 0.7,
-        top_p: 0.1
-      })
-      console.log(`Created default config for feature: ${featureName}`)
-    }
-  }
-  
-  console.log('Feature names initialization completed')
-}
 
 // 获取所有功能配置
 function getAllFeatureConfigs(): FeatureConfig[] {
@@ -834,7 +811,6 @@ function getAllFeatureConfigs(): FeatureConfig[] {
     FROM feature_configs fc
     JOIN providers p ON fc.provider_id = p.id
     JOIN models m ON fc.model_id = m.id
-    ORDER BY fc.feature_name ASC
   `)
   return stmt.all() as FeatureConfig[]
 }
