@@ -49,6 +49,10 @@ declare global {
       getFileSize: (filePath: string) => Promise<{ size: number; success: boolean }>
       getFolderSize: (folderPath: string) => Promise<{ size: number; success: boolean }>
       resetData: () => Promise<{ success: boolean; error?: string }>
+      
+      // 功能配置相关API
+      getFeatureConfigs: () => Promise<FeatureConfig[]>
+      updateFeatureConfig: (featureName: string, data: { provider_id?: number; model_id?: number; temperature?: number; top_p?: number }) => Promise<FeatureConfig>
     }
   }
 }
@@ -108,4 +112,16 @@ export interface Model {
   updated_at: string
 }
 
-// export {}
+// 功能配置类型定义
+export interface FeatureConfig {
+  id: number
+  feature_name: string
+  provider_id: number
+  model_id: number
+  temperature: number
+  top_p: number
+  provider_name?: string
+  model_name?: string
+  created_at: string
+  updated_at: string
+}

@@ -104,6 +104,28 @@ function initDatabase() {
     // 创建模型表索引
     db.exec('CREATE INDEX IF NOT EXISTS idx_models_provider_id ON models (provider_id)')
     
+    // 创建功能配置表
+    db.exec(`
+      CREATE TABLE IF NOT EXISTS feature_configs (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        feature_name TEXT NOT NULL,
+        provider_id INTEGER NOT NULL,
+        model_id INTEGER NOT NULL,
+        temperature REAL DEFAULT 0.7,
+        top_p REAL DEFAULT 1.0,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (provider_id) REFERENCES providers (id) ON DELETE CASCADE,
+        FOREIGN KEY (model_id) REFERENCES models (id) ON DELETE CASCADE,
+        UNIQUE(feature_name)
+      )
+    `)
+    
+    // 创建功能配置表索引
+    db.exec('CREATE INDEX IF NOT EXISTS idx_feature_configs_feature_name ON feature_configs (feature_name)')
+    db.exec('CREATE INDEX IF NOT EXISTS idx_feature_configs_provider_id ON feature_configs (provider_id)')
+    db.exec('CREATE INDEX IF NOT EXISTS idx_feature_configs_model_id ON feature_configs (model_id)')
+    
     // 检查现有数据
     const count = db.prepare('SELECT COUNT(*) as count FROM books').get() as { count: number }
     console.log(`Database initialized successfully with ${count.count} existing books`)
@@ -238,6 +260,33 @@ interface UpdateModelData {
   provider_id?: number
   model?: string
   tags?: string
+}
+
+// 功能配置相关操作
+interface FeatureConfig {
+  id: number
+  feature_name: string
+  provider_id: number
+  model_id: number
+  temperature: number
+  top_p: number
+  created_at: string
+  updated_at: string
+}
+
+interface CreateFeatureConfigData {
+  feature_name: string
+  provider_id: number
+  model_id: number
+  temperature?: number
+  top_p?: number
+}
+
+interface UpdateFeatureConfigData {
+  provider_id?: number
+  model_id?: number
+  temperature?: number
+  top_p?: number
 }
 
 // 章节相关操作
@@ -745,5 +794,128 @@ export {
   getModelById,
   createModel,
   updateModel,
-  deleteModel
+  deleteModel,
+  getAllFeatureConfigs,
+  getFeatureConfigByName,
+  createFeatureConfig,
+  updateFeatureConfig,
+  initializeFeatureNames,
+  getFeatureConfigById
 }
+
+// 功能配置相关操作函数
+
+// 初始化功能名称（只创建不存在的功能配置，供应商和模型为空）
+function initializeFeatureNames(featureNames: string[]): void {
+  // 检查每个功能名称是否存在，如果不存在则创建空配置
+  for (const featureName of featureNames) {
+    const existingConfig = getFeatureConfigByName(featureName)
+    if (!existingConfig) {
+      // 创建空配置，供应商和模型ID为0，使用默认参数
+      createFeatureConfig({
+        feature_name: featureName,
+        provider_id: 0,  // 空供应商
+        model_id: 0,     // 空模型
+        temperature: 0.7,
+        top_p: 0.1
+      })
+      console.log(`Created default config for feature: ${featureName}`)
+    }
+  }
+  
+  console.log('Feature names initialization completed')
+}
+
+// 获取所有功能配置
+function getAllFeatureConfigs(): FeatureConfig[] {
+  const db = getDatabase()
+  const stmt = db.prepare(`
+    SELECT fc.*, p.name as provider_name, m.model as model_name
+    FROM feature_configs fc
+    JOIN providers p ON fc.provider_id = p.id
+    JOIN models m ON fc.model_id = m.id
+    ORDER BY fc.feature_name ASC
+  `)
+  return stmt.all() as FeatureConfig[]
+}
+
+// 根据功能名称获取配置
+function getFeatureConfigByName(featureName: string): FeatureConfig | undefined {
+  const db = getDatabase()
+  const stmt = db.prepare(`
+    SELECT fc.*, p.name as provider_name, m.model as model_name
+    FROM feature_configs fc
+    JOIN providers p ON fc.provider_id = p.id
+    JOIN models m ON fc.model_id = m.id
+    WHERE fc.feature_name = ?
+  `)
+  return stmt.get(featureName) as FeatureConfig | undefined
+}
+
+// 创建功能配置
+function createFeatureConfig(data: CreateFeatureConfigData): FeatureConfig {
+  const db = getDatabase()
+  const stmt = db.prepare(`
+    INSERT INTO feature_configs (feature_name, provider_id, model_id, temperature, top_p)
+    VALUES (?, ?, ?, ?, ?)
+  `)
+  const result = stmt.run(
+    data.feature_name,
+    data.provider_id,
+    data.model_id,
+    data.temperature ?? 0.7,
+    data.top_p ?? 1.0
+  )
+  
+  return getFeatureConfigById(result.lastInsertRowid as number)!
+}
+
+// 根据ID获取功能配置
+function getFeatureConfigById(id: number): FeatureConfig | undefined {
+  const db = getDatabase()
+  const stmt = db.prepare(`
+    SELECT fc.*, p.name as provider_name, m.model as model_name
+    FROM feature_configs fc
+    JOIN providers p ON fc.provider_id = p.id
+    JOIN models m ON fc.model_id = m.id
+    WHERE fc.id = ?
+  `)
+  return stmt.get(id) as FeatureConfig | undefined
+}
+
+// 更新功能配置
+function updateFeatureConfig(featureName: string, data: UpdateFeatureConfigData): FeatureConfig {
+  const db = getDatabase()
+  const fields: string[] = []
+  const values: any[] = []
+
+  if (data.provider_id !== undefined) {
+    fields.push('provider_id = ?')
+    values.push(data.provider_id)
+  }
+  if (data.model_id !== undefined) {
+    fields.push('model_id = ?')
+    values.push(data.model_id)
+  }
+  if (data.temperature !== undefined) {
+    fields.push('temperature = ?')
+    values.push(data.temperature)
+  }
+  if (data.top_p !== undefined) {
+    fields.push('top_p = ?')
+    values.push(data.top_p)
+  }
+
+  if (fields.length > 0) {
+    fields.push('updated_at = CURRENT_TIMESTAMP')
+    values.push(featureName)
+
+    const stmt = db.prepare(`
+      UPDATE feature_configs SET ${fields.join(', ')} WHERE feature_name = ?
+    `)
+    stmt.run(...values)
+  }
+
+  return getFeatureConfigByName(featureName)!
+}
+

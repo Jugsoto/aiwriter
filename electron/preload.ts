@@ -48,7 +48,12 @@ const api = {
   openFolder: (folderPath: string) => ipcRenderer.invoke('open-folder', folderPath),
   getFileSize: (filePath: string) => ipcRenderer.invoke('get-file-size', filePath),
   getFolderSize: (folderPath: string) => ipcRenderer.invoke('get-folder-size', folderPath),
-  resetData: () => ipcRenderer.invoke('reset-data')
+  resetData: () => ipcRenderer.invoke('reset-data'),
+  
+  // 功能配置相关API
+  getFeatureConfigs: () => ipcRenderer.invoke('get-feature-configs'),
+  updateFeatureConfig: (featureName: string, data: { provider_id?: number; model_id?: number; temperature?: number; top_p?: number }) =>
+    ipcRenderer.invoke('update-feature-config', featureName, data)
 }
 
 contextBridge.exposeInMainWorld('electronAPI', api)

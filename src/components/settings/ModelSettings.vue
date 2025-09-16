@@ -1,7 +1,7 @@
 <template>
   <div class=" flex h-full bg-[var(--bg-primary)]">
     <!-- 左侧供应商列表 -->
-    <div class="w-60 bg-[var(--bg-primary)] border-r border-[var(--border-color)] p-4 flex flex-col">
+    <div class="w-60 bg-[var(--bg-secondary)] border-r border-[var(--border-color)] p-4 flex flex-col">
       <div class="flex items-center justify-between mb-4">
         <h2 class="text-2xl font-semibold text-[var(--text-primary)]">模型供应商</h2>
         <button @click="showProviderModal = true"
@@ -14,7 +14,7 @@
         <div class="space-y-2">
           <div v-for="provider in sortedProviders" :key="provider.id" class="relative group">
             <button @click="selectProvider(provider.id)" :class="[
-              'w-full flex items-center bg-[var(--bg-secondary)] px-3 py-3 rounded-xl border border-[var(--border-color)] text-left transition-all duration-200',
+              'w-full flex items-center bg-[var(--bg-primary)] px-3 py-3 rounded-xl border border-[var(--border-color)] text-left transition-all duration-200',
               providersStore.selectedProviderId === provider.id
                 ? ' bg-[var(--blue-100)] border-[var(--theme-bg)]'
                 : 'text-[var(--text-primary)] hover:bg-[var(--hover-bg)]'

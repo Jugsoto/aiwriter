@@ -31,7 +31,9 @@ import {
   getModelById,
   createModel,
   updateModel,
-  deleteModel
+  deleteModel,
+  getAllFeatureConfigs,
+  updateFeatureConfig
 } from './database'
 import { initializeDefaultProviders } from './initializer'
 
@@ -338,6 +340,16 @@ ipcMain.handle('reset-data', async () => {
     return { success: false, error: error instanceof Error ? error.message : String(error) }
   }
 })
+
+// 功能配置相关IPC处理
+ipcMain.handle('get-feature-configs', () => {
+  return getAllFeatureConfigs()
+})
+
+ipcMain.handle('update-feature-config', (_event: any, featureName: string, data: { provider_id?: number; model_id?: number; temperature?: number; top_p?: number }) => {
+  return updateFeatureConfig(featureName, data)
+})
+
 
 // 应用退出时关闭数据库
 app.on('before-quit', () => {

@@ -1,7 +1,10 @@
 import {
   getAllProviders,
   createProvider,
-  createModel
+  createModel,
+  getFeatureConfigByName,
+  getModelsByProviderId,
+  createFeatureConfig
 } from './database'
 
 //默认供应商和模型数据
@@ -130,6 +133,37 @@ const DEFAULT_PROVIDERS_DATA = {
   ]
 }
 
+// 默认功能配置数据 - 与数据库feature_configs表结构完全对应
+const DEFAULT_FEATURE_CONFIGS_DATA = {
+  configs: [
+    {
+      feature_name: 'basic_model',
+      temperature: 0.7,
+      top_p: 0.9
+    },
+    {
+      feature_name: 'chapter_planning',
+      temperature: 0.8,
+      top_p: 0.95
+    },
+    {
+      feature_name: 'content_writing',
+      temperature: 0.9,
+      top_p: 0.95
+    },
+    {
+      feature_name: 'editing_review',
+      temperature: 0.3,
+      top_p: 0.7
+    },
+    {
+      feature_name: 'embedding_model',
+      temperature: 0.1,
+      top_p: 0.5
+    }
+  ]
+}
+
 /**
  * 检查是否需要初始化默认数据
  */
@@ -189,6 +223,17 @@ export async function initializeDefaultProviders(): Promise<boolean> {
     }
     
     console.log('Default providers initialization completed successfully')
+    
+    // 初始化功能配置（使用默认数据）
+    try {
+      console.log('Initializing feature configs with default values...')
+      initializeFeatureConfigsWithDefaults()
+      console.log('Feature configs initialization completed successfully')
+    } catch (error) {
+      console.error('Failed to initialize feature configs:', error)
+      // 不中断整个初始化过程
+    }
+    
     return true
     
   } catch (error) {
@@ -200,6 +245,61 @@ export async function initializeDefaultProviders(): Promise<boolean> {
 /**
  * 获取初始化状态信息
  */
+/**
+ * 使用默认数据初始化功能配置
+ * 根据供应商和模型的实际创建情况来设置功能配置
+ */
+function initializeFeatureConfigsWithDefaults(): void {
+  try {
+    const providers = getAllProviders()
+    
+    // 为每个默认功能配置创建或更新配置
+    for (const defaultConfig of DEFAULT_FEATURE_CONFIGS_DATA.configs) {
+      try {
+        // 检查功能配置是否已存在
+        const existingConfig = getFeatureConfigByName(defaultConfig.feature_name)
+        
+        if (!existingConfig) {
+          // 查找推荐的供应商和模型
+          let providerId = 0
+          let modelId = 0
+          
+          // 尝试找到合适的供应商和模型
+          for (const provider of providers) {
+            const models = getModelsByProviderId(provider.id)
+            if (models.length > 0) {
+              providerId = provider.id
+              modelId = models[0].id // 使用第一个模型作为默认
+              break
+            }
+          }
+          
+          // 创建功能配置，使用默认的温度和top_p值
+          createFeatureConfig({
+            feature_name: defaultConfig.feature_name,
+            provider_id: providerId,
+            model_id: modelId,
+            temperature: defaultConfig.temperature,
+            top_p: defaultConfig.top_p
+          })
+          
+          console.log(`Created feature config: ${defaultConfig.feature_name} with temperature: ${defaultConfig.temperature}, top_p: ${defaultConfig.top_p}`)
+        } else {
+          console.log(`Feature config already exists: ${defaultConfig.feature_name}`)
+        }
+      } catch (error) {
+        console.error(`Failed to initialize feature config ${defaultConfig.feature_name}:`, error)
+        // 继续处理其他功能配置
+      }
+    }
+    
+    console.log('Feature configs initialization completed')
+  } catch (error) {
+    console.error('Failed to initialize feature configs:', error)
+    throw error
+  }
+}
+
 export function getInitializationStatus(): {
   hasProviders: boolean
   providerCount: number
