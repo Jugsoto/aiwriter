@@ -1,17 +1,19 @@
 <template>
-  <div class="h-full bg-[var(--bg-secondary)] flex flex-col">
+  <div class="h-full bg-[var(--bg-primary)] flex flex-col">
     <!-- 头部 -->
     <div class="p-3 flex items-center justify-between">
-      <button @click="toggleSortOrder"
-        class="flex items-center gap-1 px-2 py-1.5 text-sm border border-[var(--border-color)] bg-[var(--bg-primary)] rounded-full hover:bg-[var(--bg-secondary)] transition-colors">
-        <ArrowUpDown class="w-4 h-4" />
-        切换排序
-      </button>
-      <button @click="showCreateModal = true"
-        class="flex items-center gap-1 px-2 py-1.5 text-sm border border-[var(--border-color)] bg-[var(--bg-primary)] rounded-full hover:bg-[var(--bg-secondary)] transition-colors">
-        <Plus class="w-4 h-4" />
-        新建章节
-      </button>
+      <!-- 左侧：排序和新建按钮组合 -->
+      <div class="flex items-center gap-1 border border-[var(--border-color)] bg-[var(--bg-primary)] rounded-full px-1">
+        <button @click="toggleSortOrder" class="p-2 hover:bg-[var(--bg-secondary)] rounded-full transition-colors"
+          title="切换排序">
+          <ArrowUpDown class="w-4 h-4" />
+        </button>
+        <div class="h-4 w-px bg-[var(--border-color)]"></div>
+        <button @click="showCreateModal = true"
+          class="p-2 hover:bg-[var(--bg-secondary)] rounded-full transition-colors" title="新建章节">
+          <Plus class="w-4 h-4" />
+        </button>
+      </div>
     </div>
 
     <!-- 章节列表 -->
