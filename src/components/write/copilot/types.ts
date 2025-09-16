@@ -3,6 +3,9 @@ export interface Message {
   role: 'user' | 'assistant'
   content: string
   timestamp: Date
+  reasoningContent?: string // 推理内容
+  isReasoning?: boolean // 是否正在推理
+  showReasoning?: boolean // 是否显示推理内容
 }
 
 export interface Conversation {
