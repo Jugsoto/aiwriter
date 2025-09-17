@@ -1,5 +1,5 @@
 <template>
-  <div class="px-3 py-2  flex items-center justify-between">
+  <div class="px-3 py-2 flex items-center justify-between relative">
     <!-- 左侧：历史对话和新建对话按钮 -->
     <div class="flex items-center gap-1 border border-[var(--border-color)] bg-[var(--bg-primary)] rounded-full px-1">
       <button @click="$emit('show-history')" class="p-2 hover:bg-[var(--bg-secondary)] rounded-full transition-colors"
@@ -19,21 +19,40 @@
       title="设置">
       <Settings class="w-4 h-4" />
     </button>
+
+    <!-- Copilot设置组件 -->
+    <CopilotSettings v-if="showSettings" :book-id="bookId" @close="handleCloseSettings" @saved="handleSettingsSaved" />
   </div>
 </template>
 
 <script setup lang="ts">
+import { ref } from 'vue'
 import { Plus, Settings, History } from 'lucide-vue-next'
 import type { HeaderProps } from './types'
+import CopilotSettings from './CopilotSettings.vue'
 
-defineProps<HeaderProps>()
-const emit = defineEmits(['new-conversation', 'open-settings', 'show-history'])
+const props = defineProps<HeaderProps & {
+  bookId: number
+}>()
+
+const emit = defineEmits(['new-conversation', 'open-settings', 'show-history', 'settings-saved'])
+
+// 设置面板显示状态
+const showSettings = ref(false)
 
 const handleNewConversation = () => {
   emit('new-conversation')
 }
 
 const handleOpenSettings = () => {
-  emit('open-settings')
+  showSettings.value = true
+}
+
+const handleCloseSettings = () => {
+  showSettings.value = false
+}
+
+const handleSettingsSaved = (settings: any) => {
+  emit('settings-saved', settings)
 }
 </script>

@@ -1,8 +1,8 @@
 <template>
   <div class="h-full flex flex-col bg-[var(--bg-primary)]">
-    <CopilotHeader :conversations="conversations" :current-conversation="currentConversation"
+    <CopilotHeader :conversations="conversations" :current-conversation="currentConversation" :book-id="bookId"
       @new-conversation="handleNewConversation" @select-conversation="handleSelectConversation"
-      @open-settings="handleOpenSettings" />
+      @open-settings="handleOpenSettings" @settings-saved="handleSettingsSaved" />
 
     <MessageList :messages="messages" :is-loading="isLoading" />
 
@@ -18,7 +18,14 @@ import MessageList from './copilot/MessageList.vue'
 import InputArea from './copilot/InputArea.vue'
 import { streamChapterOutline } from '@/services'
 import type { Message } from './copilot/types'
+import type { CopilotSettings } from './copilot/types'
+import type { ChatMessage } from '@/services/chat'
 import { useFeatureConfigsStore } from '@/stores/featureConfigs'
+
+// Props
+const props = defineProps<{
+  bookId: number
+}>()
 
 // 消息列表
 const messages = ref<Message[]>([])
@@ -31,6 +38,11 @@ const currentConversation = ref<any>(null)
 
 // 功能配置
 const featureConfigsStore = useFeatureConfigsStore()
+
+// Copilot设置
+const copilotSettings = ref<CopilotSettings>({
+  contextLength: 3
+})
 
 // 流式响应控制器
 let streamController: AbortController | null = null
@@ -96,8 +108,19 @@ const generateResponse = async (userInput: string) => {
     // 将AI消息添加到消息列表
     messages.value.push(aiMessage)
 
+    // 准备历史消息和上下文选项
+    const chatMessages: ChatMessage[] = messages.value.map(msg => ({
+      role: msg.role,
+      content: msg.content
+    }))
+
+    const chapterOutlineOptions = {
+      contextLength: copilotSettings.value.contextLength,
+      messages: chatMessages
+    }
+
     // 流式生成章节细纲
-    for await (const { type, text } of streamChapterOutline(context, featureConfig)) {
+    for await (const { type, text } of streamChapterOutline(context, featureConfig, chapterOutlineOptions)) {
       if (streamController?.signal.aborted) {
         break
       }
@@ -178,11 +201,35 @@ const handleOpenSettings = () => {
   console.log('打开设置')
 }
 
+// 处理设置保存
+const handleSettingsSaved = (settings: CopilotSettings) => {
+  copilotSettings.value = settings
+  console.log('Copilot设置已保存:', settings)
+}
+
+// 加载保存的设置
+const loadSavedSettings = () => {
+  try {
+    const settingsKey = `copilot-settings-${props.bookId}`
+    const savedSettings = localStorage.getItem(settingsKey)
+
+    if (savedSettings) {
+      const parsed = JSON.parse(savedSettings) as CopilotSettings
+      copilotSettings.value = parsed
+    }
+  } catch (error) {
+    console.error('加载Copilot设置失败:', error)
+  }
+}
+
 // 组件卸载时清理
 onMounted(() => {
   // 确保功能配置已加载
   if (featureConfigsStore.configs.length === 0) {
     featureConfigsStore.loadFeatureConfigs()
   }
+
+  // 加载保存的设置
+  loadSavedSettings()
 })
 </script>

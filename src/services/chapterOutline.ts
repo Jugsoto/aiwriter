@@ -8,7 +8,12 @@ export interface ChapterOutlineContext {
   content?: string
 }
 
-const SYSTEM_PROMPT = `你是一个AI助手，生成100字以内的章节细纲`
+export interface ChapterOutlineOptions {
+  contextLength?: number // 上下文长度，表示要包含的历史消息数量
+  messages?: ChatMessage[] // 历史消息数组
+}
+
+const SYSTEM_PROMPT = `你是一个AI助手,名字是神笔AI`
 
 /**
  * 获取章节细纲功能配置
@@ -42,8 +47,6 @@ export function buildChapterOutlinePrompt(context: ChapterOutlineContext): strin
     prompt += `\n\n现有内容：${content}`
   }
 
-  prompt += `\n\n请为这个章节生成细纲，包括主要情节发展和关键场景。`
-
   return prompt
 }
 
@@ -52,7 +55,8 @@ export function buildChapterOutlinePrompt(context: ChapterOutlineContext): strin
  */
 export async function* streamChapterOutline(
   context: ChapterOutlineContext,
-  featureConfig?: FeatureConfig
+  featureConfig?: FeatureConfig,
+  options?: ChapterOutlineOptions
 ): AsyncGenerator<{ type: 'reasoning' | 'content', text: string }, void, unknown> {
   // 如果没有提供功能配置，则获取默认配置
   if (!featureConfig) {
@@ -61,10 +65,19 @@ export async function* streamChapterOutline(
 
   const userPrompt = buildChapterOutlinePrompt(context)
 
+  // 构建消息数组
   const messages: ChatMessage[] = [
-    { role: 'system', content: SYSTEM_PROMPT },
-    { role: 'user', content: userPrompt }
+    { role: 'system', content: SYSTEM_PROMPT }
   ]
+
+  // 如果有历史消息且设置了上下文长度，则添加历史消息
+  if (options?.messages && options.contextLength && options.contextLength > 0) {
+    const recentMessages = getRecentMessages(options.messages, options.contextLength)
+    messages.push(...recentMessages)
+  }
+
+  // 添加当前用户消息
+  messages.push({ role: 'user', content: userPrompt })
 
   // 流式生成章节细纲
   for await (const chunk of streamChatCompletion(messages, featureConfig)) {
@@ -75,4 +88,19 @@ export async function* streamChapterOutline(
       yield { type: 'content', text: chunk.content }
     }
   }
+}
+
+/**
+ * 获取最近的历史消息
+ */
+function getRecentMessages(messages: ChatMessage[], contextLength: number): ChatMessage[] {
+  if (!messages || messages.length === 0) {
+    return []
+  }
+
+  // 只获取最近的几条消息（排除系统消息）
+  const userAssistantMessages = messages.filter(msg => msg.role === 'user' || msg.role === 'assistant')
+  const recentMessages = userAssistantMessages.slice(-contextLength * 2) // 每轮对话包含user和assistant消息
+  
+  return recentMessages
 }

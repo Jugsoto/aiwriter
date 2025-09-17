@@ -30,3 +30,15 @@ export interface MessageListProps {
 export interface InputAreaProps {
   disabled: boolean
 }
+
+export interface CopilotSettings {
+  contextLength: number
+}
+
+export interface CopilotSettingsProps {
+  bookId: number
+}
+
+export interface CopilotHeaderProps extends HeaderProps {
+  bookId: number
+}

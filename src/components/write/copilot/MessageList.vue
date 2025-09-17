@@ -163,7 +163,7 @@ watch(() => props.messages, (newMessages) => {
 }
 
 :deep(.markdown-content p) {
-  margin-bottom: 0.5em;
+  margin-bottom: 0.1em;
 }
 
 :deep(.markdown-content ul),

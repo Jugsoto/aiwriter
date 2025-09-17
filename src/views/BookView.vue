@@ -31,7 +31,7 @@
 
       <!-- 右侧AI助手 -->
       <div ref="rightPanel" class="bg-[var(--bg-secondary)] relative" :style="{ width: rightWidth + 'px' }">
-        <WriteCopilot />
+        <WriteCopilot :book-id="bookId" />
       </div>
     </div>
 
