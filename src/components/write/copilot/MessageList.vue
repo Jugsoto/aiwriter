@@ -68,7 +68,7 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
 import { marked } from 'marked'
-import type { Message, MessageListProps } from './types'
+import type { Message, MessageListProps } from '../../../utils/types'
 
 const props = defineProps<MessageListProps>()
 const messagesContainer = ref<HTMLElement>()

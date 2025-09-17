@@ -12,6 +12,9 @@ export interface Conversation {
   id: string
   title: string
   messages: Message[]
+  bookId: number
+  createdAt: Date
+  updatedAt: Date
 }
 
 export interface HeaderProps {

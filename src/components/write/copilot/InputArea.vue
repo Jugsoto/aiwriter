@@ -36,7 +36,7 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
 import { AtSign, Trash2, Square, Send } from 'lucide-vue-next'
-import type { InputAreaProps } from './types'
+import type { InputAreaProps } from '../../../utils/types'
 
 defineProps<InputAreaProps>()
 const emit = defineEmits(['send-message', 'at-resource', 'clear-conversation', 'stop-conversation'])
