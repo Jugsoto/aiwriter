@@ -77,6 +77,23 @@ export async function chatCompletion(
       stream: false
     })
 
+    // 记录用量统计
+    if (response.usage) {
+      try {
+        await window.electronAPI.createUsageStatistic({
+          provider_id: featureConfig.provider_id,
+          model_id: featureConfig.model_id,
+          feature_name: featureConfig.feature_name,
+          mode: 'non-stream',
+          input_tokens: response.usage.prompt_tokens,
+          output_tokens: response.usage.completion_tokens,
+          total_tokens: response.usage.total_tokens
+        })
+      } catch (error) {
+        console.error('记录用量统计失败:', error)
+      }
+    }
+
     return {
       content: response.choices[0]?.message?.content || '',
       usage: response.usage
@@ -153,13 +170,42 @@ export async function* streamChatCompletion(
       stream: true
     })
 
+    let totalUsage = undefined
     for await (const chunk of stream) {
       const delta = chunk.choices[0]?.delta as any
+      const finishReason = chunk.choices[0]?.finish_reason
+      
+      // 检查是否有用量信息（通常在最后一个chunk中）
+      if (chunk.usage) {
+        totalUsage = chunk.usage
+      }
+      
       yield {
         content: delta?.content || '',
         reasoning_content: delta?.reasoning_content || '',
-        finish_reason: chunk.choices[0]?.finish_reason,
-        usage: undefined // 流式响应中usage通常在最后返回
+        finish_reason: finishReason,
+        usage: chunk.usage ? {
+          prompt_tokens: chunk.usage.prompt_tokens,
+          completion_tokens: chunk.usage.completion_tokens,
+          total_tokens: chunk.usage.total_tokens
+        } : undefined
+      }
+    }
+    
+    // 流式响应结束后记录用量统计
+    if (totalUsage) {
+      try {
+        await window.electronAPI.createUsageStatistic({
+          provider_id: featureConfig.provider_id,
+          model_id: featureConfig.model_id,
+          feature_name: featureConfig.feature_name,
+          mode: 'stream',
+          input_tokens: totalUsage.prompt_tokens,
+          output_tokens: totalUsage.completion_tokens,
+          total_tokens: totalUsage.total_tokens
+        })
+      } catch (error) {
+        console.error('记录流式用量统计失败:', error)
       }
     }
   } catch (error) {

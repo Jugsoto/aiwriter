@@ -53,7 +53,16 @@ const api = {
   // 功能配置相关API
   getFeatureConfigs: () => ipcRenderer.invoke('get-feature-configs'),
   updateFeatureConfig: (featureName: string, data: { provider_id?: number; model_id?: number; temperature?: number; top_p?: number }) =>
-    ipcRenderer.invoke('update-feature-config', featureName, data)
+    ipcRenderer.invoke('update-feature-config', featureName, data),
+  
+  // 用量统计相关API
+  createUsageStatistic: (data: { provider_id: number; model_id: number; feature_name: string; mode: string; input_tokens?: number; output_tokens?: number; total_tokens?: number }) =>
+    ipcRenderer.invoke('create-usage-statistic', data),
+  getUsageStatistics: () => ipcRenderer.invoke('get-usage-statistics'),
+  getUsageStatisticsByDateRange: (startDate: string, endDate: string) => ipcRenderer.invoke('get-usage-statistics-by-date-range', startDate, endDate),
+  getUsageStatisticsByProvider: (providerId: number) => ipcRenderer.invoke('get-usage-statistics-by-provider', providerId),
+  getUsageStatisticsByModel: (modelId: number) => ipcRenderer.invoke('get-usage-statistics-by-model', modelId),
+  getUsageStatisticsSummary: () => ipcRenderer.invoke('get-usage-statistics-summary')
 }
 
 contextBridge.exposeInMainWorld('electronAPI', api)

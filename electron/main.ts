@@ -33,7 +33,13 @@ import {
   updateModel,
   deleteModel,
   getAllFeatureConfigs,
-  updateFeatureConfig
+  updateFeatureConfig,
+  createUsageStatistic,
+  getAllUsageStatistics,
+  getUsageStatisticsByDateRange,
+  getUsageStatisticsByProvider,
+  getUsageStatisticsByModel,
+  getUsageStatisticsSummary
 } from './database'
 import { initializeDefaultProviders } from './initializer'
 
@@ -348,6 +354,31 @@ ipcMain.handle('get-feature-configs', () => {
 
 ipcMain.handle('update-feature-config', (_event: any, featureName: string, data: { provider_id?: number; model_id?: number; temperature?: number; top_p?: number }) => {
   return updateFeatureConfig(featureName, data)
+})
+
+// 用量统计相关IPC处理
+ipcMain.handle('create-usage-statistic', (_event: any, data: { provider_id: number; model_id: number; feature_name: string; mode: string; input_tokens?: number; output_tokens?: number; total_tokens?: number }) => {
+  return createUsageStatistic(data)
+})
+
+ipcMain.handle('get-usage-statistics', () => {
+  return getAllUsageStatistics()
+})
+
+ipcMain.handle('get-usage-statistics-by-date-range', (_event: any, startDate: string, endDate: string) => {
+  return getUsageStatisticsByDateRange(startDate, endDate)
+})
+
+ipcMain.handle('get-usage-statistics-by-provider', (_event: any, providerId: number) => {
+  return getUsageStatisticsByProvider(providerId)
+})
+
+ipcMain.handle('get-usage-statistics-by-model', (_event: any, modelId: number) => {
+  return getUsageStatisticsByModel(modelId)
+})
+
+ipcMain.handle('get-usage-statistics-summary', () => {
+  return getUsageStatisticsSummary()
 })
 
 

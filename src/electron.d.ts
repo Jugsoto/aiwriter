@@ -53,6 +53,32 @@ declare global {
       // 功能配置相关API
       getFeatureConfigs: () => Promise<FeatureConfig[]>
       updateFeatureConfig: (featureName: string, data: { provider_id?: number; model_id?: number; temperature?: number; top_p?: number }) => Promise<FeatureConfig>
+      
+      // 用量统计相关API
+      createUsageStatistic: (data: { provider_id: number; model_id: number; feature_name: string; mode: string; input_tokens?: number; output_tokens?: number; total_tokens?: number }) => Promise<UsageStatistic>
+      getUsageStatistics: () => Promise<UsageStatistic[]>
+      getUsageStatisticsByDateRange: (startDate: string, endDate: string) => Promise<UsageStatistic[]>
+      getUsageStatisticsByProvider: (providerId: number) => Promise<UsageStatistic[]>
+      getUsageStatisticsByModel: (modelId: number) => Promise<UsageStatistic[]>
+      getUsageStatisticsSummary: () => Promise<{
+        total_calls: number
+        total_input_tokens: number
+        total_output_tokens: number
+        total_tokens: number
+        providers: Array<{
+          provider_id: number
+          provider_name: string
+          total_calls: number
+          total_tokens: number
+        }>
+        models: Array<{
+          model_id: number
+          model_name: string
+          provider_name: string
+          total_calls: number
+          total_tokens: number
+        }>
+      }>
     }
   }
 }
@@ -124,4 +150,19 @@ export interface FeatureConfig {
   model_name?: string
   created_at: string
   updated_at: string
+}
+
+// 用量统计类型定义
+export interface UsageStatistic {
+  id: number
+  timestamp: string
+  provider_id: number
+  model_id: number
+  feature_name: string
+  mode: string
+  input_tokens: number
+  output_tokens: number
+  total_tokens: number
+  provider_name?: string
+  model_name?: string
 }
