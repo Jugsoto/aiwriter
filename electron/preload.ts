@@ -49,6 +49,8 @@ const api = {
   getFileSize: (filePath: string) => ipcRenderer.invoke('get-file-size', filePath),
   getFolderSize: (folderPath: string) => ipcRenderer.invoke('get-folder-size', folderPath),
   resetData: () => ipcRenderer.invoke('reset-data'),
+  backupData: () => ipcRenderer.invoke('backup-data'),
+  restoreData: () => ipcRenderer.invoke('restore-data'),
   
   // 功能配置相关API
   getFeatureConfigs: () => ipcRenderer.invoke('get-feature-configs'),

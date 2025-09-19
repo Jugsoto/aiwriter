@@ -49,6 +49,8 @@ declare global {
       getFileSize: (filePath: string) => Promise<{ size: number; success: boolean }>
       getFolderSize: (folderPath: string) => Promise<{ size: number; success: boolean }>
       resetData: () => Promise<{ success: boolean; error?: string }>
+      backupData: () => Promise<{ success: boolean; backupPath?: string; error?: string }>
+      restoreData: () => Promise<{ success: boolean; error?: string }>
       
       // 功能配置相关API
       getFeatureConfigs: () => Promise<FeatureConfig[]>

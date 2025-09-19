@@ -1,4 +1,4 @@
-import { app, BrowserWindow, shell, ipcMain } from 'electron'
+import { app, BrowserWindow, shell, ipcMain, dialog } from 'electron'
 import path from 'path'
 import { fileURLToPath } from 'url'
 import fs from 'fs'
@@ -344,6 +344,105 @@ ipcMain.handle('reset-data', async () => {
   } catch (error) {
     console.error('Failed to reset data:', error)
     return { success: false, error: error instanceof Error ? error.message : String(error) }
+  }
+})
+
+// 数据备份功能
+ipcMain.handle('backup-data', async () => {
+  try {
+    // 获取数据库文件路径
+    const dbPath = path.join(app.getPath('userData'), 'aiwriter.db')
+    
+    // 检查数据库文件是否存在
+    if (!fs.existsSync(dbPath)) {
+      return { success: false, error: '数据库文件不存在' }
+    }
+    
+    // 显示保存对话框，让用户选择备份位置
+    const result = await dialog.showSaveDialog({
+      title: '备份数据',
+      defaultPath: `aiwriter_backup_${new Date().toISOString().slice(0, 10)}.db`,
+      filters: [
+        { name: 'Database Files', extensions: ['db'] },
+        { name: 'All Files', extensions: ['*'] }
+      ]
+    })
+    
+    if (result.canceled) {
+      return { success: false, error: '用户取消了备份操作' }
+    }
+    
+    // 复制数据库文件到备份位置
+    fs.copyFileSync(dbPath, result.filePath!)
+    
+    console.log('数据备份成功:', result.filePath)
+    return { success: true, backupPath: result.filePath }
+  } catch (error) {
+    console.error('数据备份失败:', error)
+    return { success: false, error: error instanceof Error ? error.message : '备份数据时发生未知错误' }
+  }
+})
+
+// 数据恢复功能
+ipcMain.handle('restore-data', async () => {
+  try {
+    // 显示打开对话框，让用户选择备份文件
+    const result = await dialog.showOpenDialog({
+      title: '恢复数据',
+      filters: [
+        { name: 'Database Files', extensions: ['db'] },
+        { name: 'All Files', extensions: ['*'] }
+      ],
+      properties: ['openFile']
+    })
+    
+    if (result.canceled) {
+      return { success: false, error: '用户取消了恢复操作' }
+    }
+    
+    const backupPath = result.filePaths[0]
+    
+    // 验证备份文件是否存在
+    if (!fs.existsSync(backupPath)) {
+      return { success: false, error: '备份文件不存在' }
+    }
+    
+    // 关闭数据库连接
+    closeDatabase()
+    
+    // 获取当前数据库文件路径
+    const dbPath = path.join(app.getPath('userData'), 'aiwriter.db')
+    
+    // 创建当前数据库的备份（以防恢复失败）
+    const tempBackupPath = `${dbPath}.backup_${Date.now()}`
+    if (fs.existsSync(dbPath)) {
+      fs.copyFileSync(dbPath, tempBackupPath)
+    }
+    
+    try {
+      // 复制备份文件到数据库位置
+      fs.copyFileSync(backupPath, dbPath)
+      
+      // 重新初始化数据库连接
+      initDatabase()
+      
+      console.log('数据恢复成功')
+      return { success: true }
+    } catch (error) {
+      // 如果恢复失败，尝试恢复原数据库
+      if (fs.existsSync(tempBackupPath)) {
+        fs.copyFileSync(tempBackupPath, dbPath)
+      }
+      throw error
+    } finally {
+      // 清理临时备份文件
+      if (fs.existsSync(tempBackupPath)) {
+        fs.unlinkSync(tempBackupPath)
+      }
+    }
+  } catch (error) {
+    console.error('数据恢复失败:', error)
+    return { success: false, error: error instanceof Error ? error.message : '恢复数据时发生未知错误' }
   }
 })
 

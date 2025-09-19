@@ -1,35 +1,62 @@
 <template>
-  <div class="p-6">
-    <div class="space-y-6 bg-[var(--bg-primary)] p-6 rounded-xl border border-[var(--border-color)]">
-      <div>
-        <h3 class="text-lg font-semibold text-[var(--text-primary)] mb-4">数据设置</h3>
-        <!-- 数据目录卡片 -->
-        <div class="space-y-4">
-          <div
-            class="flex items-center justify-between p-4 bg-[var(--bg-secondary)] rounded-lg border border-[var(--border-color)]">
-            <div class="flex-1">
-              <h4 class="text-sm font-medium text-[var(--text-primary)]">应用数据</h4>
-            </div>
-            <button @click="openDataFolder"
-              class="ml-4 px-3 py-1.5 text-xs text-white bg-[var(--theme-bg)] hover:bg-primary transition-all rounded-lg">
-              {{ appDataPath }}
-            </button>
+  <div class="p-6 space-y-6 ">
+    <!-- 数据目录卡片 -->
+    <div class="p-6 rounded-xl border border-[var(--border-color)] bg-[var(--bg-primary)]">
+      <h3 class="text-lg font-semibold text-[var(--text-primary)] mb-4">数据目录</h3>
+      <div class="space-y-4">
+        <div
+          class="flex items-center justify-between p-4 bg-[var(--bg-secondary)] rounded-lg border border-[var(--border-color)]">
+          <div class="flex-1">
+            <h4 class="text-sm font-medium text-[var(--text-primary)]">应用数据目录</h4>
           </div>
+          <button @click="openDataFolder"
+            class="ml-4 px-3 py-1.5 text-xs text-white bg-[var(--theme-bg)] hover:bg-primary transition-all rounded-lg">
+            {{ appDataPath }}
+          </button>
+        </div>
 
-          <div
-            class="flex items-center justify-between p-4 bg-[var(--bg-secondary)] rounded-lg border border-[var(--border-color)]">
+        <div
+          class="flex items-center justify-between p-4 bg-[var(--bg-secondary)] rounded-lg border border-[var(--border-color)]">
+          <div class="flex-1">
+            <h4 class="text-sm font-medium text-[var(--text-primary)]">用户数据大小</h4>
+          </div>
+          <div class="px-3 py-1.5 text-sm font-medium text-white bg-[var(--theme-bg)] rounded-lg">
+            {{ databaseSize }}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 数据设置卡片 -->
+    <div class="bg-[var(--bg-primary)] p-6 rounded-xl border border-[var(--border-color)]">
+      <h3 class="text-lg font-semibold text-[var(--text-primary)] mb-4">数据设置</h3>
+      <div class="space-y-4">
+        <div class="bg-[var(--bg-secondary)] rounded-lg border border-[var(--border-color)] p-4">
+          <div class="flex items-center justify-between">
             <div class="flex-1">
-              <h4 class="text-sm font-medium text-[var(--text-primary)]">数据大小</h4>
+              <h4 class="text-sm font-medium text-[var(--text-primary)]">数据备份与恢复</h4>
             </div>
-            <div class="px-3 py-1.5 text-sm font-medium text-white bg-[var(--theme-bg)] rounded-lg">
-              {{ databaseSize }}
+            <div class="flex items-center gap-3">
+              <button @click="handleBackup" :disabled="isBackingUp"
+                class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-600 border-1 border-[var(--border-color)] rounded-full hover:bg-gray-50 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed">
+                <Download v-if="!isBackingUp" class="w-4 h-4" />
+                <Loader2 v-else class="w-4 h-4 animate-spin" />
+                {{ isBackingUp ? '备份中...' : '备份数据' }}
+              </button>
+              <button @click="handleRestore" :disabled="isRestoring"
+                class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-600 border-1 border-[var(--border-color)] rounded-full hover:bg-gray-50 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed">
+                <Upload v-if="!isRestoring" class="w-4 h-4" />
+                <Loader2 v-else class="w-4 h-4 animate-spin" />
+                {{ isRestoring ? '恢复中...' : '恢复数据' }}
+              </button>
             </div>
           </div>
+        </div>
 
-          <div
-            class="flex items-center justify-between p-4 bg-[var(--bg-secondary)] rounded-lg border border-[var(--border-color)]">
+        <div class="bg-[var(--bg-secondary)] rounded-lg border border-[var(--border-color)] p-4">
+          <div class="flex items-center justify-between">
             <div class="flex-1">
-              <h5 class="text-sm font-medium text-[var(--text-primary)]">重置数据</h5>
+              <h4 class="text-sm font-medium text-[var(--text-primary)]">重置用户数据</h4>
             </div>
             <button @click="showResetConfirm"
               class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-red-600 border-1 border-red-600 rounded-full hover:bg-red-50 transition-all duration-200">
@@ -49,13 +76,21 @@
   <!-- 错误提示模态窗 -->
   <ErrorModal v-model:visible="errorModalVisible" title="重置数据失败" message="重置数据时发生错误，请查看错误详情或重试。"
     :error-details="resetError" @close="handleErrorModalClose" />
+
+  <!-- 备份错误提示模态窗 -->
+  <ErrorModal v-model:visible="backupModalVisible" title="备份数据失败" message="备份数据时发生错误，请查看错误详情或重试。"
+    :error-details="backupError" @close="handleBackupErrorModalClose" />
+
+  <!-- 恢复错误提示模态窗 -->
+  <ErrorModal v-model:visible="restoreModalVisible" title="恢复数据失败" message="恢复数据时发生错误，请查看错误详情或重试。"
+    :error-details="restoreError" @close="handleRestoreErrorModalClose" />
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import ConfirmModal from '../shared/ConfirmModal.vue'
 import ErrorModal from '../shared/ErrorModal.vue'
-import { Trash2 } from 'lucide-vue-next'
+import { Trash2, Download, Upload, Loader2 } from 'lucide-vue-next'
 
 // 响应式数据
 const appDataPath = ref('')
@@ -64,6 +99,12 @@ const resetConfirmVisible = ref(false)
 const isResetting = ref(false)
 const resetError = ref('')
 const errorModalVisible = ref(false)
+const isBackingUp = ref(false)
+const isRestoring = ref(false)
+const backupError = ref('')
+const restoreError = ref('')
+const backupModalVisible = ref(false)
+const restoreModalVisible = ref(false)
 
 // 获取应用数据路径
 const getAppDataPath = async () => {
@@ -143,19 +184,86 @@ const formatFileSize = (bytes: number): string => {
   return `${mb.toFixed(2)} MB`
 }
 
-// 获取数据文件夹大小
+// 获取数据库文件大小（只统计用户数据）
 const getDatabaseSize = async (dataPath: string) => {
   try {
-    const result = await window.electronAPI.getFolderSize(dataPath)
+    const dbFilePath = `${dataPath}/aiwriter.db`
+    const result = await window.electronAPI.getFileSize(dbFilePath)
     if (result.success) {
       databaseSize.value = formatFileSize(result.size)
     } else {
       databaseSize.value = '无法获取大小'
     }
   } catch (error) {
-    console.error('获取数据文件夹大小失败:', error)
+    console.error('获取数据库文件大小失败:', error)
     databaseSize.value = '无法获取大小'
   }
+}
+
+// 处理数据备份
+const handleBackup = async () => {
+  try {
+    isBackingUp.value = true
+    backupError.value = ''
+
+    const result = await window.electronAPI.backupData()
+
+    if (result.success) {
+      console.log('数据备份成功:', result.backupPath)
+      // 可以添加成功提示
+    } else {
+      backupError.value = result.error || '备份数据失败'
+      backupModalVisible.value = true
+      console.error('数据备份失败:', result.error)
+    }
+  } catch (error) {
+    backupError.value = error instanceof Error ? error.message : '备份数据时发生未知错误'
+    backupModalVisible.value = true
+    console.error('数据备份失败:', error)
+  } finally {
+    isBackingUp.value = false
+  }
+}
+
+// 处理数据恢复
+const handleRestore = async () => {
+  try {
+    isRestoring.value = true
+    restoreError.value = ''
+
+    const result = await window.electronAPI.restoreData()
+
+    if (result.success) {
+      console.log('数据恢复成功')
+      // 可以添加成功提示或刷新数据
+      // 重新获取数据大小
+      if (appDataPath.value) {
+        await getDatabaseSize(appDataPath.value)
+      }
+    } else {
+      restoreError.value = result.error || '恢复数据失败'
+      restoreModalVisible.value = true
+      console.error('数据恢复失败:', result.error)
+    }
+  } catch (error) {
+    restoreError.value = error instanceof Error ? error.message : '恢复数据时发生未知错误'
+    restoreModalVisible.value = true
+    console.error('数据恢复失败:', error)
+  } finally {
+    isRestoring.value = false
+  }
+}
+
+// 处理备份错误模态窗关闭
+const handleBackupErrorModalClose = () => {
+  backupModalVisible.value = false
+  backupError.value = ''
+}
+
+// 处理恢复错误模态窗关闭
+const handleRestoreErrorModalClose = () => {
+  restoreModalVisible.value = false
+  restoreError.value = ''
 }
 
 // 组件挂载时初始化数据
