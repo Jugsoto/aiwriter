@@ -32,12 +32,13 @@ import { useBooksStore } from '@/stores/books'
 import { ConversationStorage } from '../../utils/conversationStorage'
 import type { Setting } from '@/electron.d'
 
-// Props
+// Props定义
 const props = defineProps<{
   bookId: number
 }>()
 
-// 消息列表
+// 响应式状态
+// 消息状态
 const messages = ref<Message[]>([])
 const isLoading = ref(false)
 const inputAreaRef = ref<InstanceType<typeof InputArea>>()
@@ -46,36 +47,32 @@ const inputAreaRef = ref<InstanceType<typeof InputArea>>()
 const conversations = ref<Conversation[]>([])
 const currentConversation = ref<Conversation | null>(null)
 
-// 功能配置
-const featureConfigsStore = useFeatureConfigsStore()
-
-// 设定存储
-const settingsStore = useSettingsStore()
-
-// 章节存储
-const chaptersStore = useChaptersStore()
-
-// 书籍存储
-const booksStore = useBooksStore()
-
-// Copilot设置
-const copilotSettings = ref<CopilotSettings>({
-  contextLength: 3
-})
-
-// 星标设定
+// 设定管理
 const starredSettings = ref<Setting[]>([])
 const settingsLoading = ref(false)
 const selectedSettings = ref<Setting[]>([])
 
-// 流式响应控制器
+// Copilot配置
+const copilotSettings = ref<CopilotSettings>({
+  contextLength: 3
+})
+
+// Store实例
+const featureConfigsStore = useFeatureConfigsStore()
+const settingsStore = useSettingsStore()
+const chaptersStore = useChaptersStore()
+const booksStore = useBooksStore()
+
+// 流控制器
 let streamController: AbortController | null = null
 
-// 处理发送消息
+// 消息处理
+// 发送消息
 const handleSendMessage = async (content: string | EnhancedMessageContext) => {
   let userInput: string
   let enhancedContext: EnhancedMessageContext | undefined
 
+  // 解析输入内容
   if (typeof content === 'string') {
     userInput = content.trim()
     enhancedContext = {
@@ -94,209 +91,229 @@ const handleSendMessage = async (content: string | EnhancedMessageContext) => {
 
   if (!userInput.trim()) return
 
-  // 添加用户消息
-  const userMessage: Message = {
-    id: `user-${Date.now()}`,
-    role: 'user',
-    content: userInput.trim(),
-    timestamp: new Date()
-  }
+  // 创建并添加用户消息
+  const userMessage = createUserMessage(userInput)
   messages.value.push(userMessage)
 
-  // 如果没有当前对话，创建新对话（但先不保存到存储）
-  if (!currentConversation.value) {
-    currentConversation.value = ConversationStorage.createNewConversation(props.bookId, [userMessage])
-  } else {
-    // 更新当前对话的消息
-    currentConversation.value.messages = [...messages.value]
-  }
+  // 管理对话状态
+  updateConversationState(userMessage)
 
-  // 开始生成回复
+  // 生成AI回复
   await generateResponse(userInput.trim(), enhancedContext)
 }
 
-// 生成AI回复
+// 创建用户消息
+const createUserMessage = (content: string): Message => ({
+  id: `user-${Date.now()}`,
+  role: 'user',
+  content: content.trim(),
+  timestamp: new Date()
+})
+
+// 更新对话状态
+const updateConversationState = (userMessage: Message) => {
+  if (!currentConversation.value) {
+    // 创建新对话（暂不保存到存储）
+    currentConversation.value = ConversationStorage.createNewConversation(props.bookId, [userMessage])
+  } else {
+    // 更新现有对话的消息列表
+    currentConversation.value.messages = [...messages.value]
+  }
+}
+
+// AI回复生成
+// 生成回复
 const generateResponse = async (_userInput: string, enhancedContext?: EnhancedMessageContext) => {
   isLoading.value = true
 
   try {
-    // 获取章节细纲配置
-    const featureConfig = await featureConfigsStore.getConfigByFeatureName('chapter_planning')
-    if (!featureConfig) {
-      throw new Error('章节细纲功能未配置')
-    }
+    // 获取功能配置
+    const featureConfig = await getFeatureConfig()
 
-    // 创建AI消息（用于正式回复）
-    const aiMessage: Message = {
-      id: `assistant-${Date.now()}`,
-      role: 'assistant',
-      content: '',
-      timestamp: new Date()
-    }
+    // 构建生成上下文
+    const context = await buildGenerationContext(enhancedContext)
 
-    // 创建流式控制器
-    streamController = new AbortController()
+    // 创建AI消息
+    const { aiMessage, reasoningMessage } = createAIMessages()
 
-    // 获取前章节内容和最近章节概括
-    const previousChapterContent = await getPreviousChapterContent()
-    const recentChapterSummaries = await getRecentChapterSummaries()
+    // 准备聊天历史
+    const chatMessages = prepareChatHistory()
 
-    // 获取当前书籍的全局设定
-    const globalSettings = await getBookGlobalSettings()
+    // 流式生成回复
+    await streamAIResponse(context, featureConfig, chatMessages, aiMessage, reasoningMessage)
 
-    // 构建增强的章节细纲上下文
-    const context = {
-      content: '',
-      previousChapterContent,
-      recentChapterSummaries,
-      globalSettings,
-      selectedSettings: enhancedContext?.selectedSettings || []
-    }
-
-    // 创建独立的推理消息
-    const reasoningMessage: Message = {
-      id: `reasoning-${Date.now()}`,
-      role: 'assistant',
-      content: '',
-      timestamp: new Date(),
-      reasoningContent: '',
-      isReasoning: true,
-      showReasoning: true
-    }
-    messages.value.push(reasoningMessage)
-
-    // 将AI消息添加到消息列表
-    messages.value.push(aiMessage)
-
-    // 准备历史消息和上下文选项（排除推理消息，只保留user和assistant消息）
-    const chatMessages: ChatMessage[] = messages.value
-      .filter(msg => msg.role === 'user' || msg.role === 'assistant')
-      .map(msg => ({
-        role: msg.role,
-        content: msg.content
-      }))
-
-    const chapterOutlineOptions = {
-      contextLength: copilotSettings.value.contextLength,
-      messages: chatMessages
-    }
-
-    // 流式生成章节细纲
-    for await (const { type, text } of streamChapterOutline(context, featureConfig, chapterOutlineOptions)) {
-      if (streamController?.signal.aborted) {
-        break
-      }
-
-      if (type === 'reasoning') {
-        // 处理推理内容
-        reasoningMessage.reasoningContent += text
-      } else {
-        // 处理正式内容
-        aiMessage.content += text
-        if (reasoningMessage.isReasoning) {
-          // 第一次收到正式内容，停止推理状态
-          reasoningMessage.isReasoning = false
-          reasoningMessage.showReasoning = false
-        }
-      }
-
-      // 触发视图更新
-      messages.value = [...messages.value]
-    }
-
-    // 确保推理状态结束
-    reasoningMessage.isReasoning = false
-
-    // AI回复完成，自动保存对话
-    if (currentConversation.value) {
-      currentConversation.value.messages = [...messages.value]
-
-      // 只有在有实际消息内容时才保存对话
-      if (currentConversation.value.messages.length > 0) {
-        // 更新对话标题（基于第一条用户消息）
-        if (currentConversation.value.messages.filter(msg => msg.role === 'user').length === 1) {
-          currentConversation.value.title = ConversationStorage.generateTitle(currentConversation.value.messages)
-        }
-
-        // 检查是否应该添加新对话还是更新现有对话
-        const isExistingConversation = conversations.value.some(c => c.id === currentConversation.value!.id)
-
-        if (isExistingConversation) {
-          // 更新现有对话
-          ConversationStorage.updateConversation(props.bookId, currentConversation.value.id, currentConversation.value.messages)
-        } else {
-          // 添加新对话：使用unshift添加到列表顶部，然后保存到存储
-          conversations.value.unshift(currentConversation.value)
-          ConversationStorage.addConversation(props.bookId, currentConversation.value)
-        }
-      }
-    }
+    // 保存对话
+    await saveConversation()
 
   } catch (error) {
-    console.error('生成章节细纲失败:', error)
-
-    // 添加错误消息
-    const errorMessage: Message = {
-      id: `error-${Date.now()}`,
-      role: 'assistant',
-      content: `抱歉，生成章节细纲时出现错误：${error instanceof Error ? error.message : '未知错误'}`,
-      timestamp: new Date()
-    }
-    messages.value.push(errorMessage)
-
-    // 错误时也要保存对话
-    if (currentConversation.value) {
-      currentConversation.value.messages = [...messages.value]
-      if (currentConversation.value.messages.length > 0) {
-        // 更新对话标题（基于第一条用户消息）
-        if (currentConversation.value.messages.filter(msg => msg.role === 'user').length === 1) {
-          currentConversation.value.title = ConversationStorage.generateTitle(currentConversation.value.messages)
-        }
-
-        // 使用相同逻辑：更新现有对话而不是重复添加
-        const isExistingConversation = conversations.value.some(c => c.id === currentConversation.value!.id)
-        if (isExistingConversation) {
-          ConversationStorage.updateConversation(props.bookId, currentConversation.value.id, currentConversation.value.messages)
-        } else {
-          // 添加新对话：使用unshift添加到列表顶部，然后保存到存储
-          conversations.value.unshift(currentConversation.value)
-          ConversationStorage.addConversation(props.bookId, currentConversation.value)
-        }
-      }
-    }
+    await handleGenerationError(error)
   } finally {
     isLoading.value = false
     streamController = null
   }
 }
 
-// 处理引用资源
+// 获取功能配置
+const getFeatureConfig = async () => {
+  const config = await featureConfigsStore.getConfigByFeatureName('chapter_planning')
+  if (!config) {
+    throw new Error('章节细纲功能未配置')
+  }
+  return config
+}
+
+// 构建生成上下文
+const buildGenerationContext = async (enhancedContext?: EnhancedMessageContext) => {
+  const [previousChapterContent, recentChapterSummaries, globalSettings] = await Promise.all([
+    getPreviousChapterContent(),
+    getRecentChapterSummaries(),
+    getBookGlobalSettings()
+  ])
+
+  return {
+    content: '',
+    previousChapterContent,
+    recentChapterSummaries,
+    globalSettings,
+    selectedSettings: enhancedContext?.selectedSettings || []
+  }
+}
+
+// 创建AI消息
+const createAIMessages = () => {
+  const aiMessage: Message = {
+    id: `assistant-${Date.now()}`,
+    role: 'assistant',
+    content: '',
+    timestamp: new Date()
+  }
+
+  const reasoningMessage: Message = {
+    id: `reasoning-${Date.now()}`,
+    role: 'assistant',
+    content: '',
+    timestamp: new Date(),
+    reasoningContent: '',
+    isReasoning: true,
+    showReasoning: true
+  }
+
+  messages.value.push(reasoningMessage, aiMessage)
+  return { aiMessage, reasoningMessage }
+}
+
+// 准备聊天历史
+const prepareChatHistory = (): ChatMessage[] => {
+  return messages.value
+    .filter(msg => msg.role === 'user' || msg.role === 'assistant')
+    .map(msg => ({
+      role: msg.role,
+      content: msg.content
+    }))
+}
+
+// 流式生成回复
+const streamAIResponse = async (
+  context: any,
+  featureConfig: any,
+  chatMessages: ChatMessage[],
+  aiMessage: Message,
+  reasoningMessage: Message
+) => {
+  streamController = new AbortController()
+
+  const chapterOutlineOptions = {
+    contextLength: copilotSettings.value.contextLength,
+    messages: chatMessages
+  }
+
+  for await (const { type, text } of streamChapterOutline(context, featureConfig, chapterOutlineOptions)) {
+    if (streamController?.signal.aborted) break
+
+    if (type === 'reasoning') {
+      reasoningMessage.reasoningContent += text
+    } else {
+      aiMessage.content += text
+      if (reasoningMessage.isReasoning) {
+        reasoningMessage.isReasoning = false
+        reasoningMessage.showReasoning = false
+      }
+    }
+
+    // 触发视图更新
+    messages.value = [...messages.value]
+  }
+
+  reasoningMessage.isReasoning = false
+}
+
+// 保存对话
+const saveConversation = async () => {
+  if (!currentConversation.value || currentConversation.value.messages.length === 0) return
+
+  // 更新对话标题（基于第一条用户消息）
+  const userMessages = currentConversation.value.messages.filter(msg => msg.role === 'user')
+  if (userMessages.length === 1) {
+    currentConversation.value.title = ConversationStorage.generateTitle(currentConversation.value.messages)
+  }
+
+  // 更新当前对话的消息列表
+  currentConversation.value.messages = [...messages.value]
+
+  // 检查是否为现有对话
+  const isExistingConversation = conversations.value.some(c => c.id === currentConversation.value!.id)
+
+  if (isExistingConversation) {
+    ConversationStorage.updateConversation(props.bookId, currentConversation.value.id, currentConversation.value.messages)
+  } else {
+    conversations.value.unshift(currentConversation.value)
+    ConversationStorage.addConversation(props.bookId, currentConversation.value)
+  }
+}
+
+// 处理生成错误
+const handleGenerationError = async (error: any) => {
+  console.error('生成章节细纲失败:', error)
+
+  const errorMessage: Message = {
+    id: `error-${Date.now()}`,
+    role: 'assistant',
+    content: `抱歉，生成章节细纲时出现错误：${error instanceof Error ? error.message : '未知错误'}`,
+    timestamp: new Date()
+  }
+  messages.value.push(errorMessage)
+
+  // 错误时也要保存对话
+  await saveConversation()
+}
+
+// 事件处理
+// 引用资源
 const handleAtResource = () => {
   // 引用资源功能（现在由InputArea内部处理弹窗）
 }
 
-// 处理词条设定
+// 词条设定
 const handleEntrySetting = () => {
   console.log('词条设定功能')
   // 这里可以添加词条设定的具体逻辑
 }
 
-// 处理世界观
+// 世界观
 const handleWorldview = () => {
   console.log('世界观功能')
   // 这里可以添加世界观的具体逻辑
 }
 
-// 处理人物档案
+// 人物档案
 const handleCharacterProfile = () => {
   console.log('人物档案功能')
   // 这里可以添加人物档案的具体逻辑
 }
 
-// 处理设定选择
+// 设定选择
 const handleSettingsSelected = (settings: Setting[]) => {
   selectedSettings.value = settings
-  console.log('设定已更新:', settings)
 }
 
 // 清空对话
@@ -315,13 +332,13 @@ const handleStopConversation = () => {
   }
 }
 
-// 新建对话
+// 创建新对话
 const handleNewConversation = () => {
   handleClearConversation()
   currentConversation.value = null
 }
 
-// 选择对话
+// 选择历史对话
 const handleSelectConversation = (conversation: Conversation) => {
   currentConversation.value = conversation
   messages.value = [...conversation.messages]
@@ -337,12 +354,13 @@ const handleOpenSettings = () => {
   // 打开功能设置页面
 }
 
-// 处理设置保存
+// 保存设置
 const handleSettingsSaved = (settings: CopilotSettings) => {
   copilotSettings.value = settings
 }
 
-// 加载保存的设置
+// 数据加载
+// 加载设置
 const loadSavedSettings = () => {
   try {
     const settingsKey = `copilot-settings-${props.bookId}`
@@ -362,6 +380,7 @@ const loadStarredSettings = async () => {
   try {
     settingsLoading.value = true
     await settingsStore.loadSettings(props.bookId)
+
     // 过滤星标设定
     starredSettings.value = settingsStore.settings.filter(setting => setting.starred)
 
@@ -379,8 +398,8 @@ const loadConversations = () => {
   conversations.value = ConversationStorage.loadConversations(props.bookId)
 }
 
-// 组件挂载时初始化
-onMounted(() => {
+// 初始化组件
+const initializeComponent = () => {
   // 确保功能配置已加载
   if (featureConfigsStore.configs.length === 0) {
     featureConfigsStore.loadFeatureConfigs()
@@ -400,17 +419,24 @@ onMounted(() => {
   if (latestConversation) {
     handleSelectConversation(latestConversation)
   }
-})
+}
 
-// 监听设定存储变化，实时更新星标设定
+// 监听函数
+// 监听设定变化
 watch(() => settingsStore.settings, (newSettings) => {
+  // 更新星标设定列表
   starredSettings.value = newSettings.filter(setting => setting.starred)
 
-  // 同时更新选中的设定，确保星标设定的变化能实时反映
+  // 同步更新选中的设定
+  syncSelectedSettings(newSettings)
+}, { deep: true })
+
+// 同步设定状态
+const syncSelectedSettings = (newSettings: Setting[]) => {
   const newStarredSettings = newSettings.filter(setting => setting.starred)
   const currentStarredInSelected = selectedSettings.value.filter(setting => setting.starred)
 
-  // 如果有星标设定被移除，从selectedSettings中移除
+  // 移除已取消星标的设定
   currentStarredInSelected.forEach(starredSetting => {
     if (!newStarredSettings.some(s => s.id === starredSetting.id)) {
       const index = selectedSettings.value.findIndex(s => s.id === starredSetting.id)
@@ -420,14 +446,15 @@ watch(() => settingsStore.settings, (newSettings) => {
     }
   })
 
-  // 如果有新的星标设定，添加到selectedSettings中
+  // 添加新的星标设定
   newStarredSettings.forEach(starredSetting => {
     if (!selectedSettings.value.some(s => s.id === starredSetting.id)) {
       selectedSettings.value.push(starredSetting)
     }
   })
-}, { deep: true })
+}
 
+// 数据获取
 // 获取前一章节内容
 const getPreviousChapterContent = async (): Promise<string> => {
   try {
@@ -463,7 +490,7 @@ const getBookGlobalSettings = async (): Promise<string> => {
   }
 }
 
-// 获取最近5章的概括
+// 获取最近章节概括
 const getRecentChapterSummaries = async (): Promise<string[]> => {
   try {
     const currentChapter = chaptersStore.currentChapter
@@ -490,4 +517,10 @@ const getRecentChapterSummaries = async (): Promise<string[]> => {
     return []
   }
 }
+
+// 生命周期
+// 组件挂载
+onMounted(() => {
+  initializeComponent()
+})
 </script>
