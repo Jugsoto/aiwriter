@@ -22,11 +22,12 @@ import CopilotHeader from './copilot/CopilotHeader.vue'
 import MessageList from './copilot/MessageList.vue'
 import InputArea from './copilot/InputArea.vue'
 import { streamChapterOutline } from '@/services'
-import type { Message, Conversation } from '../../utils/types'
+import type { Message, Conversation, EnhancedMessageContext } from '../../utils/types'
 import type { CopilotSettings } from '../../utils/types'
 import type { ChatMessage } from '@/services/chat'
 import { useFeatureConfigsStore } from '@/stores/featureConfigs'
 import { useSettingsStore } from '@/stores/settings'
+import { useChaptersStore } from '@/stores/chapters'
 import { ConversationStorage } from '../../utils/conversationStorage'
 import type { Setting } from '@/electron.d'
 
@@ -50,6 +51,9 @@ const featureConfigsStore = useFeatureConfigsStore()
 // 设定存储
 const settingsStore = useSettingsStore()
 
+// 章节存储
+const chaptersStore = useChaptersStore()
+
 // Copilot设置
 const copilotSettings = ref<CopilotSettings>({
   contextLength: 3
@@ -64,14 +68,33 @@ const selectedSettings = ref<Setting[]>([])
 let streamController: AbortController | null = null
 
 // 处理发送消息
-const handleSendMessage = async (content: string) => {
-  if (!content.trim()) return
+const handleSendMessage = async (content: string | EnhancedMessageContext) => {
+  let userInput: string
+  let enhancedContext: EnhancedMessageContext | undefined
+
+  if (typeof content === 'string') {
+    userInput = content.trim()
+    enhancedContext = {
+      userInput,
+      selectedSettings: selectedSettings.value.map(setting => ({
+        name: setting.name,
+        content: setting.content,
+        status: setting.status,
+        type: setting.type
+      }))
+    }
+  } else {
+    enhancedContext = content
+    userInput = content.userInput
+  }
+
+  if (!userInput.trim()) return
 
   // 添加用户消息
   const userMessage: Message = {
     id: `user-${Date.now()}`,
     role: 'user',
-    content: content.trim(),
+    content: userInput.trim(),
     timestamp: new Date()
   }
   messages.value.push(userMessage)
@@ -85,11 +108,11 @@ const handleSendMessage = async (content: string) => {
   }
 
   // 开始生成回复
-  await generateResponse(content.trim())
+  await generateResponse(userInput.trim(), enhancedContext)
 }
 
 // 生成AI回复
-const generateResponse = async (userInput: string) => {
+const generateResponse = async (userInput: string, enhancedContext?: EnhancedMessageContext) => {
   isLoading.value = true
 
   try {
@@ -110,11 +133,18 @@ const generateResponse = async (userInput: string) => {
     // 创建流式控制器
     streamController = new AbortController()
 
-    // 构建章节细纲上下文
+    // 获取前章节内容和最近章节概括
+    const previousChapterContent = await getPreviousChapterContent()
+    const recentChapterSummaries = await getRecentChapterSummaries()
+
+    // 构建增强的章节细纲上下文
     const context = {
       bookTitle: '当前书籍', // 可以从store获取实际数据
       chapterTitle: userInput,
-      content: ''
+      content: '',
+      previousChapterContent,
+      recentChapterSummaries,
+      selectedSettings: enhancedContext?.selectedSettings || []
     }
 
     // 创建独立的推理消息
@@ -132,11 +162,13 @@ const generateResponse = async (userInput: string) => {
     // 将AI消息添加到消息列表
     messages.value.push(aiMessage)
 
-    // 准备历史消息和上下文选项
-    const chatMessages: ChatMessage[] = messages.value.map(msg => ({
-      role: msg.role,
-      content: msg.content
-    }))
+    // 准备历史消息和上下文选项（排除推理消息，只保留user和assistant消息）
+    const chatMessages: ChatMessage[] = messages.value
+      .filter(msg => msg.role === 'user' || msg.role === 'assistant')
+      .map(msg => ({
+        role: msg.role,
+        content: msg.content
+      }))
 
     const chapterOutlineOptions = {
       contextLength: copilotSettings.value.contextLength,
@@ -389,4 +421,50 @@ watch(() => settingsStore.settings, (newSettings) => {
     }
   })
 }, { deep: true })
+
+// 获取前一章节内容
+const getPreviousChapterContent = async (): Promise<string> => {
+  try {
+    const currentChapter = chaptersStore.currentChapter
+    if (!currentChapter) return ''
+
+    const previousChapter = chaptersStore.getPreviousChapter(currentChapter.id)
+    if (!previousChapter) return ''
+
+    // 获取前一章节的完整内容
+    const fullPreviousChapter = await chaptersStore.getChapter(previousChapter.id)
+    return fullPreviousChapter?.content || ''
+  } catch (error) {
+    console.error('获取前一章节内容失败:', error)
+    return ''
+  }
+}
+
+// 获取最近5章的概括
+const getRecentChapterSummaries = async (): Promise<string[]> => {
+  try {
+    const currentChapter = chaptersStore.currentChapter
+    if (!currentChapter) return []
+
+    // 获取所有章节并按order_index排序
+    const allChapters = [...chaptersStore.chapters].sort((a, b) => a.order_index - b.order_index)
+
+    // 找到当前章节的索引
+    const currentIndex = allChapters.findIndex(ch => ch.id === currentChapter.id)
+    if (currentIndex === -1) return []
+
+    // 获取前5章的概括（包括当前章节之前的章节）
+    const startIndex = Math.max(0, currentIndex - 5)
+    const recentChapters = allChapters.slice(startIndex, currentIndex)
+
+    // 返回这些章节的标题和概括
+    return recentChapters.map(chapter => {
+      const summary = chapter.summary?.trim() || '暂无概括'
+      return `第${chapter.order_index + 1}章 - ${chapter.title}: ${summary}`
+    })
+  } catch (error) {
+    console.error('获取最近章节概括失败:', error)
+    return []
+  }
+}
 </script>

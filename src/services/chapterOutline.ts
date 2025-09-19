@@ -6,6 +6,14 @@ export interface ChapterOutlineContext {
   bookTitle: string
   chapterTitle: string
   content?: string
+  previousChapterContent?: string
+  recentChapterSummaries?: string[]
+  selectedSettings?: Array<{
+    name: string
+    content: string
+    status: string
+    type: string
+  }>
 }
 
 export interface ChapterOutlineOptions {
@@ -38,10 +46,28 @@ export async function getChapterOutlineConfig(): Promise<FeatureConfig> {
  * 构建章节细纲的用户提示词
  */
 export function buildChapterOutlinePrompt(context: ChapterOutlineContext): string {
-  const { bookTitle, chapterTitle, content } = context
+  const { bookTitle, chapterTitle, content, previousChapterContent, recentChapterSummaries, selectedSettings } = context
 
   let prompt = `书籍标题：${bookTitle}
 章节标题：${chapterTitle}`
+
+  if (previousChapterContent) {
+    prompt += `\n\n前一章节内容（作为前文参考）：
+${previousChapterContent}`
+  }
+
+  if (recentChapterSummaries && recentChapterSummaries.length > 0) {
+    prompt += `\n\n最近${recentChapterSummaries.length}章章节概括（把握剧情发展）：
+${recentChapterSummaries.join('\n')}`
+  }
+
+  if (selectedSettings && selectedSettings.length > 0) {
+    prompt += `\n\n当前选中的设定信息：`
+    selectedSettings.forEach((setting, index) => {
+      prompt += `\n${index + 1}. [${setting.type}] ${setting.name} (${setting.status})
+内容：${setting.content}`
+    })
+  }
 
   if (content) {
     prompt += `\n\n现有内容：${content}`
@@ -65,19 +91,22 @@ export async function* streamChapterOutline(
 
   const userPrompt = buildChapterOutlinePrompt(context)
 
-  // 构建消息数组
+  // 构建消息数组 - 第一条是系统提示，第二条是包含后台信息的user消息
   const messages: ChatMessage[] = [
     { role: 'system', content: SYSTEM_PROMPT }
   ]
 
-  // 如果有历史消息且设置了上下文长度，则添加历史消息
+  // 如果有历史消息且设置了上下文长度，则添加历史消息（排除推理内容）
   if (options?.messages && options.contextLength && options.contextLength > 0) {
     const recentMessages = getRecentMessages(options.messages, options.contextLength)
     messages.push(...recentMessages)
   }
 
-  // 添加当前用户消息
-  messages.push({ role: 'user', content: userPrompt })
+  // 添加包含后台信息的user消息（作为第一条user消息）
+  messages.push({
+    role: 'user',
+    content: userPrompt
+  })
 
   // 流式生成章节细纲
   for await (const chunk of streamChatCompletion(messages, featureConfig)) {

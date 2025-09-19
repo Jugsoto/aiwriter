@@ -38,6 +38,18 @@ export interface InputAreaProps {
   selectedSettings?: any[]
 }
 
+export interface EnhancedMessageContext {
+  userInput: string
+  previousChapterContent?: string
+  recentChapterSummaries?: string[] // 最近5章的概括
+  selectedSettings?: Array<{
+    name: string
+    content: string
+    status: string
+    type: string
+  }>
+}
+
 export interface CopilotSettings {
   contextLength: number
 }

@@ -90,7 +90,7 @@
 <script setup lang="ts">
 import { ref, watch, onMounted, onUnmounted, nextTick } from 'vue'
 import { AtSign, Trash2, Square, Send, User, Globe, FileText, ChevronUp, ChevronDown, X } from 'lucide-vue-next'
-import type { InputAreaProps } from '../../../utils/types'
+import type { InputAreaProps, EnhancedMessageContext } from '../../../utils/types'
 import type { Setting } from '@/electron.d'
 import SettingSelectionModal from '@/components/modal/SettingSelectionModal.vue'
 
@@ -160,7 +160,18 @@ const handleWorldview = () => {
 
 const handleSend = () => {
   if (inputText.value.trim()) {
-    emit('send-message', inputText.value.trim())
+    // 构建增强的消息上下文
+    const enhancedContext: EnhancedMessageContext = {
+      userInput: inputText.value.trim(),
+      selectedSettings: selectedSettings.value.map(setting => ({
+        name: setting.name,
+        content: setting.content,
+        status: setting.status,
+        type: setting.type
+      }))
+    }
+
+    emit('send-message', enhancedContext)
     inputText.value = ''
     adjustTextareaHeight()
   }

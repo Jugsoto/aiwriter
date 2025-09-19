@@ -110,6 +110,34 @@ export async function* streamChatCompletion(
       throw new Error('模型不存在')
     }
 
+    // 记录详细的模型信息和发送内容
+    const logData = {
+      timestamp: new Date().toISOString(),
+      provider: {
+        id: provider.id,
+        name: provider.name,
+        url: provider.url
+      },
+      model: {
+        id: model.id,
+        name: model.model,
+        provider_id: model.provider_id
+      },
+      featureConfig: {
+        feature_name: featureConfig.feature_name,
+        temperature: options.temperature ?? featureConfig.temperature,
+        top_p: options.top_p ?? featureConfig.top_p,
+        max_tokens: options.max_tokens
+      },
+      messages: messages.map(msg => ({
+        role: msg.role,
+        content: msg.content.substring(0, 500) + (msg.content.length > 500 ? '...' : '') // 截断过长的内容
+      })),
+      fullMessages: messages // 完整的消息内容
+    }
+
+    console.log(JSON.stringify(logData, null, 2))
+
     const openai = new OpenAI({
       apiKey: provider.key,
       baseURL: provider.url,
