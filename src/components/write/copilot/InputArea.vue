@@ -1,16 +1,22 @@
 <template>
   <div class="border-t border-[var(--border-color)] bg-[var(--bg-secondary)]">
     <!-- 设定显示区域 -->
-    <div v-if="starredSettings && starredSettings.length > 0" class="px-3 pt-3">
+    <div v-if="selectedSettings && selectedSettings.length > 0" class="px-3 pt-3">
       <div class="relative">
         <div ref="settingsContainerRef" class="overflow-hidden transition-all duration-300"
           :style="{ maxHeight: expanded ? 'none' : '72px' }">
           <div class="flex flex-wrap gap-2">
-            <div v-for="setting in starredSettings" :key="setting.id"
-              class="inline-flex items-center px-2 py-1 text-xs border rounded-full cursor-pointer hover:bg-[var(--bg-secondary)] transition-colors"
+            <div v-for="setting in selectedSettings" :key="setting.id"
+              class="inline-flex items-center px-2 py-1 text-xs border rounded-full cursor-pointer hover:bg-[var(--bg-secondary)] transition-colors relative group"
               :style="{ borderColor: 'var(--theme-bg)' }" :title="setting.content" @click="handleSettingClick(setting)">
               <component :is="getSettingIcon(setting.type)" class="w-3 h-3 mr-1" />
               <span class="truncate max-w-[100px]">{{ setting.name }}</span>
+              <!-- 删除按钮（仅对非星标设定显示） -->
+              <button v-if="!setting.starred" @click.stop="removeSetting(setting)"
+                class="ml-1 p-1 text-[var(--text-secondary)] hover:text-red-500 hover:bg-[var(--hover-bg)] rounded-md transition-colors"
+                title="移除设定">
+                <X class="w-3 h-3" />
+              </button>
             </div>
           </div>
         </div>
@@ -74,17 +80,22 @@
         <Send class="w-4 h-4" />
       </button>
     </div>
+
+    <!-- 设定选择模态窗 -->
+    <SettingSelectionModal v-if="bookId" v-model:visible="showSettingSelectionModal" :book-id="bookId"
+      :setting-type="currentSettingType" :selected-settings="selectedSettings" @confirm="handleSettingsSelected" />
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, watch, onMounted, onUnmounted, nextTick } from 'vue'
-import { AtSign, Trash2, Square, Send, User, Globe, FileText, ChevronUp, ChevronDown } from 'lucide-vue-next'
+import { AtSign, Trash2, Square, Send, User, Globe, FileText, ChevronUp, ChevronDown, X } from 'lucide-vue-next'
 import type { InputAreaProps } from '../../../utils/types'
 import type { Setting } from '@/electron.d'
+import SettingSelectionModal from '@/components/modal/SettingSelectionModal.vue'
 
 const props = defineProps<InputAreaProps>()
-const emit = defineEmits(['send-message', 'at-resource', 'clear-conversation', 'stop-conversation', 'entry-setting', 'worldview', 'character-profile', 'settings-updated'])
+const emit = defineEmits(['send-message', 'at-resource', 'clear-conversation', 'stop-conversation', 'entry-setting', 'worldview', 'character-profile', 'settings-updated', 'settings-selected'])
 
 const inputText = ref('')
 const inputRef = ref<HTMLTextAreaElement>()
@@ -93,12 +104,22 @@ const showAtModal = ref(false)
 const expanded = ref(false)
 const settingsContainerRef = ref<HTMLElement>()
 const showExpandButton = ref(false)
+const showSettingSelectionModal = ref(false)
+const currentSettingType = ref<'character' | 'worldview' | 'entry'>('entry')
+const selectedSettings = ref<Setting[]>([])
 
 // 监听设定数量变化，检查是否需要显示展开按钮
-watch(() => props.starredSettings, async () => {
+watch(() => props.selectedSettings, async () => {
   await nextTick()
   checkExpandButton()
 }, { deep: true })
+
+// 监听selectedSettings变化
+watch(() => props.selectedSettings, (newSettings) => {
+  if (newSettings) {
+    selectedSettings.value = [...newSettings]
+  }
+}, { immediate: true, deep: true })
 
 // 检查是否需要显示展开按钮
 const checkExpandButton = () => {
@@ -133,6 +154,20 @@ const handleSettingClick = (setting: Setting) => {
   }
 }
 
+// 处理词条设定
+const handleEntrySetting = () => {
+  currentSettingType.value = 'entry'
+  showSettingSelectionModal.value = true
+  showAtModal.value = false
+}
+
+// 处理世界观
+const handleWorldview = () => {
+  currentSettingType.value = 'worldview'
+  showSettingSelectionModal.value = true
+  showAtModal.value = false
+}
+
 const handleSend = () => {
   if (inputText.value.trim()) {
     emit('send-message', inputText.value.trim())
@@ -145,19 +180,25 @@ const handleAt = () => {
   showAtModal.value = !showAtModal.value
 }
 
-const handleEntrySetting = () => {
-  emit('entry-setting')
-  showAtModal.value = false
-}
-
-const handleWorldview = () => {
-  emit('worldview')
-  showAtModal.value = false
-}
-
 const handleCharacterProfile = () => {
-  emit('character-profile')
+  currentSettingType.value = 'character'
+  showSettingSelectionModal.value = true
   showAtModal.value = false
+}
+
+// 处理设定选择
+const handleSettingsSelected = (settings: Setting[]) => {
+  selectedSettings.value = settings
+  emit('settings-selected', settings)
+}
+
+// 移除设定
+const removeSetting = (setting: Setting) => {
+  const index = selectedSettings.value.findIndex(s => s.id === setting.id)
+  if (index > -1) {
+    selectedSettings.value.splice(index, 1)
+    emit('settings-selected', selectedSettings.value)
+  }
 }
 
 // 点击外部关闭弹窗

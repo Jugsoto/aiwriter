@@ -34,6 +34,8 @@ export interface InputAreaProps {
   disabled: boolean
   starredSettings?: any[]
   settingsLoading?: boolean
+  bookId?: number
+  selectedSettings?: any[]
 }
 
 export interface CopilotSettings {

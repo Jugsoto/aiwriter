@@ -8,9 +8,11 @@
     <MessageList :messages="messages" :is-loading="isLoading" />
 
     <InputArea :disabled="isLoading" :starred-settings="starredSettings" :settings-loading="settingsLoading"
-      @send-message="handleSendMessage" @at-resource="handleAtResource" @clear-conversation="handleClearConversation"
+      :book-id="bookId" :selected-settings="selectedSettings" @send-message="handleSendMessage"
+      @at-resource="handleAtResource" @clear-conversation="handleClearConversation"
       @stop-conversation="handleStopConversation" @entry-setting="handleEntrySetting" @worldview="handleWorldview"
-      @character-profile="handleCharacterProfile" @settings-updated="loadStarredSettings" ref="inputAreaRef" />
+      @character-profile="handleCharacterProfile" @settings-updated="loadStarredSettings"
+      @settings-selected="handleSettingsSelected" ref="inputAreaRef" />
   </div>
 </template>
 
@@ -56,6 +58,7 @@ const copilotSettings = ref<CopilotSettings>({
 // 星标设定
 const starredSettings = ref<Setting[]>([])
 const settingsLoading = ref(false)
+const selectedSettings = ref<Setting[]>([])
 
 // 流式响应控制器
 let streamController: AbortController | null = null
@@ -252,6 +255,12 @@ const handleCharacterProfile = () => {
   // 这里可以添加人物档案的具体逻辑
 }
 
+// 处理设定选择
+const handleSettingsSelected = (settings: Setting[]) => {
+  selectedSettings.value = settings
+  console.log('设定已更新:', settings)
+}
+
 // 清空对话
 const handleClearConversation = () => {
   messages.value = []
@@ -317,6 +326,9 @@ const loadStarredSettings = async () => {
     await settingsStore.loadSettings(props.bookId)
     // 过滤星标设定
     starredSettings.value = settingsStore.settings.filter(setting => setting.starred)
+
+    // 初始化选中的设定（包含所有星标设定）
+    selectedSettings.value = [...starredSettings.value]
   } catch (error) {
     console.error('加载星标设定失败:', error)
   } finally {
@@ -355,5 +367,26 @@ onMounted(() => {
 // 监听设定存储变化，实时更新星标设定
 watch(() => settingsStore.settings, (newSettings) => {
   starredSettings.value = newSettings.filter(setting => setting.starred)
+
+  // 同时更新选中的设定，确保星标设定的变化能实时反映
+  const newStarredSettings = newSettings.filter(setting => setting.starred)
+  const currentStarredInSelected = selectedSettings.value.filter(setting => setting.starred)
+
+  // 如果有星标设定被移除，从selectedSettings中移除
+  currentStarredInSelected.forEach(starredSetting => {
+    if (!newStarredSettings.some(s => s.id === starredSetting.id)) {
+      const index = selectedSettings.value.findIndex(s => s.id === starredSetting.id)
+      if (index > -1) {
+        selectedSettings.value.splice(index, 1)
+      }
+    }
+  })
+
+  // 如果有新的星标设定，添加到selectedSettings中
+  newStarredSettings.forEach(starredSetting => {
+    if (!selectedSettings.value.some(s => s.id === starredSetting.id)) {
+      selectedSettings.value.push(starredSetting)
+    }
+  })
 }, { deep: true })
 </script>
