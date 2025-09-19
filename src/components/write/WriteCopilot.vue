@@ -8,7 +8,9 @@
     <MessageList :messages="messages" :is-loading="isLoading" />
 
     <InputArea :disabled="isLoading" @send-message="handleSendMessage" @at-resource="handleAtResource"
-      @clear-conversation="handleClearConversation" @stop-conversation="handleStopConversation" ref="inputAreaRef" />
+      @clear-conversation="handleClearConversation" @stop-conversation="handleStopConversation"
+      @entry-setting="handleEntrySetting" @worldview="handleWorldview" @character-profile="handleCharacterProfile"
+      ref="inputAreaRef" />
   </div>
 </template>
 
@@ -220,7 +222,25 @@ const generateResponse = async (userInput: string) => {
 
 // 处理引用资源
 const handleAtResource = () => {
-  // 引用资源功能
+  // 引用资源功能（现在由InputArea内部处理弹窗）
+}
+
+// 处理词条设定
+const handleEntrySetting = () => {
+  console.log('词条设定功能')
+  // 这里可以添加词条设定的具体逻辑
+}
+
+// 处理世界观
+const handleWorldview = () => {
+  console.log('世界观功能')
+  // 这里可以添加世界观的具体逻辑
+}
+
+// 处理人物档案
+const handleCharacterProfile = () => {
+  console.log('人物档案功能')
+  // 这里可以添加人物档案的具体逻辑
 }
 
 // 清空对话

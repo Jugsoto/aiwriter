@@ -11,11 +11,30 @@
 
     <!-- 操作栏 -->
     <div class="flex items-center justify-between px-3 py-2">
-      <div class="flex items-center gap-2">
-        <button @click="handleAt" title="引用资源"
+      <div class="flex items-center gap-2 relative">
+        <button @click="handleAt" title="引用资源" ref="atButtonRef"
           class="p-2 border border-[var(--border-color)] bg-[var(--bg-primary)] rounded-lg hover:bg-[var(--bg-secondary)] transition-colors">
           <AtSign class="w-4 h-4" />
         </button>
+
+        <!-- 引用资源弹窗 -->
+        <div v-if="showAtModal"
+          class="absolute bottom-full left-0 mb-2 bg-[var(--bg-primary)] border border-[var(--border-color)] rounded-lg shadow-lg p-2 min-w-[120px] z-10">
+          <div class="flex flex-col gap-1">
+            <button @click="handleEntrySetting"
+              class="px-3 py-2 text-sm text-left hover:bg-[var(--bg-secondary)] rounded transition-colors">
+              词条设定
+            </button>
+            <button @click="handleWorldview"
+              class="px-3 py-2 text-sm text-left hover:bg-[var(--bg-secondary)] rounded transition-colors">
+              世界观
+            </button>
+            <button @click="handleCharacterProfile"
+              class="px-3 py-2 text-sm text-left hover:bg-[var(--bg-secondary)] rounded transition-colors">
+              人物档案
+            </button>
+          </div>
+        </div>
         <button @click="handleClear" title="清空对话内容"
           class="p-2 border border-[var(--border-color)] bg-[var(--bg-primary)] rounded-lg hover:bg-[var(--bg-secondary)] transition-colors">
           <Trash2 class="w-4 h-4" />
@@ -34,15 +53,17 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { ref, watch, onMounted, onUnmounted } from 'vue'
 import { AtSign, Trash2, Square, Send } from 'lucide-vue-next'
 import type { InputAreaProps } from '../../../utils/types'
 
 defineProps<InputAreaProps>()
-const emit = defineEmits(['send-message', 'at-resource', 'clear-conversation', 'stop-conversation'])
+const emit = defineEmits(['send-message', 'at-resource', 'clear-conversation', 'stop-conversation', 'entry-setting', 'worldview', 'character-profile'])
 
 const inputText = ref('')
 const inputRef = ref<HTMLTextAreaElement>()
+const atButtonRef = ref<HTMLButtonElement>()
+const showAtModal = ref(false)
 
 const handleSend = () => {
   if (inputText.value.trim()) {
@@ -53,7 +74,32 @@ const handleSend = () => {
 }
 
 const handleAt = () => {
-  emit('at-resource')
+  showAtModal.value = !showAtModal.value
+}
+
+const handleEntrySetting = () => {
+  emit('entry-setting')
+  showAtModal.value = false
+}
+
+const handleWorldview = () => {
+  emit('worldview')
+  showAtModal.value = false
+}
+
+const handleCharacterProfile = () => {
+  emit('character-profile')
+  showAtModal.value = false
+}
+
+// 点击外部关闭弹窗
+const handleClickOutside = (event: MouseEvent) => {
+  if (showAtModal.value && atButtonRef.value && !atButtonRef.value.contains(event.target as Node)) {
+    const modalElement = (event.target as HTMLElement).closest('.absolute.bottom-full')
+    if (!modalElement) {
+      showAtModal.value = false
+    }
+  }
 }
 
 const handleClear = () => {
@@ -81,6 +127,15 @@ watch(inputText, () => {
 const focusInput = () => {
   inputRef.value?.focus()
 }
+
+// 生命周期钩子
+onMounted(() => {
+  document.addEventListener('click', handleClickOutside)
+})
+
+onUnmounted(() => {
+  document.removeEventListener('click', handleClickOutside)
+})
 
 defineExpose({
   focusInput
