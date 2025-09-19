@@ -7,8 +7,8 @@
           :style="{ maxHeight: expanded ? 'none' : '72px' }">
           <div class="flex flex-wrap gap-2">
             <div v-for="setting in selectedSettings" :key="setting.id"
-              class="inline-flex items-center px-2 py-1 text-xs border rounded-full cursor-pointer hover:bg-[var(--bg-secondary)] transition-colors relative group"
-              :style="{ borderColor: 'var(--theme-bg)' }" :title="setting.content" @click="handleSettingClick(setting)">
+              class="inline-flex items-center px-2 py-1 text-xs border rounded-full hover:bg-[var(--bg-secondary)] transition-colors relative group"
+              :style="{ borderColor: 'var(--theme-bg)' }" :title="setting.content">
               <component :is="getSettingIcon(setting.type)" class="w-3 h-3 mr-1" />
               <span class="truncate max-w-[100px]">{{ setting.name }}</span>
               <!-- 删除按钮（仅对非星标设定显示） -->
@@ -143,16 +143,6 @@ const getSettingIcon = (type: string) => {
   return icons[type as keyof typeof icons] || FileText
 }
 
-// 处理设定点击
-const handleSettingClick = (setting: Setting) => {
-  // 将设定内容插入到输入框
-  const settingText = `【${setting.name}】${setting.content}`
-  if (inputText.value) {
-    inputText.value += `\n${settingText}`
-  } else {
-    inputText.value = settingText
-  }
-}
 
 // 处理词条设定
 const handleEntrySetting = () => {
