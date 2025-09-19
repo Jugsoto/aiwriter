@@ -3,11 +3,10 @@ import type { FeatureConfig } from '@/electron.d'
 import { useFeatureConfigsStore } from '@/stores/featureConfigs'
 
 export interface ChapterOutlineContext {
-  bookTitle: string
-  chapterTitle: string
   content?: string
   previousChapterContent?: string
   recentChapterSummaries?: string[]
+  globalSettings?: string
   selectedSettings?: Array<{
     name: string
     content: string
@@ -46,26 +45,39 @@ export async function getChapterOutlineConfig(): Promise<FeatureConfig> {
  * 构建章节细纲的用户提示词
  */
 export function buildChapterOutlinePrompt(context: ChapterOutlineContext): string {
-  const { bookTitle, chapterTitle, content, previousChapterContent, recentChapterSummaries, selectedSettings } = context
+  const { content, previousChapterContent, recentChapterSummaries, globalSettings, selectedSettings } = context
 
-  let prompt = `书籍标题：${bookTitle}
-章节标题：${chapterTitle}`
+  let prompt = ''
+
+  if (globalSettings) {
+    prompt += `全局设定（世界观背景）：
+${globalSettings}`
+  }
 
   if (previousChapterContent) {
-    prompt += `\n\n前一章节内容（作为前文参考）：
+    prompt += `\n前一章节内容（作为前文参考）：
 ${previousChapterContent}`
   }
 
   if (recentChapterSummaries && recentChapterSummaries.length > 0) {
-    prompt += `\n\n最近${recentChapterSummaries.length}章章节概括（把握剧情发展）：
+    prompt += `\n最近${recentChapterSummaries.length}章章节概括（把握剧情发展）：
 ${recentChapterSummaries.join('\n')}`
   }
 
   if (selectedSettings && selectedSettings.length > 0) {
-    prompt += `\n\n当前选中的设定信息：`
+    // 设定类型中文映射
+    const typeMap: Record<string, string> = {
+      'character': '人物档案',
+      'worldview': '世界观设定',
+      'entry': '其他设定'
+    }
+    
+    prompt += `\n当前选中的设定信息：`
     selectedSettings.forEach((setting, index) => {
-      prompt += `\n${index + 1}. [${setting.type}] ${setting.name} (${setting.status})
-内容：${setting.content}`
+      const chineseType = typeMap[setting.type] || setting.type
+      prompt += `\n${index + 1}. [${chineseType}] ${setting.name}
+      当前状态：${setting.status}
+      全部设定：${setting.content}`
     })
   }
 

@@ -136,7 +136,7 @@ export async function* streamChatCompletion(
       fullMessages: messages // 完整的消息内容
     }
 
-    console.log(JSON.stringify(logData, null, 2))
+    console.log(logData)
 
     const openai = new OpenAI({
       apiKey: provider.key,

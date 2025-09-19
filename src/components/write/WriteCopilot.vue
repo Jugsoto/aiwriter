@@ -28,6 +28,7 @@ import type { ChatMessage } from '@/services/chat'
 import { useFeatureConfigsStore } from '@/stores/featureConfigs'
 import { useSettingsStore } from '@/stores/settings'
 import { useChaptersStore } from '@/stores/chapters'
+import { useBooksStore } from '@/stores/books'
 import { ConversationStorage } from '../../utils/conversationStorage'
 import type { Setting } from '@/electron.d'
 
@@ -53,6 +54,9 @@ const settingsStore = useSettingsStore()
 
 // 章节存储
 const chaptersStore = useChaptersStore()
+
+// 书籍存储
+const booksStore = useBooksStore()
 
 // Copilot设置
 const copilotSettings = ref<CopilotSettings>({
@@ -112,7 +116,7 @@ const handleSendMessage = async (content: string | EnhancedMessageContext) => {
 }
 
 // 生成AI回复
-const generateResponse = async (userInput: string, enhancedContext?: EnhancedMessageContext) => {
+const generateResponse = async (_userInput: string, enhancedContext?: EnhancedMessageContext) => {
   isLoading.value = true
 
   try {
@@ -137,13 +141,15 @@ const generateResponse = async (userInput: string, enhancedContext?: EnhancedMes
     const previousChapterContent = await getPreviousChapterContent()
     const recentChapterSummaries = await getRecentChapterSummaries()
 
+    // 获取当前书籍的全局设定
+    const globalSettings = await getBookGlobalSettings()
+
     // 构建增强的章节细纲上下文
     const context = {
-      bookTitle: '当前书籍', // 可以从store获取实际数据
-      chapterTitle: userInput,
       content: '',
       previousChapterContent,
       recentChapterSummaries,
+      globalSettings,
       selectedSettings: enhancedContext?.selectedSettings || []
     }
 
@@ -436,6 +442,23 @@ const getPreviousChapterContent = async (): Promise<string> => {
     return fullPreviousChapter?.content || ''
   } catch (error) {
     console.error('获取前一章节内容失败:', error)
+    return ''
+  }
+}
+
+// 获取书籍全局设定
+const getBookGlobalSettings = async (): Promise<string> => {
+  try {
+    // 确保书籍数据已加载
+    if (booksStore.books.length === 0) {
+      await booksStore.loadBooks()
+    }
+
+    // 查找当前书籍
+    const currentBook = booksStore.books.find(book => book.id === props.bookId)
+    return currentBook?.global_settings || ''
+  } catch (error) {
+    console.error('获取书籍全局设定失败:', error)
     return ''
   }
 }
