@@ -1,166 +1,164 @@
 <template>
-  <div class="p-6">
-    <div class="space-y-6 bg-[var(--bg-primary)] p-6 rounded-xl border border-[var(--border-color)]">
-      <div>
-        <h3 class="text-lg font-semibold text-[var(--text-primary)] mb-4">用量统计</h3>
-
-        <!-- 汇总信息卡片 -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-          <div class="bg-[var(--bg-secondary)] rounded-lg p-4 border border-[var(--border-color)]">
-            <div class="text-sm text-[var(--text-secondary)] mb-1">总调用次数</div>
-            <div class="text-2xl font-bold text-[var(--text-primary)]">{{ summary.total_calls }}</div>
-          </div>
-          <div class="bg-[var(--bg-secondary)] rounded-lg p-4 border border-[var(--border-color)]">
-            <div class="text-sm text-[var(--text-secondary)] mb-1">总输入Token</div>
-            <div class="text-2xl font-bold text-[var(--text-primary)]">{{ formatNumber(summary.total_input_tokens) }}
-            </div>
-          </div>
-          <div class="bg-[var(--bg-secondary)] rounded-lg p-4 border border-[var(--border-color)]">
-            <div class="text-sm text-[var(--text-secondary)] mb-1">总输出Token</div>
-            <div class="text-2xl font-bold text-[var(--text-primary)]">{{ formatNumber(summary.total_output_tokens) }}
-            </div>
-          </div>
-          <div class="bg-[var(--bg-secondary)] rounded-lg p-4 border border-[var(--border-color)]">
-            <div class="text-sm text-[var(--text-secondary)] mb-1">总Token数</div>
-            <div class="text-2xl font-bold text-[var(--text-primary)]">{{ formatNumber(summary.total_tokens) }}</div>
+  <div class="p-6 space-y-6">
+    <!-- 使用总览卡片 -->
+    <div class="bg-[var(--bg-primary)] p-6 rounded-xl border border-[var(--border-color)]">
+      <h3 class="text-lg font-semibold text-[var(--text-primary)] mb-4">使用总览</h3>
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="bg-[var(--bg-secondary)] rounded-lg p-4 border border-[var(--border-color)]">
+          <div class="text-sm text-[var(--text-secondary)] mb-1">总调用次数</div>
+          <div class="text-2xl font-bold text-[var(--text-primary)]">{{ summary.total_calls }}</div>
+        </div>
+        <div class="bg-[var(--bg-secondary)] rounded-lg p-4 border border-[var(--border-color)]">
+          <div class="text-sm text-[var(--text-secondary)] mb-1">总输入Token</div>
+          <div class="text-2xl font-bold text-[var(--text-primary)]">{{ formatNumber(summary.total_input_tokens) }}
           </div>
         </div>
-
-        <!-- 图表区域 -->
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-          <!-- 每日用量趋势图 -->
-          <div class="bg-[var(--bg-secondary)] rounded-lg p-4 border border-[var(--border-color)]">
-            <div class="flex items-center justify-between mb-3">
-              <h4 class="text-md font-medium text-[var(--text-primary)]">每日用量趋势</h4>
-              <div class="flex gap-1">
-                <button @click="setTrendDays(7)" :class="[
-                  'px-3 py-1 text-xs rounded transition-all',
-                  trendDays === 7 ? 'text-white bg-[var(--theme-bg)]' : 'text-[var(--text-secondary)] border border-[var(--border-color)] hover:bg-[var(--bg-secondary)]'
-                ]">
-                  7天
-                </button>
-                <button @click="setTrendDays(15)" :class="[
-                  'px-3 py-1 text-xs rounded transition-all',
-                  trendDays === 15 ? 'text-white bg-[var(--theme-bg)]' : 'text-[var(--text-secondary)] border border-[var(--border-color)] hover:bg-[var(--bg-secondary)]'
-                ]">
-                  15天
-                </button>
-                <button @click="setTrendDays(30)" :class="[
-                  'px-3 py-1 text-xs rounded transition-all',
-                  trendDays === 30 ? 'text-white bg-[var(--theme-bg)]' : 'text-[var(--text-secondary)] border border-[var(--border-color)] hover:bg-[var(--bg-secondary)]'
-                ]">
-                  30天
-                </button>
-              </div>
-            </div>
-            <div ref="dailyTrendChart" class="h-64"></div>
-          </div>
-
-          <!-- 供应商分布饼图 -->
-          <div class="bg-[var(--bg-secondary)] rounded-lg p-4 border border-[var(--border-color)]">
-            <h4 class="text-md font-medium text-[var(--text-primary)] mb-3">供应商Token分布</h4>
-            <div ref="providerPieChart" class="h-64"></div>
-          </div>
-
-          <!-- 模型使用对比柱状图 -->
-          <div class="bg-[var(--bg-secondary)] rounded-lg p-4 border border-[var(--border-color)]">
-            <h4 class="text-md font-medium text-[var(--text-primary)] mb-3">模型使用对比</h4>
-            <div ref="modelBarChart" class="h-64"></div>
-          </div>
-
-          <!-- 功能Token分布 -->
-          <div class="bg-[var(--bg-secondary)] rounded-lg p-4 border border-[var(--border-color)]">
-            <h4 class="text-md font-medium text-[var(--text-primary)] mb-3">功能Token分布</h4>
-            <div ref="tokenTypeChart" class="h-64"></div>
+        <div class="bg-[var(--bg-secondary)] rounded-lg p-4 border border-[var(--border-color)]">
+          <div class="text-sm text-[var(--text-secondary)] mb-1">总输出Token</div>
+          <div class="text-2xl font-bold text-[var(--text-primary)]">{{ formatNumber(summary.total_output_tokens) }}
           </div>
         </div>
-
-        <!-- 时间范围选择 -->
-        <div class="flex items-center gap-4 mb-6">
-          <div class="flex items-center gap-2">
-            <label class="text-sm text-[var(--text-secondary)]">开始时间:</label>
-            <input v-model="startDate" type="date"
-              class="px-3 py-2 text-sm bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-lg text-[var(--text-primary)]">
-          </div>
-          <div class="flex items-center gap-2">
-            <label class="text-sm text-[var(--text-secondary)]">结束时间:</label>
-            <input v-model="endDate" type="date"
-              class="px-3 py-2 text-sm bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-lg text-[var(--text-primary)]">
-          </div>
-          <button @click="filterByDateRange"
-            class="px-4 py-2 text-sm text-white bg-[var(--theme-bg)] hover:bg-primary transition-all rounded-lg">
-            筛选
-          </button>
-          <button @click="resetDateFilter"
-            class="px-4 py-2 text-sm text-[var(--text-secondary)] border border-[var(--border-color)] hover:bg-[var(--bg-secondary)] transition-all rounded-lg">
-            重置
-          </button>
+        <div class="bg-[var(--bg-secondary)] rounded-lg p-4 border border-[var(--border-color)]">
+          <div class="text-sm text-[var(--text-secondary)] mb-1">总Token数</div>
+          <div class="text-2xl font-bold text-[var(--text-primary)]">{{ formatNumber(summary.total_tokens) }}</div>
         </div>
+      </div>
+    </div>
 
-        <!-- 详细记录表格 -->
-        <div>
+    <!-- 图表信息卡片 -->
+    <div class="bg-[var(--bg-primary)] p-6 rounded-xl border border-[var(--border-color)]">
+      <h3 class="text-lg font-semibold text-[var(--text-primary)] mb-4">图表信息</h3>
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- 每日用量趋势图 -->
+        <div class="bg-[var(--bg-secondary)] rounded-lg p-4 border border-[var(--border-color)]">
           <div class="flex items-center justify-between mb-3">
-            <h4 class="text-md font-medium text-[var(--text-primary)]">详细记录</h4>
-            <button @click="loadUsageStatistics"
-              class="px-3 py-1.5 text-xs text-white bg-[var(--theme-bg)] hover:bg-primary transition-all rounded-lg">
-              刷新
-            </button>
-          </div>
-
-          <div class="overflow-x-auto">
-            <table class="w-full text-sm">
-              <thead>
-                <tr class="border-b border-[var(--border-color)]">
-                  <th class="text-left py-2 px-3 text-[var(--text-secondary)]">时间</th>
-                  <th class="text-left py-2 px-3 text-[var(--text-secondary)]">供应商/模型</th>
-                  <th class="text-left py-2 px-3 text-[var(--text-secondary)]">功能</th>
-                  <th class="text-right py-2 px-3 text-[var(--text-secondary)]">输入Token</th>
-                  <th class="text-right py-2 px-3 text-[var(--text-secondary)]">输出Token</th>
-                  <th class="text-right py-2 px-3 text-[var(--text-secondary)]">总计</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-for="stat in paginatedStatistics" :key="stat.id"
-                  class="border-b border-[var(--border-color)] hover:bg-[var(--bg-secondary)]">
-                  <td class="py-2 px-3 text-[var(--text-primary)]">{{ formatDateTime(stat.timestamp) }}</td>
-                  <td class="py-2 px-3 text-[var(--text-primary)]">
-                    <div class="text-xs">{{ stat.provider_name }}</div>
-                    <div class="text-xs text-[var(--text-secondary)]">{{ stat.model_name }}</div>
-                  </td>
-                  <td class="py-2 px-3 text-[var(--text-primary)]">{{ stat.feature_name }}</td>
-                  <td class="py-2 px-3 text-right text-[var(--text-primary)]">{{ formatNumber(stat.input_tokens) }}</td>
-                  <td class="py-2 px-3 text-right text-[var(--text-primary)]">{{ formatNumber(stat.output_tokens) }}
-                  </td>
-                  <td class="py-2 px-3 text-right text-[var(--text-primary)] font-medium">{{
-                    formatNumber(stat.total_tokens) }}</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-
-          <!-- 分页 -->
-          <div v-if="totalPages > 1" class="flex items-center justify-between mt-4">
-            <div class="text-sm text-[var(--text-secondary)]">
-              显示 {{ (currentPage - 1) * pageSize + 1 }} - {{ Math.min(currentPage * pageSize, usageStatistics.length) }}
-              条，共 {{ usageStatistics.length }} 条
-            </div>
-            <div class="flex items-center gap-2">
-              <button @click="currentPage--" :disabled="currentPage <= 1"
-                class="px-3 py-1 text-sm border border-[var(--border-color)] rounded hover:bg-[var(--bg-secondary)] disabled:opacity-50">
-                上一页
+            <h4 class="text-md font-medium text-[var(--text-primary)]">每日用量趋势</h4>
+            <div class="flex gap-1">
+              <button @click="setTrendDays(7)" :class="[
+                'px-3 py-1 text-xs rounded transition-all',
+                trendDays === 7 ? 'text-white bg-[var(--theme-bg)]' : 'text-[var(--text-secondary)] border border-[var(--border-color)] hover:bg-[var(--bg-secondary)]'
+              ]">
+                7天
               </button>
-              <span class="text-sm text-[var(--text-primary)]">{{ currentPage }} / {{ totalPages }}</span>
-              <button @click="currentPage++" :disabled="currentPage >= totalPages"
-                class="px-3 py-1 text-sm border border-[var(--border-color)] rounded hover:bg-[var(--bg-secondary)] disabled:opacity-50">
-                下一页
+              <button @click="setTrendDays(15)" :class="[
+                'px-3 py-1 text-xs rounded transition-all',
+                trendDays === 15 ? 'text-white bg-[var(--theme-bg)]' : 'text-[var(--text-secondary)] border border-[var(--border-color)] hover:bg-[var(--bg-secondary)]'
+              ]">
+                15天
+              </button>
+              <button @click="setTrendDays(30)" :class="[
+                'px-3 py-1 text-xs rounded transition-all',
+                trendDays === 30 ? 'text-white bg-[var(--theme-bg)]' : 'text-[var(--text-secondary)] border border-[var(--border-color)] hover:bg-[var(--bg-secondary)]'
+              ]">
+                30天
               </button>
             </div>
           </div>
-
-          <div v-if="usageStatistics.length === 0" class="text-center py-8 text-[var(--text-secondary)]">
-            暂无用量记录
-          </div>
+          <div ref="dailyTrendChart" class="h-64"></div>
         </div>
+
+        <!-- 供应商分布饼图 -->
+        <div class="bg-[var(--bg-secondary)] rounded-lg p-4 border border-[var(--border-color)]">
+          <h4 class="text-md font-medium text-[var(--text-primary)] mb-3">供应商Token分布</h4>
+          <div ref="providerPieChart" class="h-64"></div>
+        </div>
+
+        <!-- 模型使用对比柱状图 -->
+        <div class="bg-[var(--bg-secondary)] rounded-lg p-4 border border-[var(--border-color)]">
+          <h4 class="text-md font-medium text-[var(--text-primary)] mb-3">模型使用对比</h4>
+          <div ref="modelBarChart" class="h-64"></div>
+        </div>
+
+        <!-- 功能Token分布 -->
+        <div class="bg-[var(--bg-secondary)] rounded-lg p-4 border border-[var(--border-color)]">
+          <h4 class="text-md font-medium text-[var(--text-primary)] mb-3">功能Token分布</h4>
+          <div ref="tokenTypeChart" class="h-64"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 详细记录卡片 -->
+    <div class="bg-[var(--bg-primary)] p-6 rounded-xl border border-[var(--border-color)]">
+      <h3 class="text-lg font-semibold text-[var(--text-primary)] mb-4">详细记录</h3>
+
+      <!-- 时间范围选择 -->
+      <div class="flex items-center gap-4 mb-6">
+        <div class="flex items-center gap-2">
+          <label class="text-sm text-[var(--text-secondary)]">开始时间:</label>
+          <input v-model="startDate" type="date"
+            class="px-3 py-2 text-sm bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-lg text-[var(--text-primary)]">
+        </div>
+        <div class="flex items-center gap-2">
+          <label class="text-sm text-[var(--text-secondary)]">结束时间:</label>
+          <input v-model="endDate" type="date"
+            class="px-3 py-2 text-sm bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-lg text-[var(--text-primary)]">
+        </div>
+        <button @click="filterByDateRange"
+          class="px-4 py-2 text-sm text-white bg-[var(--theme-bg)] hover:bg-primary transition-all rounded-lg">
+          筛选
+        </button>
+        <button @click="resetDateFilter"
+          class="px-4 py-2 text-sm text-[var(--text-secondary)] border border-[var(--border-color)] hover:bg-[var(--bg-secondary)] transition-all rounded-lg">
+          重置
+        </button>
+        <button @click="loadUsageStatistics"
+          class="px-4 py-2 text-sm text-white bg-[var(--theme-bg)] hover:bg-primary transition-all rounded-lg">
+          刷新
+        </button>
+      </div>
+
+      <!-- 详细记录表格 -->
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="border-b border-[var(--border-color)]">
+              <th class="text-left py-2 px-3 text-[var(--text-secondary)]">时间</th>
+              <th class="text-left py-2 px-3 text-[var(--text-secondary)]">供应商/模型</th>
+              <th class="text-left py-2 px-3 text-[var(--text-secondary)]">功能</th>
+              <th class="text-right py-2 px-3 text-[var(--text-secondary)]">输入Token</th>
+              <th class="text-right py-2 px-3 text-[var(--text-secondary)]">输出Token</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="stat in paginatedStatistics" :key="stat.id"
+              class="border-b border-[var(--border-color)] hover:bg-[var(--bg-secondary)]">
+              <td class="py-2 px-3 text-[var(--text-primary)]">{{ formatDateTime(stat.timestamp) }}</td>
+              <td class="py-2 px-3 text-[var(--text-primary)]">
+                <div class="text-xs">{{ stat.provider_name }}</div>
+                <div class="text-xs text-[var(--text-secondary)]">{{ stat.model_name }}</div>
+              </td>
+              <td class="py-2 px-3 text-[var(--text-primary)]">{{ stat.feature_name }}</td>
+              <td class="py-2 px-3 text-right text-[var(--text-primary)]">{{ formatNumber(stat.input_tokens) }}</td>
+              <td class="py-2 px-3 text-right text-[var(--text-primary)]">{{ formatNumber(stat.output_tokens) }}
+              </td>
+              <td class="py-2 px-3 text-right text-[var(--text-primary)] font-medium">{{
+                formatNumber(stat.total_tokens) }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- 分页 -->
+      <div v-if="totalPages > 1" class="flex items-center justify-between mt-4">
+        <div class="text-sm text-[var(--text-secondary)]">
+          显示 {{ (currentPage - 1) * pageSize + 1 }} - {{ Math.min(currentPage * pageSize, usageStatistics.length) }}
+          条，共 {{ usageStatistics.length }} 条
+        </div>
+        <div class="flex items-center gap-2">
+          <button @click="currentPage--" :disabled="currentPage <= 1"
+            class="px-3 py-1 text-sm border border-[var(--border-color)] rounded hover:bg-[var(--bg-secondary)] disabled:opacity-50">
+            上一页
+          </button>
+          <span class="text-sm text-[var(--text-primary)]">{{ currentPage }} / {{ totalPages }}</span>
+          <button @click="currentPage++" :disabled="currentPage >= totalPages"
+            class="px-3 py-1 text-sm border border-[var(--border-color)] rounded hover:bg-[var(--bg-secondary)] disabled:opacity-50">
+            下一页
+          </button>
+        </div>
+      </div>
+
+      <div v-if="usageStatistics.length === 0" class="text-center py-8 text-[var(--text-secondary)]">
+        暂无用量记录
       </div>
     </div>
   </div>
