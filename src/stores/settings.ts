@@ -28,7 +28,10 @@ export const useSettingsStore = defineStore('settings', () => {
       loading.value = true
       error.value = null
       const loadedSettings = await window.electronAPI.getSettingsByType(bookId, type)
-      settings.value = loadedSettings
+      
+      // 保留其他类型的设定，只更新当前类型的设定
+      const otherTypeSettings = settings.value.filter(setting => setting.type !== type)
+      settings.value = [...otherTypeSettings, ...loadedSettings]
     } catch (err) {
       error.value = err instanceof Error ? err.message : '加载设定失败'
       console.error('Failed to load settings by type:', err)
@@ -54,8 +57,8 @@ export const useSettingsStore = defineStore('settings', () => {
     try {
       error.value = null
       const newSetting = await window.electronAPI.createSetting(data)
-      // 创建后只加载当前类型的设定，避免显示所有设定
-      await loadSettingsByType(data.book_id, data.type)
+      // 将新设定添加到本地数组，而不是重新加载
+      settings.value.push(newSetting)
       return newSetting
     } catch (err) {
       error.value = err instanceof Error ? err.message : '创建设定失败'

@@ -32,6 +32,8 @@ export interface MessageListProps {
 
 export interface InputAreaProps {
   disabled: boolean
+  starredSettings?: any[]
+  settingsLoading?: boolean
 }
 
 export interface CopilotSettings {

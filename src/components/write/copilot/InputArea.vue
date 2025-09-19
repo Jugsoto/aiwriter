@@ -1,5 +1,27 @@
 <template>
   <div class="border-t border-[var(--border-color)] bg-[var(--bg-secondary)]">
+    <!-- 设定显示区域 -->
+    <div v-if="starredSettings && starredSettings.length > 0" class="px-3 pt-3">
+      <div class="relative">
+        <div ref="settingsContainerRef" class="overflow-hidden transition-all duration-300"
+          :style="{ maxHeight: expanded ? 'none' : '72px' }">
+          <div class="flex flex-wrap gap-2">
+            <div v-for="setting in starredSettings" :key="setting.id"
+              class="inline-flex items-center px-2 py-1 text-xs border rounded-full cursor-pointer hover:bg-[var(--bg-secondary)] transition-colors"
+              :style="{ borderColor: 'var(--theme-bg)' }" :title="setting.content" @click="handleSettingClick(setting)">
+              <component :is="getSettingIcon(setting.type)" class="w-3 h-3 mr-1" />
+              <span class="truncate max-w-[100px]">{{ setting.name }}</span>
+            </div>
+          </div>
+        </div>
+        <button v-if="showExpandButton" @click="expanded = !expanded"
+          class="absolute -bottom-1 right-0 p-1 text-[var(--theme-bg)] hover:text-[var(--theme-hover)] transition-colors">
+          <ChevronUp v-if="expanded" class="w-4 h-4" />
+          <ChevronDown v-else class="w-4 h-4" />
+        </button>
+      </div>
+    </div>
+
     <!-- 输入区域 -->
     <div class="p-3 pb-0">
       <div class="relative">
@@ -19,18 +41,21 @@
 
         <!-- 引用资源弹窗 -->
         <div v-if="showAtModal"
-          class="absolute bottom-full left-0 mb-2 bg-[var(--bg-primary)] border border-[var(--border-color)] rounded-lg shadow-lg p-2 min-w-[120px] z-10">
+          class="absolute bottom-full left-0 mb-2 bg-[var(--bg-primary)] border border-[var(--border-color)] rounded-lg shadow-lg p-2 min-w-[160px] z-10">
           <div class="flex flex-col gap-1">
             <button @click="handleEntrySetting"
-              class="px-3 py-2 text-sm text-left hover:bg-[var(--bg-secondary)] rounded transition-colors">
+              class="flex items-center gap-2 px-3 py-2 text-sm text-left hover:bg-[var(--bg-secondary)] rounded transition-colors">
+              <FileText class="w-4 h-4" />
               词条设定
             </button>
             <button @click="handleWorldview"
-              class="px-3 py-2 text-sm text-left hover:bg-[var(--bg-secondary)] rounded transition-colors">
+              class="flex items-center gap-2 px-3 py-2 text-sm text-left hover:bg-[var(--bg-secondary)] rounded transition-colors">
+              <Globe class="w-4 h-4" />
               世界观
             </button>
             <button @click="handleCharacterProfile"
-              class="px-3 py-2 text-sm text-left hover:bg-[var(--bg-secondary)] rounded transition-colors">
+              class="flex items-center gap-2 px-3 py-2 text-sm text-left hover:bg-[var(--bg-secondary)] rounded transition-colors">
+              <User class="w-4 h-4" />
               人物档案
             </button>
           </div>
@@ -53,17 +78,60 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, onMounted, onUnmounted } from 'vue'
-import { AtSign, Trash2, Square, Send } from 'lucide-vue-next'
+import { ref, watch, onMounted, onUnmounted, nextTick } from 'vue'
+import { AtSign, Trash2, Square, Send, User, Globe, FileText, ChevronUp, ChevronDown } from 'lucide-vue-next'
 import type { InputAreaProps } from '../../../utils/types'
+import type { Setting } from '@/electron.d'
 
-defineProps<InputAreaProps>()
-const emit = defineEmits(['send-message', 'at-resource', 'clear-conversation', 'stop-conversation', 'entry-setting', 'worldview', 'character-profile'])
+const props = defineProps<InputAreaProps>()
+const emit = defineEmits(['send-message', 'at-resource', 'clear-conversation', 'stop-conversation', 'entry-setting', 'worldview', 'character-profile', 'settings-updated'])
 
 const inputText = ref('')
 const inputRef = ref<HTMLTextAreaElement>()
 const atButtonRef = ref<HTMLButtonElement>()
 const showAtModal = ref(false)
+const expanded = ref(false)
+const settingsContainerRef = ref<HTMLElement>()
+const showExpandButton = ref(false)
+
+// 监听设定数量变化，检查是否需要显示展开按钮
+watch(() => props.starredSettings, async () => {
+  await nextTick()
+  checkExpandButton()
+}, { deep: true })
+
+// 检查是否需要显示展开按钮
+const checkExpandButton = () => {
+  if (settingsContainerRef.value) {
+    const containerHeight = settingsContainerRef.value.scrollHeight
+    const maxHeight = 72 // 两行的高度 (约36px * 2)
+    showExpandButton.value = containerHeight > maxHeight
+    if (!showExpandButton.value) {
+      expanded.value = true // 如果不需要展开，默认展开
+    }
+  }
+}
+
+// 获取设定类型图标
+const getSettingIcon = (type: string) => {
+  const icons = {
+    'character': User,
+    'worldview': Globe,
+    'entry': FileText
+  }
+  return icons[type as keyof typeof icons] || FileText
+}
+
+// 处理设定点击
+const handleSettingClick = (setting: Setting) => {
+  // 将设定内容插入到输入框
+  const settingText = `【${setting.name}】${setting.content}`
+  if (inputText.value) {
+    inputText.value += `\n${settingText}`
+  } else {
+    inputText.value = settingText
+  }
+}
 
 const handleSend = () => {
   if (inputText.value.trim()) {
@@ -131,6 +199,7 @@ const focusInput = () => {
 // 生命周期钩子
 onMounted(() => {
   document.addEventListener('click', handleClickOutside)
+  checkExpandButton()
 })
 
 onUnmounted(() => {

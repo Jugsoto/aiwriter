@@ -7,15 +7,15 @@
 
     <MessageList :messages="messages" :is-loading="isLoading" />
 
-    <InputArea :disabled="isLoading" @send-message="handleSendMessage" @at-resource="handleAtResource"
-      @clear-conversation="handleClearConversation" @stop-conversation="handleStopConversation"
-      @entry-setting="handleEntrySetting" @worldview="handleWorldview" @character-profile="handleCharacterProfile"
-      ref="inputAreaRef" />
+    <InputArea :disabled="isLoading" :starred-settings="starredSettings" :settings-loading="settingsLoading"
+      @send-message="handleSendMessage" @at-resource="handleAtResource" @clear-conversation="handleClearConversation"
+      @stop-conversation="handleStopConversation" @entry-setting="handleEntrySetting" @worldview="handleWorldview"
+      @character-profile="handleCharacterProfile" @settings-updated="loadStarredSettings" ref="inputAreaRef" />
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import CopilotHeader from './copilot/CopilotHeader.vue'
 import MessageList from './copilot/MessageList.vue'
 import InputArea from './copilot/InputArea.vue'
@@ -24,7 +24,9 @@ import type { Message, Conversation } from '../../utils/types'
 import type { CopilotSettings } from '../../utils/types'
 import type { ChatMessage } from '@/services/chat'
 import { useFeatureConfigsStore } from '@/stores/featureConfigs'
+import { useSettingsStore } from '@/stores/settings'
 import { ConversationStorage } from '../../utils/conversationStorage'
+import type { Setting } from '@/electron.d'
 
 // Props
 const props = defineProps<{
@@ -43,10 +45,17 @@ const currentConversation = ref<Conversation | null>(null)
 // 功能配置
 const featureConfigsStore = useFeatureConfigsStore()
 
+// 设定存储
+const settingsStore = useSettingsStore()
+
 // Copilot设置
 const copilotSettings = ref<CopilotSettings>({
   contextLength: 3
 })
+
+// 星标设定
+const starredSettings = ref<Setting[]>([])
+const settingsLoading = ref(false)
 
 // 流式响应控制器
 let streamController: AbortController | null = null
@@ -301,6 +310,20 @@ const loadSavedSettings = () => {
   }
 }
 
+// 加载星标设定
+const loadStarredSettings = async () => {
+  try {
+    settingsLoading.value = true
+    await settingsStore.loadSettings(props.bookId)
+    // 过滤星标设定
+    starredSettings.value = settingsStore.settings.filter(setting => setting.starred)
+  } catch (error) {
+    console.error('加载星标设定失败:', error)
+  } finally {
+    settingsLoading.value = false
+  }
+}
+
 // 加载对话历史
 const loadConversations = () => {
   conversations.value = ConversationStorage.loadConversations(props.bookId)
@@ -319,10 +342,18 @@ onMounted(() => {
   // 加载对话历史
   loadConversations()
 
+  // 加载星标设定
+  loadStarredSettings()
+
   // 自动加载最新对话
   const latestConversation = ConversationStorage.getLatestConversation(props.bookId)
   if (latestConversation) {
     handleSelectConversation(latestConversation)
   }
 })
+
+// 监听设定存储变化，实时更新星标设定
+watch(() => settingsStore.settings, (newSettings) => {
+  starredSettings.value = newSettings.filter(setting => setting.starred)
+}, { deep: true })
 </script>
