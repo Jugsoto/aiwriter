@@ -2,7 +2,7 @@ o<template>
   <div class="h-full bg-[var(--bg-primary)] flex flex-col">
     <!-- 顶部操作栏 -->
     <HeaderToolbar :current-chapter="currentChapter" :saving="saving" :last-saved="lastSaved" :has-changes="hasChanges"
-      @save-content="saveContent" />
+      :is-streaming="isStreaming" @save-content="saveContent" @stop-streaming="handleStopStreaming" />
 
     <!-- 编辑器区域 - 精确填充可用空间，无外部滚动 -->
     <div class="flex-1 min-h-0">
