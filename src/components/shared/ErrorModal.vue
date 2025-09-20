@@ -1,6 +1,6 @@
 <template>
   <div v-if="visible" class="fixed inset-0 flex items-center justify-center z-50">
-    <div class="fixed inset-0 bg-black bg-opacity-50" @click="handleClose"></div>
+    <div class="fixed inset-0" @click="handleClose"></div>
     <div
       class="bg-[var(--bg-primary)] rounded-xl p-6 w-full max-w-lg mx-4 border-2 border-[var(--border-color)] shadow-lg relative">
       <div class="flex items-center mb-4">

@@ -109,12 +109,14 @@ export async function chatCompletion(
  * @param messages 聊天消息数组
  * @param featureConfig 功能配置（包含供应商和模型信息）
  * @param options 可选参数
+ * @param signal 可选的AbortSignal用于终止请求
  * @yields 流式响应块
  */
 export async function* streamChatCompletion(
   messages: ChatMessage[],
   featureConfig: FeatureConfig,
-  options: ChatOptions = {}
+  options: ChatOptions = {},
+  signal?: AbortSignal
 ): AsyncGenerator<StreamChunk, void, unknown> {
   try {
     const provider = await window.electronAPI.getProvider(featureConfig.provider_id)
@@ -168,28 +170,52 @@ export async function* streamChatCompletion(
       top_p: options.top_p ?? featureConfig.top_p,
       max_tokens: options.max_tokens,
       stream: true
+    }, {
+      signal: signal // 在第二个参数中传递终止信号
     })
 
     let totalUsage = undefined
-    for await (const chunk of stream) {
-      const delta = chunk.choices[0]?.delta as any
-      const finishReason = chunk.choices[0]?.finish_reason
-      
-      // 检查是否有用量信息（通常在最后一个chunk中）
-      if (chunk.usage) {
-        totalUsage = chunk.usage
+    
+    try {
+      for await (const chunk of stream) {
+        // 立即检查终止信号
+        if (signal?.aborted) {
+          console.log('流式输出被用户终止')
+          break
+        }
+        
+        const delta = chunk.choices[0]?.delta as any
+        const finishReason = chunk.choices[0]?.finish_reason
+        
+        // 检查是否有用量信息（通常在最后一个chunk中）
+        if (chunk.usage) {
+          totalUsage = chunk.usage
+        }
+        
+        yield {
+          content: delta?.content || '',
+          reasoning_content: delta?.reasoning_content || '',
+          finish_reason: finishReason,
+          usage: chunk.usage ? {
+            prompt_tokens: chunk.usage.prompt_tokens,
+            completion_tokens: chunk.usage.completion_tokens,
+            total_tokens: chunk.usage.total_tokens
+          } : undefined
+        }
+        
+        // 每个chunk处理后都检查终止信号，确保快速响应
+        if (signal?.aborted) {
+          console.log('流式输出在处理chunk时被终止')
+          break
+        }
       }
-      
-      yield {
-        content: delta?.content || '',
-        reasoning_content: delta?.reasoning_content || '',
-        finish_reason: finishReason,
-        usage: chunk.usage ? {
-          prompt_tokens: chunk.usage.prompt_tokens,
-          completion_tokens: chunk.usage.completion_tokens,
-          total_tokens: chunk.usage.total_tokens
-        } : undefined
+    } catch (error: any) {
+      // 处理用户终止的情况
+      if (error.name === 'AbortError' || signal?.aborted) {
+        console.log('流式输出被终止')
+        return
       }
+      throw error
     }
     
     // 流式响应结束后记录用量统计

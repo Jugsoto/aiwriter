@@ -71,7 +71,8 @@
           <Trash2 class="w-4 h-4" />
         </button>
         <button @click="handleStop" title="终止对话"
-          class="p-2 border border-[var(--border-color)] bg-[var(--bg-primary)] rounded-lg hover:bg-[var(--bg-secondary)] transition-colors">
+          class="p-2 border border-[var(--border-color)] bg-[var(--bg-primary)] rounded-lg hover:bg-[var(--bg-secondary)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          :disabled="!disabled">
           <Square class="w-4 h-4" />
         </button>
       </div>

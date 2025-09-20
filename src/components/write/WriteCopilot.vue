@@ -227,24 +227,55 @@ const streamAIResponse = async (
     messages: chatMessages
   }
 
-  for await (const { type, text } of streamChapterOutline(context, featureConfig, chapterOutlineOptions)) {
-    if (streamController?.signal.aborted) break
+  try {
+    for await (const { type, text } of streamChapterOutline(context, featureConfig, chapterOutlineOptions, streamController.signal)) {
+      // 立即检查终止信号
+      if (streamController?.signal.aborted) {
+        console.log('检测到终止信号，停止流式输出')
+        break
+      }
 
-    if (type === 'reasoning') {
-      reasoningMessage.reasoningContent += text
-    } else {
-      aiMessage.content += text
-      if (reasoningMessage.isReasoning) {
-        reasoningMessage.isReasoning = false
-        reasoningMessage.showReasoning = false
+      if (type === 'reasoning') {
+        reasoningMessage.reasoningContent += text
+      } else {
+        aiMessage.content += text
+        if (reasoningMessage.isReasoning) {
+          reasoningMessage.isReasoning = false
+          reasoningMessage.showReasoning = false
+        }
+      }
+
+      // 触发视图更新
+      messages.value = [...messages.value]
+
+      // 每个chunk处理后都检查终止信号，确保快速响应
+      if (streamController?.signal.aborted) {
+        console.log('处理chunk时检测到终止信号，停止流式输出')
+        break
       }
     }
-
-    // 触发视图更新
-    messages.value = [...messages.value]
+  } catch (error: any) {
+    // 处理用户终止的情况
+    if (error.name === 'AbortError' || streamController?.signal.aborted) {
+      console.log('流式输出被用户终止')
+      // 添加终止提示消息
+      const stopMessage: Message = {
+        id: `stop-${Date.now()}`,
+        role: 'assistant',
+        content: '\n\n*对话已终止*',
+        timestamp: new Date()
+      }
+      messages.value.push(stopMessage)
+    } else {
+      throw error
+    }
+  } finally {
+    reasoningMessage.isReasoning = false
+    // 立即更新加载状态
+    if (streamController?.signal.aborted) {
+      isLoading.value = false
+    }
   }
-
-  reasoningMessage.isReasoning = false
 }
 
 // 保存对话
@@ -318,23 +349,50 @@ const handleSettingsSelected = (settings: Setting[]) => {
 
 // 清空对话
 const handleClearConversation = () => {
+  // 如果有当前对话，先删除它
+  if (currentConversation.value) {
+    ConversationStorage.deleteConversation(props.bookId, currentConversation.value.id)
+    // 从对话列表中移除
+    conversations.value = conversations.value.filter(c => c.id !== currentConversation.value!.id)
+  }
+
+  // 清空当前消息
   messages.value = []
   streamController?.abort()
   streamController = null
+
+  // 重置当前对话为null，这样下次发送消息时会自动创建新对话
+  currentConversation.value = null
 }
 
 // 停止对话
 const handleStopConversation = () => {
   if (streamController) {
+    console.log('用户点击终止按钮，立即终止流式输出')
     streamController.abort()
     streamController = null
     isLoading.value = false
+
+    // 立即禁用输入框，提供即时反馈
+    if (inputAreaRef.value) {
+      inputAreaRef.value.focusInput()
+    }
   }
 }
 
 // 创建新对话
 const handleNewConversation = () => {
-  handleClearConversation()
+  // 停止任何正在进行的流
+  if (streamController) {
+    streamController.abort()
+    streamController = null
+  }
+
+  // 清空当前消息
+  messages.value = []
+  isLoading.value = false
+
+  // 重置当前对话为null，这样下次发送消息时会自动创建新对话
   currentConversation.value = null
 }
 

@@ -263,7 +263,7 @@ const getThemeColors = () => {
 
 // 处理每日数据
 const processDailyData = () => {
-  const dailyMap = new Map<string, { calls: number, inputTokens: number, outputTokens: number, totalTokens: number }>()
+  const dailyMap = new Map<string, { inputTokens: number, outputTokens: number, totalTokens: number }>()
 
   // 根据趋势天数筛选数据（从今天往前推指定天数）
   const endDate = new Date()
@@ -276,8 +276,7 @@ const processDailyData = () => {
     // 只处理在指定时间范围内的数据
     if (statDate >= startDate && statDate <= endDate) {
       const date = statDate.toLocaleDateString('zh-CN')
-      const existing = dailyMap.get(date) || { calls: 0, inputTokens: 0, outputTokens: 0, totalTokens: 0 }
-      existing.calls += 1
+      const existing = dailyMap.get(date) || { inputTokens: 0, outputTokens: 0, totalTokens: 0 }
       existing.inputTokens += stat.input_tokens
       existing.outputTokens += stat.output_tokens
       existing.totalTokens += stat.total_tokens
@@ -286,12 +285,11 @@ const processDailyData = () => {
   })
 
   const dates = Array.from(dailyMap.keys()).sort()
-  const calls = dates.map(date => dailyMap.get(date)!.calls)
   const inputTokens = dates.map(date => dailyMap.get(date)!.inputTokens)
   const outputTokens = dates.map(date => dailyMap.get(date)!.outputTokens)
   const totalTokens = dates.map(date => dailyMap.get(date)!.totalTokens)
 
-  return { dates, calls, inputTokens, outputTokens, totalTokens }
+  return { dates, inputTokens, outputTokens, totalTokens }
 }
 
 // 处理功能数据（使用所有历史数据，不受时间筛选影响）
@@ -349,26 +347,17 @@ const initDailyTrendChart = () => {
       textStyle: { color: colors.textColor },
       formatter: (params: any) => {
         const date = params[0].axisValue
-        const calls = params[0].value
-        const inputTokens = params[1].value
-        const outputTokens = params[2].value
-        const totalTokens = params[3].value
-        return `${date}<br/>调用次数: ${calls}<br/>输入Token: ${formatNumber(inputTokens)}<br/>输出Token: ${formatNumber(outputTokens)}<br/>总Token: ${formatNumber(totalTokens)}`
+        const inputTokens = params[0].value
+        const outputTokens = params[1].value
+        const totalTokens = params[2].value
+        return `${date}<br/>输入Token: ${formatNumber(inputTokens)}<br/>输出Token: ${formatNumber(outputTokens)}<br/>总Token: ${formatNumber(totalTokens)}`
       }
     },
     legend: {
-      data: ['调用次数', '输入Token', '输出Token', '总Token'],
+      data: ['输入Token', '输出Token', '总Token'],
       textStyle: { color: colors.textColor }
     },
     series: [
-      {
-        name: '调用次数',
-        type: 'line',
-        data: dailyData.calls,
-        smooth: true,
-        itemStyle: { color: '#3b82f6' },
-        areaStyle: { opacity: 0.3 }
-      },
       {
         name: '输入Token',
         type: 'line',

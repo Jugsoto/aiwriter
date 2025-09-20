@@ -94,7 +94,8 @@ ${recentChapterSummaries.join('\n')}`
 export async function* streamChapterOutline(
   context: ChapterOutlineContext,
   featureConfig?: FeatureConfig,
-  options?: ChapterOutlineOptions
+  options?: ChapterOutlineOptions,
+  signal?: AbortSignal
 ): AsyncGenerator<{ type: 'reasoning' | 'content', text: string }, void, unknown> {
   // 如果没有提供功能配置，则获取默认配置
   if (!featureConfig) {
@@ -121,12 +122,24 @@ export async function* streamChapterOutline(
   })
 
   // 流式生成章节细纲
-  for await (const chunk of streamChatCompletion(messages, featureConfig)) {
+  for await (const chunk of streamChatCompletion(messages, featureConfig, {}, signal)) {
+    // 立即检查终止信号
+    if (signal?.aborted) {
+      console.log('章节细纲生成被用户终止')
+      break
+    }
+    
     // 优先处理推理内容
     if (chunk.reasoning_content) {
       yield { type: 'reasoning', text: chunk.reasoning_content }
     } else if (chunk.content) {
       yield { type: 'content', text: chunk.content }
+    }
+    
+    // 每个chunk处理后都检查终止信号，确保快速响应
+    if (signal?.aborted) {
+      console.log('章节细纲生成在处理chunk时被终止')
+      break
     }
   }
 }
