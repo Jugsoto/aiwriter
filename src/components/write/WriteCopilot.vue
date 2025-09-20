@@ -5,7 +5,8 @@
       @conversations-updated="handleConversationsUpdated" @open-settings="handleOpenSettings"
       @settings-saved="handleSettingsSaved" />
 
-    <MessageList :messages="messages" :is-loading="isLoading" @update:message="handleMessageUpdate" />
+    <MessageList :messages="messages" :is-loading="isLoading" @update:message="handleMessageUpdate"
+      @start-writing="handleStartWriting" ref="messageListRef" />
 
     <InputArea :disabled="isLoading" :starred-settings="starredSettings" :settings-loading="settingsLoading"
       :book-id="bookId" :selected-settings="selectedSettings" @send-message="handleSendMessage"
@@ -17,11 +18,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, watch } from 'vue'
+import { ref, onMounted, onUnmounted, watch } from 'vue'
 import CopilotHeader from './copilot/CopilotHeader.vue'
 import MessageList from './copilot/MessageList.vue'
 import InputArea from './copilot/InputArea.vue'
-import { streamChapterOutline } from '@/services'
+import { streamChapterOutline, streamContentWriting, getContentWritingConfig, type ContentWritingContext } from '@/services'
 import type { Message, Conversation, EnhancedMessageContext } from '../../utils/types'
 import type { CopilotSettings } from '../../utils/types'
 import type { ChatMessage } from '@/services/chat'
@@ -43,6 +44,7 @@ const props = defineProps<{
 const messages = ref<Message[]>([])
 const isLoading = ref(false)
 const inputAreaRef = ref<InstanceType<typeof InputArea>>()
+const messageListRef = ref<InstanceType<typeof MessageList>>()
 
 // 对话管理
 const conversations = ref<Conversation[]>([])
@@ -442,6 +444,54 @@ const handleMessageUpdate = (updatedMessage: Message) => {
     // 保存对话到存储（更新历史记录）
     saveConversation()
   }
+
+}
+
+// 处理开始写作事件
+const handleStartWriting = async (message: Message) => {
+
+  try {
+    // 获取内容写作功能配置
+    const featureConfig = await getContentWritingConfig()
+
+    // 构建内容写作上下文
+    const context = await buildContentWritingContext(message)
+
+    // 创建流式生成器
+    const streamGenerator = streamContentWriting(context, featureConfig, {})
+
+    // 触发事件让编辑器开始流式写作
+    const event = new CustomEvent('start-streaming-writing', {
+      detail: { streamGenerator }
+    })
+    window.dispatchEvent(event)
+
+    console.log('WriteCopilot: 开始流式写作')
+  } catch (error) {
+    console.error('WriteCopilot: 内容写作失败', error)
+  }
+}
+
+// 构建内容写作上下文
+const buildContentWritingContext = async (message: Message): Promise<ContentWritingContext> => {
+  const [previousChapterContent, recentChapterSummaries, globalSettings] = await Promise.all([
+    getPreviousChapterContent(),
+    getRecentChapterSummaries(),
+    getBookGlobalSettings()
+  ])
+
+  return {
+    selectedMessage: message.content,
+    previousChapterContent,
+    recentChapterSummaries,
+    globalSettings,
+    selectedSettings: selectedSettings.value.map(setting => ({
+      name: setting.name,
+      content: setting.content,
+      status: setting.status,
+      type: setting.type
+    }))
+  }
 }
 
 // 数据加载
@@ -621,5 +671,25 @@ const getRecentChapterSummaries = async (): Promise<string[]> => {
 // 组件挂载
 onMounted(() => {
   initializeComponent()
+
+  // 监听内容写作请求事件（来自BookView）
+  window.addEventListener('content-writing-request', ((event: Event) => {
+    handleContentWritingRequest(event as CustomEvent)
+  }) as EventListener)
 })
+
+onUnmounted(() => {
+  // 清理事件监听器
+  window.removeEventListener('content-writing-request', ((event: Event) => {
+    handleContentWritingRequest(event as CustomEvent)
+  }) as EventListener)
+})
+
+// 处理内容写作请求（来自BookView的事件）
+const handleContentWritingRequest = async (event: CustomEvent) => {
+  const { message } = event.detail
+
+  // 直接调用开始写作处理方法
+  await handleStartWriting(message)
+}
 </script>

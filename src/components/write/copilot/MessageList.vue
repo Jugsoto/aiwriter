@@ -57,10 +57,11 @@
                 title="复制消息">
                 <Copy class="w-4 h-4" />
               </button>
-              <button @click="handleSend(message)"
+              <button @click="handleStartWriting(message)"
                 class="flex items-center px-2 py-1 text-white bg-[var(--theme-bg)] hover:bg-[var(--theme-hover)] rounded-lg transition-colors"
-                title="发送消息">
-                <Send class="w-4 h-4" />
+                title="开始写作">
+                <PenTool class="w-4 h-4" />
+                <span class="ml-1 text-xs">写作</span>
               </button>
             </div>
           </div>
@@ -96,7 +97,7 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
 import { marked } from 'marked'
-import { Edit, Copy, Send, ChevronDown } from 'lucide-vue-next'
+import { Edit, Copy, ChevronDown, PenTool } from 'lucide-vue-next'
 import type { Message, MessageListProps } from '../../../utils/types'
 import MessageEditModal from '../../modal/MessageEditModal.vue'
 import Toast from '../../shared/Toast.vue'
@@ -104,6 +105,7 @@ import Toast from '../../shared/Toast.vue'
 const props = defineProps<MessageListProps>()
 const emit = defineEmits<{
   'update:message': [message: Message]
+  'start-writing': [message: Message]
 }>()
 const messagesContainer = ref<HTMLElement>()
 
@@ -168,11 +170,10 @@ const handleCopy = async (message: Message) => {
   }
 }
 
-// 处理发送按钮点击
-const handleSend = (message: Message) => {
-  // 这里可以实现重新发送消息的逻辑
-  console.log('重新发送消息:', message.content)
-  // 可以触发一个事件，让父组件处理重新发送
+// 处理开始写作按钮点击
+const handleStartWriting = (message: Message) => {
+  // 触发开始写作事件，让父组件处理
+  emit('start-writing', message)
 }
 
 // 处理编辑确认

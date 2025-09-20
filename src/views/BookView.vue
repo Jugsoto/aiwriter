@@ -19,7 +19,7 @@
 
       <!-- 中间正文编辑器 -->
       <div ref="middlePanel" class="flex-1 bg-[var(--bg-primary)] relative" :style="{ width: middleWidth + 'px' }">
-        <Editor />
+        <Editor ref="editorRef" />
       </div>
 
       <!-- 右侧分隔条 -->
@@ -31,7 +31,7 @@
 
       <!-- 右侧AI助手 -->
       <div ref="rightPanel" class="bg-[var(--bg-secondary)] relative" :style="{ width: rightWidth + 'px' }">
-        <WriteCopilot :book-id="bookId" />
+        <WriteCopilot :book-id="bookId" @start-writing="handleStartWriting" />
       </div>
     </div>
 
@@ -66,6 +66,7 @@ const error = ref('')
 const showGlobalSettingsModal = ref(false)
 const showSettingsModal = ref(false)
 const currentSettingType = ref<'character' | 'worldview' | 'entry'>('character')
+const editorRef = ref<InstanceType<typeof Editor>>()
 
 // 计算属性
 const bookId = computed(() => {
@@ -305,6 +306,28 @@ onUnmounted(() => {
   document.removeEventListener('mouseup', stopResize)
   window.removeEventListener('resize', initWidths)
 })
+
+// 处理开始写作事件
+const handleStartWriting = async (message: any) => {
+  console.log('BookView: 处理开始写作事件', message)
+
+  // 调用编辑器的流式写作功能
+  if (editorRef.value) {
+    try {
+      // 这里需要获取 WriteCopilot 的流式生成器
+      // 由于 WriteCopilot 是子组件，我们需要通过事件传递消息内容
+      // 让 WriteCopilot 处理具体的流式生成逻辑
+
+      // 创建一个自定义事件，让 WriteCopilot 处理
+      const event = new CustomEvent('content-writing-request', {
+        detail: { message }
+      })
+      window.dispatchEvent(event)
+    } catch (error) {
+      console.error('BookView: 开始写作失败', error)
+    }
+  }
+}
 </script>
 
 <style scoped>

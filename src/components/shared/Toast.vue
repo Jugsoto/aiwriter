@@ -23,7 +23,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { watch } from 'vue'
 import { CheckCircle, AlertCircle, Info } from 'lucide-vue-next'
 
 interface Props {

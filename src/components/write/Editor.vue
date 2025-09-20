@@ -1,4 +1,4 @@
-<template>
+o<template>
   <div class="h-full bg-[var(--bg-primary)] flex flex-col">
     <!-- 顶部操作栏 -->
     <HeaderToolbar :current-chapter="currentChapter" :saving="saving" :last-saved="lastSaved" :has-changes="hasChanges"
@@ -7,7 +7,8 @@
     <!-- 编辑器区域 - 精确填充可用空间，无外部滚动 -->
     <div class="flex-1 min-h-0">
       <ContentEditor :current-chapter="currentChapter" :content="content" :original-content="originalContent"
-        @update:content="updateContent" @content-change="handleContentChange" />
+        :is-streaming="isStreaming" @update:content="updateContent" @content-change="handleContentChange"
+        @stop-streaming="handleStopStreaming" />
     </div>
 
     <!-- 底部状态栏 -->
@@ -17,7 +18,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useChaptersStore } from '@/stores/chapters'
 import HeaderToolbar from './editor/HeaderToolbar.vue'
 import StatusBar from './editor/StatusBar.vue'
@@ -43,6 +44,8 @@ const saving = ref(false)
 const lastSaved = ref(false)
 const autoSaveStatus = ref('')
 const lastSavedTime = ref<string | Date | null>(null)
+const isStreaming = ref(false)
+const streamingController = ref<AbortController | null>(null)
 
 // 监听当前章节变化
 watch(currentChapter, (newChapter) => {
@@ -121,4 +124,99 @@ const debouncedAutoSave = debounce(() => {
   }
 }, 2000) // 2秒后自动保存
 
+// 停止流式输出
+const handleStopStreaming = () => {
+  if (streamingController.value) {
+    streamingController.value.abort()
+    streamingController.value = null
+    isStreaming.value = false
+  }
+}
+
+// 开始流式写作（供父组件调用）
+const startStreamingWriting = (streamGenerator: AsyncGenerator<string, void, unknown>) => {
+  if (isStreaming.value) {
+    console.warn('已经在流式写作中')
+    return
+  }
+
+  isStreaming.value = true
+  const controller = new AbortController()
+  streamingController.value = controller
+
+  // 异步处理流式内容
+  processStreamContent(streamGenerator, controller.signal)
+}
+
+// 处理流式内容
+const processStreamContent = async (
+  streamGenerator: AsyncGenerator<string, void, unknown>,
+  signal: AbortSignal
+) => {
+  try {
+    // 获取当前内容
+    let currentContent = content.value
+
+    // 在内容末尾添加换行，确保新内容从新段落开始
+    if (currentContent && !currentContent.endsWith('\n')) {
+      currentContent += '\n\n'
+    }
+
+    // 流式接收内容
+    for await (const contentChunk of streamGenerator) {
+      // 检查是否被终止
+      if (signal.aborted) {
+        console.log('流式写作被终止')
+        break
+      }
+
+      // 将生成的内容追加到当前内容
+      currentContent += contentChunk
+
+      // 更新内容（触发响应式更新）
+      content.value = currentContent
+
+      // 每个chunk处理后都检查终止信号
+      if (signal.aborted) {
+        console.log('流式写作在处理chunk时被终止')
+        break
+      }
+    }
+
+    console.log('流式写作完成')
+  } catch (error) {
+    console.error('流式写作处理失败:', error)
+  } finally {
+    // 清理状态
+    isStreaming.value = false
+    streamingController.value = null
+  }
+}
+
+// 暴露方法给父组件
+defineExpose({
+  startStreamingWriting,
+  handleStopStreaming
+})
+
+// 监听流式写作事件
+onMounted(() => {
+  window.addEventListener('start-streaming-writing', ((event: Event) => {
+    const customEvent = event as CustomEvent
+    const { streamGenerator } = customEvent.detail
+    if (streamGenerator) {
+      startStreamingWriting(streamGenerator)
+    }
+  }) as EventListener)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('start-streaming-writing', ((event: Event) => {
+    const customEvent = event as CustomEvent
+    const { streamGenerator } = customEvent.detail
+    if (streamGenerator) {
+      startStreamingWriting(streamGenerator)
+    }
+  }) as EventListener)
+})
 </script>
