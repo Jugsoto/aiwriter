@@ -2,7 +2,7 @@
   <div class="flex-1 overflow-y-auto p-4" ref="messagesContainer">
     <!-- 消息列表 -->
     <div v-if="messages.length > 0 || isLoading">
-      <div v-for="message in messages" :key="message.id" class="mb-4">
+      <div v-for="message in messages" :key="message.id" class="">
         <!-- 推理消息（仅对助手消息显示） -->
         <div v-if="message.role === 'assistant' && (message.reasoningContent || message.isReasoning)"
           class="flex justify-start mb-2">
@@ -35,7 +35,7 @@
         </div>
         <!-- 正常消息 -->
         <div v-if="message.content" :class="[
-          'max-w-[80%] rounded-2xl px-4 py-3',
+          'max-w-[80%] rounded-2xl px-4 py-3 mb-3',
           message.role === 'user'
             ? 'ml-auto bg-[var(--sky-100)] text-[var(--text-primary)]'
             : 'bg-[var(--bg-primary)] border border-[var(--border-color)]'
@@ -44,7 +44,7 @@
         </div>
         <!-- 操作栏（仅对正式的AI消息显示） -->
         <div v-if="message.role === 'assistant' && message.content && !message.isReasoning"
-          class="flex justify-start mt-2">
+          class="flex justify-start mb-3">
           <div class="max-w-[80%] bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-2xl p-2">
             <div class="flex items-center gap-2">
               <button @click="handleEdit(message)"

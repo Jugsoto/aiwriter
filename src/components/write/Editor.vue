@@ -157,9 +157,9 @@ const processStreamContent = async (
     // 获取当前内容
     let currentContent = content.value
 
-    // 在内容末尾添加换行，确保新内容从新段落开始
+    // 在内容末尾添加换行，确保新内容从新段落开始（避免双换行导致的空白段）
     if (currentContent && !currentContent.endsWith('\n')) {
-      currentContent += '\n\n'
+      currentContent += '\n'
     }
 
     // 流式接收内容
