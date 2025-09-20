@@ -18,6 +18,8 @@ export interface ChapterOutlineContext {
 export interface ChapterOutlineOptions {
   contextLength?: number // 上下文长度，表示要包含的历史消息数量
   messages?: ChatMessage[] // 历史消息数组
+  previousChapterCount?: number  // 前文章节数量 (1-3)
+  chapterSummaryCount?: number   // 前文章节梗概数量 (3-10)
 }
 
 const SYSTEM_PROMPT = `你是一个AI助手,名字是神笔AI`
@@ -55,7 +57,7 @@ ${globalSettings}`
   }
 
   if (previousChapterContent) {
-    prompt += `\n前一章节内容（作为前文参考）：
+    prompt += `\n前文章节内容（作为前文参考）：
 ${previousChapterContent}`
   }
 

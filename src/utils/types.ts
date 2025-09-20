@@ -52,6 +52,8 @@ export interface EnhancedMessageContext {
 
 export interface CopilotSettings {
   contextLength: number
+  previousChapterCount: number  // 前文章节数量 (1-3)
+  chapterSummaryCount: number   // 前文章节梗概数量 (3-10)
 }
 
 export interface CopilotSettingsProps {

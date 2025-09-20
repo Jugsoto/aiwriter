@@ -54,7 +54,9 @@ const selectedSettings = ref<Setting[]>([])
 
 // Copilot配置
 const copilotSettings = ref<CopilotSettings>({
-  contextLength: 3
+  contextLength: 3,
+  previousChapterCount: 1,    // 默认前文章节数量为1
+  chapterSummaryCount: 5      // 默认前文章节梗概数量为5
 })
 
 // Store实例
@@ -224,7 +226,9 @@ const streamAIResponse = async (
 
   const chapterOutlineOptions = {
     contextLength: copilotSettings.value.contextLength,
-    messages: chatMessages
+    messages: chatMessages,
+    previousChapterCount: copilotSettings.value.previousChapterCount,
+    chapterSummaryCount: copilotSettings.value.chapterSummaryCount
   }
 
   try {
@@ -519,12 +523,29 @@ const getPreviousChapterContent = async (): Promise<string> => {
     const currentChapter = chaptersStore.currentChapter
     if (!currentChapter) return ''
 
-    const previousChapter = chaptersStore.getPreviousChapter(currentChapter.id)
-    if (!previousChapter) return ''
+    // 根据设置获取前N个章节的内容
+    const allChapters = [...chaptersStore.chapters].sort((a, b) => a.order_index - b.order_index)
+    const currentIndex = allChapters.findIndex(ch => ch.id === currentChapter.id)
 
-    // 获取前一章节的完整内容
-    const fullPreviousChapter = await chaptersStore.getChapter(previousChapter.id)
-    return fullPreviousChapter?.content || ''
+    if (currentIndex === -1) return ''
+
+    // 获取前N个章节（根据设置）
+    const previousChapterCount = copilotSettings.value.previousChapterCount
+    const startIndex = Math.max(0, currentIndex - previousChapterCount)
+    const previousChapters = allChapters.slice(startIndex, currentIndex)
+
+    if (previousChapters.length === 0) return ''
+
+    // 获取这些章节的完整内容
+    const chapterContents: string[] = []
+    for (const chapter of previousChapters) {
+      const fullChapter = await chaptersStore.getChapter(chapter.id)
+      if (fullChapter?.content) {
+        chapterContents.push(`第${chapter.order_index + 1}章 - ${chapter.title}:\n${fullChapter.content}`)
+      }
+    }
+
+    return chapterContents.join('\n\n')
   } catch (error) {
     console.error('获取前一章节内容失败:', error)
     return ''
@@ -561,8 +582,9 @@ const getRecentChapterSummaries = async (): Promise<string[]> => {
     const currentIndex = allChapters.findIndex(ch => ch.id === currentChapter.id)
     if (currentIndex === -1) return []
 
-    // 获取前5章的概括（包括当前章节之前的章节）
-    const startIndex = Math.max(0, currentIndex - 5)
+    // 根据设置获取前N章的概括（包括当前章节之前的章节）
+    const chapterSummaryCount = copilotSettings.value.chapterSummaryCount
+    const startIndex = Math.max(0, currentIndex - chapterSummaryCount)
     const recentChapters = allChapters.slice(startIndex, currentIndex)
 
     // 返回这些章节的标题和概括
