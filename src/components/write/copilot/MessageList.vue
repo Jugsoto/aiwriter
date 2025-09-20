@@ -2,7 +2,7 @@
   <div class="flex-1 overflow-y-auto p-4" ref="messagesContainer">
     <!-- 消息列表 -->
     <div v-if="messages.length > 0 || isLoading">
-      <div v-for="message in messages" :key="message.id">
+      <div v-for="message in messages" :key="message.id" class="mb-4">
         <!-- 推理消息（仅对助手消息显示） -->
         <div v-if="message.role === 'assistant' && (message.reasoningContent || message.isReasoning)"
           class="flex justify-start mb-2">
@@ -23,10 +23,8 @@
                   {{ message.isReasoning ? '深度思考中...' : '思考过程' }}
                 </span>
               </div>
-              <svg class="w-4 h-4 text-[var(--text-tertiary)] transition-transform"
-                :class="{ 'rotate-180': message.showReasoning }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-              </svg>
+              <ChevronDown class="w-4 h-4 text-[var(--text-tertiary)] transition-transform"
+                :class="{ 'rotate-180': message.showReasoning }" />
             </div>
             <!-- 推理内容 -->
             <div v-if="message.showReasoning && message.reasoningContent"
@@ -37,12 +35,35 @@
         </div>
         <!-- 正常消息 -->
         <div v-if="message.content" :class="[
-          'max-w-[80%] rounded-2xl px-4 py-3 mb-2',
+          'max-w-[80%] rounded-2xl px-4 py-3',
           message.role === 'user'
             ? 'ml-auto bg-[var(--sky-100)] text-[var(--text-primary)]'
             : 'bg-[var(--bg-primary)] border border-[var(--border-color)]'
         ]">
           <div class="text-sm markdown-content" v-html="renderMarkdown(message.content)"></div>
+        </div>
+        <!-- 操作栏（仅对正式的AI消息显示） -->
+        <div v-if="message.role === 'assistant' && message.content && !message.isReasoning"
+          class="flex justify-start mt-2">
+          <div class="max-w-[80%] bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-2xl p-2">
+            <div class="flex items-center gap-2">
+              <button @click="handleEdit(message)"
+                class="flex items-center p-1 text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)] rounded transition-colors"
+                title="编辑消息">
+                <Edit class="w-4 h-4" />
+              </button>
+              <button @click="handleCopy(message)"
+                class="flex items-center p-1 text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)] rounded transition-colors"
+                title="复制消息">
+                <Copy class="w-4 h-4" />
+              </button>
+              <button @click="handleSend(message)"
+                class="flex items-center px-2 py-1 text-white bg-[var(--theme-bg)] hover:bg-[var(--theme-hover)] rounded-lg transition-colors"
+                title="发送消息">
+                <Send class="w-4 h-4" />
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -62,16 +83,38 @@
         </div>
       </div>
     </div>
+
+    <!-- 消息编辑 Modal -->
+    <MessageEditModal v-model:visible="editModalVisible" :message="editingMessage" @confirm="handleEditConfirm"
+      @cancel="handleEditCancel" />
+
+    <!-- 复制成功提示 -->
+    <Toast v-model:visible="toastVisible" :message="toastMessage" :type="toastType" />
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, watch } from 'vue'
 import { marked } from 'marked'
+import { Edit, Copy, Send, ChevronDown } from 'lucide-vue-next'
 import type { Message, MessageListProps } from '../../../utils/types'
+import MessageEditModal from '../../modal/MessageEditModal.vue'
+import Toast from '../../shared/Toast.vue'
 
 const props = defineProps<MessageListProps>()
+const emit = defineEmits<{
+  'update:message': [message: Message]
+}>()
 const messagesContainer = ref<HTMLElement>()
+
+// 编辑 modal 状态
+const editModalVisible = ref(false)
+const editingMessage = ref<Message | null>(null)
+
+// Toast 提示状态
+const toastVisible = ref(false)
+const toastMessage = ref('')
+const toastType = ref<'success' | 'error' | 'info'>('success')
 
 // 配置marked选项
 marked.setOptions({
@@ -99,6 +142,51 @@ const toggleReasoning = (message: Message) => {
   if (message.reasoningContent) {
     message.showReasoning = !message.showReasoning
   }
+}
+
+// 处理编辑按钮点击
+const handleEdit = (message: Message) => {
+  editingMessage.value = { ...message }
+  editModalVisible.value = true
+}
+
+// 显示提示
+const showToast = (message: string, type: 'success' | 'error' | 'info' = 'success') => {
+  toastMessage.value = message
+  toastType.value = type
+  toastVisible.value = true
+}
+
+// 处理复制按钮点击
+const handleCopy = async (message: Message) => {
+  try {
+    await navigator.clipboard.writeText(message.content)
+    showToast('消息已复制到剪贴板', 'success')
+  } catch (error) {
+    console.error('复制失败:', error)
+    showToast('复制失败，请重试', 'error')
+  }
+}
+
+// 处理发送按钮点击
+const handleSend = (message: Message) => {
+  // 这里可以实现重新发送消息的逻辑
+  console.log('重新发送消息:', message.content)
+  // 可以触发一个事件，让父组件处理重新发送
+}
+
+// 处理编辑确认
+const handleEditConfirm = (updatedMessage: Message) => {
+  // 通过事件通知父组件更新消息
+  emit('update:message', updatedMessage)
+  editModalVisible.value = false
+  editingMessage.value = null
+}
+
+// 处理编辑取消
+const handleEditCancel = () => {
+  editModalVisible.value = false
+  editingMessage.value = null
 }
 
 // 监听推理状态变化，自动展开推理消息

@@ -5,7 +5,7 @@
       @conversations-updated="handleConversationsUpdated" @open-settings="handleOpenSettings"
       @settings-saved="handleSettingsSaved" />
 
-    <MessageList :messages="messages" :is-loading="isLoading" />
+    <MessageList :messages="messages" :is-loading="isLoading" @update:message="handleMessageUpdate" />
 
     <InputArea :disabled="isLoading" :starred-settings="starredSettings" :settings-loading="settingsLoading"
       :book-id="bookId" :selected-settings="selectedSettings" @send-message="handleSendMessage"
@@ -420,6 +420,28 @@ const handleOpenSettings = () => {
 // 保存设置
 const handleSettingsSaved = (settings: CopilotSettings) => {
   copilotSettings.value = settings
+}
+
+// 处理消息更新（来自MessageList的编辑操作）
+const handleMessageUpdate = (updatedMessage: Message) => {
+  // 更新本地消息列表
+  const messageIndex = messages.value.findIndex(msg => msg.id === updatedMessage.id)
+  if (messageIndex !== -1) {
+    messages.value[messageIndex] = { ...updatedMessage }
+    // 触发响应式更新
+    messages.value = [...messages.value]
+
+    // 同时更新当前对话的消息列表
+    if (currentConversation.value) {
+      const convMessageIndex = currentConversation.value.messages.findIndex(msg => msg.id === updatedMessage.id)
+      if (convMessageIndex !== -1) {
+        currentConversation.value.messages[convMessageIndex] = { ...updatedMessage }
+      }
+    }
+
+    // 保存对话到存储（更新历史记录）
+    saveConversation()
+  }
 }
 
 // 数据加载
