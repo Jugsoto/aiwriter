@@ -1,10 +1,11 @@
 <template>
-  <div
-    class="absolute top-12 right-3 bg-[var(--bg-primary)] border border-[var(--border-color)] rounded-lg shadow-lg w-64 z-50">
+  <div v-if="show"
+    class="absolute top-12 right-3 bg-[var(--bg-primary)] border border-[var(--border-color)] rounded-lg shadow-lg w-64 z-50"
+    ref="settingsPanel">
     <!-- 头部 -->
     <div class="flex items-center justify-between px-3 py-2 border-b border-[var(--border-color)]">
       <h3 class="text-sm font-medium text-[var(--text-primary)]">Copilot 设置</h3>
-      <button @click="$emit('close')" class="p-1 hover:bg-[var(--bg-secondary)] rounded transition-colors">
+      <button @click="handleClose" class="p-1 hover:bg-[var(--bg-secondary)] rounded transition-colors">
         <X class="w-4 h-4 text-[var(--text-secondary)]" />
       </button>
     </div>
@@ -64,7 +65,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, watch } from 'vue'
+import { ref, onMounted, onUnmounted, watch } from 'vue'
 import { X } from 'lucide-vue-next'
 import { CopilotSettingsStorage } from '@/utils/copilotSettingsStorage'
 import type { CopilotSettings } from '@/utils/types'
@@ -72,6 +73,7 @@ import type { CopilotSettings } from '@/utils/types'
 // 定义props
 const props = defineProps<{
   bookId: number
+  show: boolean
 }>()
 
 // 定义emits
@@ -79,6 +81,21 @@ const emit = defineEmits<{
   close: []
   saved: [settings: CopilotSettings]
 }>()
+
+// Refs
+const settingsPanel = ref<HTMLElement>()
+
+// 处理关闭
+const handleClose = () => {
+  emit('close')
+}
+
+// 点击外部关闭处理
+const handleClickOutside = (event: MouseEvent) => {
+  if (settingsPanel.value && !settingsPanel.value.contains(event.target as Node)) {
+    handleClose()
+  }
+}
 
 // 响应式数据
 const contextLength = ref<number>(3)
@@ -151,9 +168,30 @@ watch(chapterSummaryCount, (newValue, oldValue) => {
   }
 })
 
+// 监听点击外部事件
+const setupClickOutsideListener = () => {
+  if (props.show) {
+    setTimeout(() => {
+      document.addEventListener('click', handleClickOutside)
+    }, 0)
+  } else {
+    document.removeEventListener('click', handleClickOutside)
+  }
+}
+
 // 初始化
 onMounted(() => {
   loadSettings()
+  setupClickOutsideListener()
+})
+
+onUnmounted(() => {
+  document.removeEventListener('click', handleClickOutside)
+})
+
+// 监听show属性变化
+watch(() => props.show, () => {
+  setupClickOutsideListener()
 })
 </script>
 

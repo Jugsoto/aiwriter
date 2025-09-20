@@ -29,7 +29,8 @@
       @select-conversation="handleSelectConversation" @conversations-updated="handleConversationsUpdated" />
 
     <!-- Copilot设置组件 -->
-    <CopilotSettings v-if="showSettings" :book-id="bookId" @close="handleCloseSettings" @saved="handleSettingsSaved" />
+    <CopilotSettings v-if="showSettings" :book-id="bookId" :show="showSettings" @close="handleCloseSettings"
+      @saved="handleSettingsSaved" />
   </div>
 </template>
 

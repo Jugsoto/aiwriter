@@ -1,10 +1,11 @@
 <template>
   <div v-if="show"
-    class="absolute top-12 left-3 bg-[var(--bg-primary)] border border-[var(--border-color)] rounded-lg shadow-lg w-64 z-50">
+    class="absolute top-12 left-3 bg-[var(--bg-primary)] border border-[var(--border-color)] rounded-lg shadow-lg w-64 z-50"
+    ref="historyPanel">
     <!-- 头部 -->
     <div class="flex items-center justify-between px-3 py-2 border-b border-[var(--border-color)]">
       <h3 class="text-sm font-medium text-[var(--text-primary)]">对话历史</h3>
-      <button @click="$emit('close')" class="p-1 hover:bg-[var(--bg-secondary)] rounded transition-colors" title="关闭">
+      <button @click="handleClose" class="p-1 hover:bg-[var(--bg-secondary)] rounded transition-colors" title="关闭">
         <X class="w-4 h-4 text-[var(--text-secondary)]" />
       </button>
     </div>
@@ -42,6 +43,7 @@ import { X, Trash2 } from 'lucide-vue-next'
 import type { Conversation } from '../../../utils/types'
 import { ConversationStorage } from '../../../utils/conversationStorage'
 import { showConfirm } from '../../../composables/useConfirm'
+import { ref, onMounted, onUnmounted, watch } from 'vue'
 
 // Props
 const props = defineProps<{
@@ -58,10 +60,49 @@ const emit = defineEmits<{
   conversationsUpdated: [conversations: Conversation[]]
 }>()
 
+// Refs
+const historyPanel = ref<HTMLElement>()
+
+// 处理关闭
+const handleClose = () => {
+  emit('close')
+}
+
+// 点击外部关闭处理
+const handleClickOutside = (event: MouseEvent) => {
+  if (historyPanel.value && !historyPanel.value.contains(event.target as Node)) {
+    handleClose()
+  }
+}
+
+// 监听点击外部事件
+const setupClickOutsideListener = () => {
+  if (props.show) {
+    setTimeout(() => {
+      document.addEventListener('click', handleClickOutside)
+    }, 0)
+  } else {
+    document.removeEventListener('click', handleClickOutside)
+  }
+}
+
+onMounted(() => {
+  setupClickOutsideListener()
+})
+
+onUnmounted(() => {
+  document.removeEventListener('click', handleClickOutside)
+})
+
+// 监听show属性变化
+watch(() => props.show, () => {
+  setupClickOutsideListener()
+})
+
 // 选择对话
 const selectConversation = (conversation: Conversation) => {
   emit('selectConversation', conversation)
-  emit('close')
+  handleClose()
 }
 
 // 删除对话（带确认）
