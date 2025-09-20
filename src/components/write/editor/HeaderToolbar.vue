@@ -21,7 +21,8 @@
       </button>
       <!-- 停止流式输出按钮 - 仅在流式写作时显示 -->
       <button v-if="isStreaming" @click="stopStreaming"
-        class="flex items-center gap-1 px-2 py-1.5 text-sm border border-[var(--border-color)] bg-[var(--bg-primary)] rounded-full hover:bg-[var(--bg-secondary)] transition-colors">
+        class="flex items-center gap-1 px-3 py-1.5 text-sm border border-red-300 bg-red-50 text-red-700 rounded-full hover:bg-red-100 transition-colors animate-pulse">
+        <span class="w-2 h-2 bg-red-500 rounded-full"></span>
         停止写作
       </button>
     </div>

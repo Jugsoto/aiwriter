@@ -148,7 +148,6 @@ export async function* streamContentWriting(
   for await (const chunk of streamChatCompletion(messages, featureConfig, {}, signal)) {
     // 立即检查终止信号
     if (signal?.aborted) {
-      console.log('内容写作生成被用户终止')
       break
     }
     
@@ -159,7 +158,6 @@ export async function* streamContentWriting(
     
     // 每个chunk处理后都检查终止信号
     if (signal?.aborted) {
-      console.log('内容写作在处理chunk时被终止')
       break
     }
   }

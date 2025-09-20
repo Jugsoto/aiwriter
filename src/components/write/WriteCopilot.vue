@@ -23,6 +23,7 @@ import CopilotHeader from './copilot/CopilotHeader.vue'
 import MessageList from './copilot/MessageList.vue'
 import InputArea from './copilot/InputArea.vue'
 import { streamChapterOutline, streamContentWriting, getContentWritingConfig, type ContentWritingContext } from '@/services'
+import { streamingManager } from '@/utils'
 import type { Message, Conversation, EnhancedMessageContext } from '../../utils/types'
 import type { CopilotSettings } from '../../utils/types'
 import type { ChatMessage } from '@/services/chat'
@@ -68,8 +69,7 @@ const settingsStore = useSettingsStore()
 const chaptersStore = useChaptersStore()
 const booksStore = useBooksStore()
 
-// 流控制器
-let streamController: AbortController | null = null
+// 流控制器 - 现在由全局管理器管理
 
 // 消息处理
 // 发送消息
@@ -154,7 +154,7 @@ const generateResponse = async (_userInput: string, enhancedContext?: EnhancedMe
     await handleGenerationError(error)
   } finally {
     isLoading.value = false
-    streamController = null
+    // 流控制器由全局管理器管理，不需要手动清理
   }
 }
 
@@ -225,7 +225,16 @@ const streamAIResponse = async (
   aiMessage: Message,
   reasoningMessage: Message
 ) => {
-  streamController = new AbortController()
+  // 监听流式状态变化 - 必须在开始流式输出之前注册
+  const updateStreamingStatus = (streaming: boolean, type: string | null) => {
+    isLoading.value = streaming && type === 'chat'
+  }
+
+  // 先注册监听器，再开始流式输出
+  streamingManager.addListener(updateStreamingStatus)
+
+  // 使用全局流式管理器开始新的对话流
+  const streamController = streamingManager.startStreaming('chat')
 
   const chapterOutlineOptions = {
     contextLength: copilotSettings.value.contextLength,
@@ -237,7 +246,7 @@ const streamAIResponse = async (
   try {
     for await (const { type, text } of streamChapterOutline(context, featureConfig, chapterOutlineOptions, streamController.signal)) {
       // 立即检查终止信号
-      if (streamController?.signal.aborted) {
+      if (streamController.signal.aborted) {
         console.log('检测到终止信号，停止流式输出')
         break
       }
@@ -256,14 +265,14 @@ const streamAIResponse = async (
       messages.value = [...messages.value]
 
       // 每个chunk处理后都检查终止信号，确保快速响应
-      if (streamController?.signal.aborted) {
+      if (streamController.signal.aborted) {
         console.log('处理chunk时检测到终止信号，停止流式输出')
         break
       }
     }
   } catch (error: any) {
     // 处理用户终止的情况
-    if (error.name === 'AbortError' || streamController?.signal.aborted) {
+    if (error.name === 'AbortError' || streamController.signal.aborted) {
       console.log('流式输出被用户终止')
       // 添加终止提示消息
       const stopMessage: Message = {
@@ -279,9 +288,11 @@ const streamAIResponse = async (
   } finally {
     reasoningMessage.isReasoning = false
     // 立即更新加载状态
-    if (streamController?.signal.aborted) {
+    if (streamController.signal.aborted) {
       isLoading.value = false
     }
+    // 清理监听器
+    streamingManager.removeListener(updateStreamingStatus)
   }
 }
 
@@ -365,8 +376,7 @@ const handleClearConversation = () => {
 
   // 清空当前消息
   messages.value = []
-  streamController?.abort()
-  streamController = null
+  streamingManager.stopStreaming()
 
   // 重置当前对话为null，这样下次发送消息时会自动创建新对话
   currentConversation.value = null
@@ -374,10 +384,9 @@ const handleClearConversation = () => {
 
 // 停止对话
 const handleStopConversation = () => {
-  if (streamController) {
+  if (streamingManager.isStreaming()) {
     console.log('用户点击终止按钮，立即终止流式输出')
-    streamController.abort()
-    streamController = null
+    streamingManager.stopStreaming()
     isLoading.value = false
 
     // 立即禁用输入框，提供即时反馈
@@ -390,10 +399,7 @@ const handleStopConversation = () => {
 // 创建新对话
 const handleNewConversation = () => {
   // 停止任何正在进行的流
-  if (streamController) {
-    streamController.abort()
-    streamController = null
-  }
+  streamingManager.stopStreaming()
 
   // 清空当前消息
   messages.value = []
@@ -449,8 +455,10 @@ const handleMessageUpdate = (updatedMessage: Message) => {
 
 // 处理开始写作事件
 const handleStartWriting = async (message: Message) => {
-
   try {
+    // 在开始新的写作之前，先停止任何正在进行的流式输出
+    streamingManager.stopStreaming()
+
     // 获取内容写作功能配置
     const featureConfig = await getContentWritingConfig()
 

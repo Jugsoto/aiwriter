@@ -8,7 +8,11 @@
 
       <!-- 中间：状态提示区域（只有触发时才显示） -->
       <div class="flex-1 text-center">
-        <span v-if="autoSaveStatus" class="text-blue-500">
+        <span v-if="isStreaming" class="text-green-500 flex items-center justify-center gap-1">
+          <span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+          AI写作中...
+        </span>
+        <span v-else-if="autoSaveStatus" class="text-blue-500">
           {{ autoSaveStatus }}
         </span>
       </div>
@@ -44,6 +48,10 @@ const props = defineProps({
   lastSavedTime: {
     type: null as any,
     default: null
+  },
+  isStreaming: {
+    type: Boolean,
+    default: false
   }
 })
 

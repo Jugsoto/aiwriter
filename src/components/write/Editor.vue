@@ -13,13 +13,14 @@ o<template>
 
     <!-- 底部状态栏 -->
     <StatusBar :current-chapter="currentChapter" :content="content" :auto-save-status="autoSaveStatus"
-      :last-saved-time="lastSavedTime" />
+      :last-saved-time="lastSavedTime" :is-streaming="isStreaming" />
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useChaptersStore } from '@/stores/chapters'
+import { streamingManager } from '@/utils'
 import HeaderToolbar from './editor/HeaderToolbar.vue'
 import StatusBar from './editor/StatusBar.vue'
 import ContentEditor from './editor/ContentEditor.vue'
@@ -31,6 +32,19 @@ function debounce<T extends (...args: any[]) => any>(func: T, wait: number): T {
     if (timeout) clearTimeout(timeout)
     timeout = setTimeout(() => func(...args), wait)
   }) as T
+}
+
+// 清理空白段落的函数
+function cleanEmptyParagraphs(text: string): string {
+  if (!text) return text
+
+  // 将多个连续换行符替换为单个换行符（只保留一个换行符）
+  text = text.replace(/\n{2,}/g, '\n')
+
+  // 移除内容末尾的换行符
+  text = text.replace(/\n+$/, '')
+
+  return text
 }
 
 const chaptersStore = useChaptersStore()
@@ -45,7 +59,6 @@ const lastSaved = ref(false)
 const autoSaveStatus = ref('')
 const lastSavedTime = ref<string | Date | null>(null)
 const isStreaming = ref(false)
-const streamingController = ref<AbortController | null>(null)
 
 // 监听当前章节变化
 watch(currentChapter, (newChapter) => {
@@ -126,26 +139,31 @@ const debouncedAutoSave = debounce(() => {
 
 // 停止流式输出
 const handleStopStreaming = () => {
-  if (streamingController.value) {
-    streamingController.value.abort()
-    streamingController.value = null
-    isStreaming.value = false
-  }
+  streamingManager.stopStreaming()
 }
 
 // 开始流式写作（供父组件调用）
 const startStreamingWriting = (streamGenerator: AsyncGenerator<string, void, unknown>) => {
-  if (isStreaming.value) {
-    console.warn('已经在流式写作中')
-    return
+  // 监听流式状态变化 - 必须在开始流式输出之前注册
+  const updateStreamingStatus = (streaming: boolean, type: string | null) => {
+    isStreaming.value = streaming && type === 'writing'
   }
 
-  isStreaming.value = true
-  const controller = new AbortController()
-  streamingController.value = controller
+  // 先注册监听器，再开始流式输出
+  streamingManager.addListener(updateStreamingStatus)
+
+  // 使用全局流式管理器开始新的写作流
+  const controller = streamingManager.startStreaming('writing')
 
   // 异步处理流式内容
-  processStreamContent(streamGenerator, controller.signal)
+  processStreamContent(streamGenerator, controller.signal).finally(() => {
+    // 清理监听器
+    streamingManager.removeListener(updateStreamingStatus)
+    // 强制检查最终状态，确保流式输出完全停止
+    if (streamingManager.isStreaming() && streamingManager.getCurrentType() === 'writing') {
+      streamingManager.stopStreaming()
+    }
+  })
 }
 
 // 处理流式内容
@@ -162,11 +180,11 @@ const processStreamContent = async (
       currentContent += '\n'
     }
 
+
     // 流式接收内容
     for await (const contentChunk of streamGenerator) {
       // 检查是否被终止
       if (signal.aborted) {
-        console.log('流式写作被终止')
         break
       }
 
@@ -178,18 +196,20 @@ const processStreamContent = async (
 
       // 每个chunk处理后都检查终止信号
       if (signal.aborted) {
-        console.log('流式写作在处理chunk时被终止')
         break
       }
     }
 
-    console.log('流式写作完成')
+    // 流式输出完成后，清理空白段落
+    content.value = cleanEmptyParagraphs(content.value)
+
   } catch (error) {
     console.error('流式写作处理失败:', error)
   } finally {
-    // 清理状态
-    isStreaming.value = false
-    streamingController.value = null
+    // 确保状态被正确清理
+    if (streamingManager.isStreaming() && streamingManager.getCurrentType() === 'writing') {
+      streamingManager.stopStreaming()
+    }
   }
 }
 

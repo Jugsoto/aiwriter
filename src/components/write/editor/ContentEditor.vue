@@ -14,14 +14,11 @@
       </textarea>
     </div>
 
-    <!-- Toast提示 - 用于显示AI写作状态 -->
-    <Toast v-model:visible="toastVisible" :message="toastMessage" :type="toastType" :duration="0" />
   </div>
 </template>
 
 <script setup lang="ts">
-import { watch, ref } from 'vue'
-import Toast from '@/components/shared/Toast.vue'
+import { watch } from 'vue'
 import type { Chapter } from '@/electron.d'
 
 // 定义props
@@ -51,30 +48,6 @@ const emit = defineEmits<{
   'stop-streaming': []
 }>()
 
-// Toast提示状态
-const toastVisible = ref(false)
-const toastMessage = ref('')
-const toastType = ref<'success' | 'error' | 'info'>('info')
-
-// 显示Toast提示
-const showToast = (message: string, type: 'success' | 'error' | 'info' = 'info', duration: number = 2000) => {
-  toastMessage.value = message
-  toastType.value = type
-  toastVisible.value = true
-
-  // 如果duration为0，表示持续显示，需要手动关闭
-  if (duration > 0) {
-    setTimeout(() => {
-      toastVisible.value = false
-    }, duration)
-  }
-}
-
-// 隐藏Toast提示
-const hideToast = () => {
-  toastVisible.value = false
-}
-
 // 处理输入事件
 const handleInput = (event: Event) => {
   const target = event.target as HTMLTextAreaElement
@@ -92,13 +65,4 @@ watch(() => props.currentChapter?.id, (newId, oldId) => {
     }
   }
 }, { immediate: true })
-
-// 监听流式写作状态，显示/隐藏Toast提示
-watch(() => props.isStreaming, (isStreaming) => {
-  if (isStreaming) {
-    showToast('AI正在写作中...', 'info', 0) // duration为0，持续显示
-  } else {
-    hideToast()
-  }
-})
 </script>
