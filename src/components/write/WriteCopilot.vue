@@ -30,6 +30,7 @@ import { useSettingsStore } from '@/stores/settings'
 import { useChaptersStore } from '@/stores/chapters'
 import { useBooksStore } from '@/stores/books'
 import { ConversationStorage } from '../../utils/conversationStorage'
+import { CopilotSettingsStorage } from '../../utils/copilotSettingsStorage'
 import type { Setting } from '@/electron.d'
 
 // Props定义
@@ -425,13 +426,9 @@ const handleSettingsSaved = (settings: CopilotSettings) => {
 // 加载设置
 const loadSavedSettings = () => {
   try {
-    const settingsKey = `copilot-settings-${props.bookId}`
-    const savedSettings = localStorage.getItem(settingsKey)
-
-    if (savedSettings) {
-      const parsed = JSON.parse(savedSettings) as CopilotSettings
-      copilotSettings.value = parsed
-    }
+    // 使用存储管理类加载设置，与对话参数保存机制保持一致
+    const loadedSettings = CopilotSettingsStorage.loadSettings(props.bookId)
+    copilotSettings.value = loadedSettings
   } catch (error) {
     console.error('加载Copilot设置失败:', error)
   }

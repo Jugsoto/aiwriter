@@ -66,6 +66,8 @@
 <script setup lang="ts">
 import { ref, onMounted, watch } from 'vue'
 import { X } from 'lucide-vue-next'
+import { CopilotSettingsStorage } from '@/utils/copilotSettingsStorage'
+import type { CopilotSettings } from '@/utils/types'
 
 // 定义props
 const props = defineProps<{
@@ -78,13 +80,6 @@ const emit = defineEmits<{
   saved: [settings: CopilotSettings]
 }>()
 
-// 设置接口
-interface CopilotSettings {
-  contextLength: number
-  previousChapterCount: number  // 前文章节数量 (1-3)
-  chapterSummaryCount: number   // 前文章节梗概数量 (3-10)
-}
-
 // 响应式数据
 const contextLength = ref<number>(3)
 const previousChapterCount = ref<number>(1)
@@ -95,45 +90,41 @@ const originalSettings = ref<CopilotSettings>({
   chapterSummaryCount: 5
 })
 
-// 自动保存防抖
-let saveTimeout: NodeJS.Timeout | null = null
-const saveDelay = 500 // 500ms 延迟
+// 实时保存设置（无延迟，像对话参数一样实时保存）
+const realtimeSaveSettings = () => {
+  try {
+    const settings: CopilotSettings = {
+      contextLength: contextLength.value,
+      previousChapterCount: previousChapterCount.value,
+      chapterSummaryCount: chapterSummaryCount.value
+    }
 
-// 获取设置存储键
-const getSettingsKey = (bookId: number): string => {
-  return `copilot-settings-${bookId}`
+    // 使用存储管理类实时保存
+    CopilotSettingsStorage.saveSettingsRealtime(props.bookId, settings)
+
+    originalSettings.value = { ...settings }
+
+    // 触发保存事件
+    emit('saved', settings)
+  } catch (error) {
+    console.error('实时保存Copilot设置失败:', error)
+  }
 }
 
 // 加载设置
 const loadSettings = () => {
   try {
-    const settingsKey = getSettingsKey(props.bookId)
-    const savedSettings = localStorage.getItem(settingsKey)
+    // 使用存储管理类加载设置
+    const loadedSettings = CopilotSettingsStorage.loadSettings(props.bookId)
 
-    if (savedSettings) {
-      const parsed = JSON.parse(savedSettings) as CopilotSettings
-      contextLength.value = parsed.contextLength
-      originalSettings.value = { ...parsed }
-    } else {
-      // 使用默认值
-      const defaultSettings: CopilotSettings = {
-        contextLength: 3,
-        previousChapterCount: 1,
-        chapterSummaryCount: 5
-      }
-      contextLength.value = defaultSettings.contextLength
-      previousChapterCount.value = defaultSettings.previousChapterCount
-      chapterSummaryCount.value = defaultSettings.chapterSummaryCount
-      originalSettings.value = { ...defaultSettings }
-    }
+    contextLength.value = loadedSettings.contextLength
+    previousChapterCount.value = loadedSettings.previousChapterCount
+    chapterSummaryCount.value = loadedSettings.chapterSummaryCount
+    originalSettings.value = { ...loadedSettings }
   } catch (error) {
     console.error('加载Copilot设置失败:', error)
     // 使用默认值
-    const defaultSettings: CopilotSettings = {
-      contextLength: 3,
-      previousChapterCount: 1,
-      chapterSummaryCount: 5
-    }
+    const defaultSettings = CopilotSettingsStorage.getDefaultSettings()
     contextLength.value = defaultSettings.contextLength
     previousChapterCount.value = defaultSettings.previousChapterCount
     chapterSummaryCount.value = defaultSettings.chapterSummaryCount
@@ -141,51 +132,22 @@ const loadSettings = () => {
   }
 }
 
-// 自动保存设置
-const autoSaveSettings = () => {
-  // 清除之前的定时器
-  if (saveTimeout) {
-    clearTimeout(saveTimeout)
-  }
-
-  // 设置新的定时器
-  saveTimeout = setTimeout(() => {
-    try {
-      const settings: CopilotSettings = {
-        contextLength: contextLength.value,
-        previousChapterCount: previousChapterCount.value,
-        chapterSummaryCount: chapterSummaryCount.value
-      }
-
-      const settingsKey = getSettingsKey(props.bookId)
-      localStorage.setItem(settingsKey, JSON.stringify(settings))
-
-      originalSettings.value = { ...settings }
-
-      // 触发保存事件
-      emit('saved', settings)
-    } catch (error) {
-      console.error('自动保存Copilot设置失败:', error)
-    }
-  }, saveDelay)
-}
-
-// 监听设置变化
+// 监听设置变化（实时保存，像对话参数一样）
 watch(contextLength, (newValue, oldValue) => {
   if (newValue !== oldValue) {
-    autoSaveSettings()
+    realtimeSaveSettings()
   }
 })
 
 watch(previousChapterCount, (newValue, oldValue) => {
   if (newValue !== oldValue) {
-    autoSaveSettings()
+    realtimeSaveSettings()
   }
 })
 
 watch(chapterSummaryCount, (newValue, oldValue) => {
   if (newValue !== oldValue) {
-    autoSaveSettings()
+    realtimeSaveSettings()
   }
 })
 
