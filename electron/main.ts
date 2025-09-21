@@ -311,7 +311,7 @@ ipcMain.handle('delete-model', (_event: any, id: number) => {
   return { success: true }
 })
 
-// 重置数据 - 只删除数据库文件，保留软件本身数据
+// 重置数据 - 删除数据库文件和本地存储数据，保留软件本身数据
 ipcMain.handle('reset-data', async () => {
   try {
     // 关闭数据库连接
@@ -329,10 +329,31 @@ ipcMain.handle('reset-data', async () => {
       console.log('Database file not found:', dbPath)
     }
     
+    // 清除浏览器本地存储数据
+    if (win && win.webContents) {
+      try {
+        // 清除 localStorage
+        await win.webContents.executeJavaScript(`
+          // 清除所有本地存储数据
+          const keys = Object.keys(localStorage);
+          keys.forEach(key => {
+            if (key.startsWith('copilot-conversations-') || key.startsWith('copilot-settings-')) {
+              localStorage.removeItem(key);
+            }
+          });
+          console.log('Local storage data cleared successfully');
+        `)
+        console.log('Browser local storage cleared successfully')
+      } catch (storageError) {
+        console.error('Failed to clear browser local storage:', storageError)
+        // 不中断重置过程，继续执行
+      }
+    }
+    
     // 重新初始化数据库（这会重新创建空的数据库文件）
     initDatabase()
     
-    console.log('Data reset completed successfully - only user data cleared')
+    console.log('Data reset completed successfully - user data and local storage cleared')
     
     // 延迟重启，确保数据库操作完成
     setTimeout(() => {

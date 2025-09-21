@@ -69,8 +69,8 @@
     </div>
   </div>
   <!-- 重置数据确认对话框 -->
-  <ConfirmModal v-model:visible="resetConfirmVisible" title="确认重置数据" message="此操作将删除所有用户数据（包括所有书籍和章节），但会保留软件本身的配置和设置。"
-    description="重置后应用将自动重启，所有创作内容将被清空且无法恢复。" confirm-text="确认重置" cancel-text="取消" :dangerous="true"
+  <ConfirmModal v-model:visible="resetConfirmVisible" title="确认重置数据" message="此操作将删除所有用户数据（包括所有书籍、章节、对话历史和Copilot设置）。"
+    description="重置后应用将自动重启，所有创作内容、对话记录和个性化设置将被清空且无法恢复。" confirm-text="确认重置" cancel-text="取消" :dangerous="true"
     :loading="isResetting" confirm-loading-text="正在重置数据..." @confirm="handleResetData" @cancel="handleResetCancel" />
 
   <!-- 错误提示模态窗 -->
