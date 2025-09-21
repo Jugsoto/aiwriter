@@ -144,6 +144,17 @@ const handleStopStreaming = () => {
 
 // 开始流式写作（供父组件调用）
 const startStreamingWriting = (streamGenerator: AsyncGenerator<string, void, unknown>) => {
+  // 检查是否已有写作流在进行中，但给予一定的容错时间
+  if (streamingManager.isStreaming() && streamingManager.getCurrentType() === 'writing') {
+    // 等待100ms让之前的流完全清理，然后重试
+    setTimeout(() => {
+      if (!streamingManager.isStreaming() || streamingManager.getCurrentType() !== 'writing') {
+        startStreamingWriting(streamGenerator)
+      }
+    }, 100)
+    return
+  }
+
   // 监听流式状态变化 - 必须在开始流式输出之前注册
   const updateStreamingStatus = (streaming: boolean, type: string | null) => {
     isStreaming.value = streaming && type === 'writing'
@@ -152,18 +163,28 @@ const startStreamingWriting = (streamGenerator: AsyncGenerator<string, void, unk
   // 先注册监听器，再开始流式输出
   streamingManager.addListener(updateStreamingStatus)
 
-  // 使用全局流式管理器开始新的写作流
-  const controller = streamingManager.startStreaming('writing')
+  let controller: AbortController | null = null
+  try {
+    // 使用全局流式管理器开始新的写作流
+    controller = streamingManager.startStreaming('writing')
 
-  // 异步处理流式内容
-  processStreamContent(streamGenerator, controller.signal).finally(() => {
-    // 清理监听器
+    // 异步处理流式内容
+    processStreamContent(streamGenerator, controller.signal).finally(() => {
+      // 清理监听器
+      streamingManager.removeListener(updateStreamingStatus)
+      // 强制检查最终状态，确保流式输出完全停止
+      if (streamingManager.isStreaming() && streamingManager.getCurrentType() === 'writing') {
+        streamingManager.stopStreaming()
+      }
+    })
+  } catch (error) {
+    console.error('启动流式写作失败:', error)
+    // 清理资源
     streamingManager.removeListener(updateStreamingStatus)
-    // 强制检查最终状态，确保流式输出完全停止
-    if (streamingManager.isStreaming() && streamingManager.getCurrentType() === 'writing') {
-      streamingManager.stopStreaming()
+    if (controller) {
+      controller.abort()
     }
-  })
+  }
 }
 
 // 处理流式内容
@@ -220,23 +241,24 @@ defineExpose({
 })
 
 // 监听流式写作事件
+let eventHandler: EventListener | null = null
+
 onMounted(() => {
-  window.addEventListener('start-streaming-writing', ((event: Event) => {
+  eventHandler = ((event: Event) => {
     const customEvent = event as CustomEvent
     const { streamGenerator } = customEvent.detail
     if (streamGenerator) {
       startStreamingWriting(streamGenerator)
     }
-  }) as EventListener)
+  }) as EventListener
+
+  window.addEventListener('start-streaming-writing', eventHandler)
 })
 
 onUnmounted(() => {
-  window.removeEventListener('start-streaming-writing', ((event: Event) => {
-    const customEvent = event as CustomEvent
-    const { streamGenerator } = customEvent.detail
-    if (streamGenerator) {
-      startStreamingWriting(streamGenerator)
-    }
-  }) as EventListener)
+  if (eventHandler) {
+    window.removeEventListener('start-streaming-writing', eventHandler)
+    eventHandler = null
+  }
 })
 </script>

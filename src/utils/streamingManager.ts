@@ -7,6 +7,7 @@ export class StreamingManager {
   private currentController: AbortController | null = null
   private currentType: string | null = null
   private listeners: Set<(isStreaming: boolean, type: string | null) => void> = new Set()
+  private isTransitioning: boolean = false // 新增：标记是否处于流切换状态
 
   private constructor() {}
 
@@ -26,9 +27,23 @@ export class StreamingManager {
    * @returns AbortController 用于终止当前流式输出
    */
   startStreaming(type: string): AbortController {
-    // 如果已有流式输出在运行，先终止它
-    if (this.currentController) {
+    // 如果处于切换状态，增加保护延迟
+    if (this.isTransitioning) {
+      // 在切换状态下，不立即中止现有流，避免竞态条件
+      if (this.currentController && this.currentType !== type) {
+        // 切换期间跳过中止不同类型流
+      }
+    }
+
+    // 如果已有流式输出在运行，先终止它（但避免竞态条件）
+    if (this.currentController && this.currentType !== type) {
+      this.isTransitioning = true
       this.currentController.abort()
+      
+      // 短暂延迟，确保中止信号传播
+      setTimeout(() => {
+        this.isTransitioning = false
+      }, 50) // 50ms 延迟应该足够
     }
 
     // 创建新的控制器
@@ -56,15 +71,8 @@ export class StreamingManager {
    */
   stopStreaming(): void {
     if (this.currentController) {
-      console.log(`StreamingManager: 停止${this.currentType}流式输出`)
-      console.log(`[DEBUG] currentController before abort:`, this.currentController)
-      const controller = this.currentController
-      console.log(`[DEBUG] assigned controller variable:`, controller)
       this.currentController.abort()
-      console.log(`[DEBUG] currentController after abort:`, this.currentController)
       // 注意：abort事件监听器会处理状态清理
-    } else {
-      console.log('StreamingManager: 没有活动的流式输出可以停止')
     }
   }
 

@@ -145,21 +145,29 @@ export async function* streamContentWriting(
   })
 
   // 流式生成内容
-  for await (const chunk of streamChatCompletion(messages, featureConfig, {}, signal)) {
-    // 立即检查终止信号
-    if (signal?.aborted) {
-      break
+  try {
+    for await (const chunk of streamChatCompletion(messages, featureConfig, {}, signal)) {
+      // 立即检查终止信号
+      if (signal?.aborted) {
+        break
+      }
+      
+      // 只返回正式内容，不返回推理内容
+      if (chunk.content) {
+        yield chunk.content
+      }
+      
+      // 每个chunk处理后都检查终止信号
+      if (signal?.aborted) {
+        break
+      }
     }
-    
-    // 只返回正式内容，不返回推理内容
-    if (chunk.content) {
-      yield chunk.content
+  } catch (error: any) {
+    if (error.name === 'AbortError' || signal?.aborted) {
+      return
     }
-    
-    // 每个chunk处理后都检查终止信号
-    if (signal?.aborted) {
-      break
-    }
+    console.error('流式生成出错:', error)
+    throw error
   }
 }
 

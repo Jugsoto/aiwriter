@@ -456,9 +456,6 @@ const handleMessageUpdate = (updatedMessage: Message) => {
 // 处理开始写作事件
 const handleStartWriting = async (message: Message) => {
   try {
-    // 在开始新的写作之前，先停止任何正在进行的流式输出
-    streamingManager.stopStreaming()
-
     // 获取内容写作功能配置
     const featureConfig = await getContentWritingConfig()
 
@@ -473,8 +470,6 @@ const handleStartWriting = async (message: Message) => {
       detail: { streamGenerator }
     })
     window.dispatchEvent(event)
-
-    console.log('WriteCopilot: 开始流式写作')
   } catch (error) {
     console.error('WriteCopilot: 内容写作失败', error)
   }
