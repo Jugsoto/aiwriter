@@ -84,6 +84,26 @@ const splitIntoParagraphs = (text: string): string[] => {
   return paragraphs.length === 0 ? [''] : paragraphs
 }
 
+// 计算每千字段落的索引
+const calculateMilestoneParagraphs = (paragraphs: string[]): number[] => {
+  const milestoneIndexes: number[] = []
+  let totalChars = 0
+  let nextMilestone = 1000
+
+  paragraphs.forEach((paragraph, index) => {
+    const prevTotalChars = totalChars
+    totalChars += paragraph.length
+
+    // 检查是否跨越了1000字的倍数里程碑
+    while (totalChars >= nextMilestone && prevTotalChars < nextMilestone) {
+      milestoneIndexes.push(index)
+      nextMilestone += 1000
+    }
+  })
+
+  return milestoneIndexes
+}
+
 // 将段落数组合并为文本
 const joinParagraphs = (paragraphs: string[]): string => {
   return paragraphs.join('\n')
@@ -94,6 +114,7 @@ const renderParagraphs = () => {
   if (!editorRef.value || isProcessingInput.value) return
 
   const paragraphs = splitIntoParagraphs(props.content)
+  const milestoneIndexes = calculateMilestoneParagraphs(paragraphs)
 
   // 清空编辑器内容
   editorRef.value.innerHTML = ''
@@ -103,6 +124,11 @@ const renderParagraphs = () => {
     const paragraphDiv = document.createElement('div')
     paragraphDiv.className = 'paragraph mb-4 min-h-[1.2em] outline-none'
     paragraphDiv.setAttribute('data-paragraph-index', index.toString())
+
+    // 如果是里程碑段落，添加特殊样式
+    if (milestoneIndexes.includes(index)) {
+      paragraphDiv.classList.add('milestone-paragraph')
+    }
 
     // 处理空段落（显示占位符光标）
     if (paragraphText === '' && index === paragraphs.length - 1) {
@@ -450,6 +476,8 @@ onUnmounted(() => {
   margin-bottom: 1em;
   min-height: 1.2em;
   outline: none;
+  border-bottom: 1px solid transparent;
+  transition: border-bottom-color 0.2s ease;
 }
 
 .paragraph:focus {
@@ -465,5 +493,15 @@ onUnmounted(() => {
 .paragraph br {
   display: none;
   /* 隐藏自动生成的br标签 */
+}
+
+/* 使用深度选择器确保里程碑段落样式能够应用 */
+:deep(.milestone-paragraph) {
+  border-bottom-color: #0ea5e9 !important;
+  border-bottom-width: 2px !important;
+}
+
+:deep(.milestone-paragraph:hover) {
+  border-bottom-color: #0284c7 !important;
 }
 </style>
