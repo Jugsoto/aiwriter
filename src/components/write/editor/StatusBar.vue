@@ -1,31 +1,35 @@
 <template>
-  <div v-if="currentChapter" class="p-3 border-t border-[var(--border-color)] bg-[var(--bg-secondary)]">
-    <div class="flex items-center justify-between text-xs text-[var(--text-secondary)]">
-      <!-- 左侧：只显示字符数 -->
-      <div class="flex items-center">
-        <span>{{ charCount }}</span>
+  <div v-if="currentChapter" class="p-2 border-t border-[var(--border-color)] bg-[var(--bg-secondary)]">
+    <div class="flex items-center text-xs text-[var(--text-secondary)]">
+      <!-- 左侧：字符数统计（固定宽度，胶囊背景） -->
+      <div class="w-32 flex items-center justify-start">
+        <div class="px-3 py-1 bg-[var(--bg-primary)] rounded-full">
+          <span>{{ charCount }} 字符</span>
+        </div>
       </div>
 
       <!-- 中间：状态提示区域（只有触发时才显示） -->
-      <div class="flex-1 text-center">
-        <span v-if="isStreaming" class="text-green-500 flex items-center justify-center gap-1">
+      <div class="flex-1 flex items-center justify-center">
+        <span v-if="isStreaming"
+          class="text-green-500 inline-flex items-center gap-1 px-3 py-1 bg-green-500/10 rounded-full">
           <span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
           神笔写作中
         </span>
-        <span v-else-if="isGeneratingSummary" class="text-purple-500 flex items-center justify-center gap-1">
+        <span v-else-if="isGeneratingSummary"
+          class="text-purple-500 inline-flex items-center gap-1 px-3 py-1 bg-purple-500/10 rounded-full">
           <span class="w-2 h-2 bg-purple-500 rounded-full animate-pulse"></span>
           梗概生成中
         </span>
-        <span v-else-if="autoSaveStatus" class="text-blue-500">
+        <span v-else-if="autoSaveStatus" class="text-blue-500 inline-block px-3 py-1 bg-blue-500/10 rounded-full">
           {{ autoSaveStatus }}
         </span>
       </div>
 
-      <!-- 右侧：只显示更新时间 -->
-      <div class="flex items-center">
-        <span v-if="currentChapter.updated_at" class="text-gray-500">
-          {{ formatDateTime(currentChapter.updated_at) }}
-        </span>
+      <!-- 右侧：更新时间（固定宽度，胶囊背景） -->
+      <div class="w-32 flex items-center justify-end">
+        <div v-if="currentChapter.updated_at" class="px-3 py-1 bg-[var(--bg-primary)] rounded-full">
+          <span>{{ formatDateTime(currentChapter.updated_at) }}</span>
+        </div>
       </div>
     </div>
   </div>
