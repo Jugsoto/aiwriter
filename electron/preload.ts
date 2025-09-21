@@ -64,7 +64,11 @@ const api = {
   getUsageStatisticsByDateRange: (startDate: string, endDate: string) => ipcRenderer.invoke('get-usage-statistics-by-date-range', startDate, endDate),
   getUsageStatisticsByProvider: (providerId: number) => ipcRenderer.invoke('get-usage-statistics-by-provider', providerId),
   getUsageStatisticsByModel: (modelId: number) => ipcRenderer.invoke('get-usage-statistics-by-model', modelId),
-  getUsageStatisticsSummary: () => ipcRenderer.invoke('get-usage-statistics-summary')
+  getUsageStatisticsSummary: () => ipcRenderer.invoke('get-usage-statistics-summary'),
+  
+  // 应用信息相关API
+  getAppVersion: () => ipcRenderer.invoke('get-app-version'),
+  openExternal: (url: string) => ipcRenderer.invoke('open-external', url)
 }
 
 contextBridge.exposeInMainWorld('electronAPI', api)

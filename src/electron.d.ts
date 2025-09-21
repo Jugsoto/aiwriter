@@ -81,6 +81,10 @@ declare global {
           total_tokens: number
         }>
       }>
+      
+      // 应用信息相关API
+      getAppVersion: () => Promise<string>
+      openExternal: (url: string) => Promise<void>
     }
   }
 }

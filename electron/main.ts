@@ -123,6 +123,11 @@ ipcMain.handle('get-app-version', () => {
   return app.getVersion()
 })
 
+// 打开外部链接
+ipcMain.handle('open-external', (_event: any, url: string) => {
+  shell.openExternal(url)
+})
+
 // 获取应用数据目录路径
 ipcMain.handle('get-app-data-path', () => {
   return app.getPath('userData')
