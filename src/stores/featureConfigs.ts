@@ -13,7 +13,9 @@ export const useFeatureConfigsStore = defineStore('featureConfigs', () => {
     'chapter_planning': '章节细纲',
     'content_writing': '正文写作',
     'editing_review': '编辑审核',
-    'embedding_model': '嵌入模型'
+    'setting_maintenance': '设定维护',
+    'embedding_model': '嵌入模型',
+    
   }
 
   // 功能默认参数配置
@@ -21,7 +23,7 @@ export const useFeatureConfigsStore = defineStore('featureConfigs', () => {
     'basic_model': {
       temperature: 0.7,
       top_p: 0.9,
-      description: '用于基础操作，如词条维护，工具页面等'
+      description: '用于基础操作，如章节梗概，方向建议，工具页面等'
     },
     'chapter_planning': {
       temperature: 0.8,
@@ -29,7 +31,7 @@ export const useFeatureConfigsStore = defineStore('featureConfigs', () => {
       description: '用于书籍章节的结构规划和内容设计'
     },
     'content_writing': {
-      temperature: 0.9,
+      temperature: 0.8,
       top_p: 0.95,
       description: '用于创作书籍的正文内容'
     },
@@ -38,11 +40,17 @@ export const useFeatureConfigsStore = defineStore('featureConfigs', () => {
       top_p: 0.7,
       description: '用于内容的评价、校对和审核工作'
     },
+    'setting_maintenance': {
+      temperature: 0.3,
+      top_p: 0.7,
+      description: '用于维护和管理设定卡片的信息，包括更新、整理和优化设定内容'
+    },
     'embedding_model': {
       temperature: 0.1,
       top_p: 0.5,
       description: '用于文本嵌入和语义搜索任务'
-    }
+    },
+
   }
 
   // 获取所有功能配置

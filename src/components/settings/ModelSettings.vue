@@ -184,7 +184,8 @@ const getProviderIcon = (providerName: string): string => {
     '智谱AI': 'zhipu',
     'AiHubMix': 'aihubmix',
     'OpenRouter': 'openrouter',
-    '硅基流动': 'siliconflow'
+    '硅基流动': 'siliconflow',
+    '神笔AI': 'shenbi'
   }
 
   // 直接查找匹配的图标

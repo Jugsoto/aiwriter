@@ -229,7 +229,8 @@ function getCurrentProviderLogo(): string {
     '智谱AI': 'zhipu',
     'AiHubMix': 'aihubmix',
     'OpenRouter': 'openrouter',
-    '硅基流动': 'siliconflow'
+    '硅基流动': 'siliconflow',
+    '神笔AI': 'shenbi'
   }
 
   const matchedIcon = iconMap[provider.name] || 'other'

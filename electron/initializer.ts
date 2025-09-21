@@ -11,6 +11,19 @@ import {
 const DEFAULT_PROVIDERS_DATA = {
   providers: [
     {
+      name: "神笔AI",
+      url: "https://ai.qgming.com/v1",
+      key: "",
+      models: [
+        { model: "shenbi-base", tags: "think" },
+        { model: "shenbi-chapter", tags: "tool" },
+        { model: "shenbi-setting", tags: "tool" },
+        { model: "shenbi-editing", tags: "tool" },
+        { model: "shenbi-writing", tags: "tool" },
+        { model: "shenbi-embedding", tags: "embedding" }
+      ]
+    },
+    {
       name: "DeepSeek",
       url: "https://api.deepseek.com/v1",
       key: "",
@@ -139,27 +152,44 @@ const DEFAULT_FEATURE_CONFIGS_DATA = {
     {
       feature_name: 'basic_model',
       temperature: 0.7,
-      top_p: 0.9
+      top_p: 0.9,
+      provider_name: '神笔AI',
+      model_name: 'shenbi-base'
     },
     {
       feature_name: 'chapter_planning',
       temperature: 0.8,
-      top_p: 0.95
+      top_p: 0.95,
+      provider_name: '神笔AI',
+      model_name: 'shenbi-chapter'
     },
     {
       feature_name: 'content_writing',
-      temperature: 0.9,
-      top_p: 0.95
+      temperature: 0.8,
+      top_p: 0.95,
+      provider_name: '神笔AI',
+      model_name: 'shenbi-writing'
     },
     {
       feature_name: 'editing_review',
       temperature: 0.3,
-      top_p: 0.7
+      top_p: 0.7,
+      provider_name: '神笔AI',
+      model_name: 'shenbi-editing'
     },
     {
       feature_name: 'embedding_model',
       temperature: 0.1,
-      top_p: 0.5
+      top_p: 0.5,
+      provider_name: '神笔AI',
+      model_name: 'shenbi-embedding'
+    },
+    {
+      feature_name: 'setting_maintenance',
+      temperature: 0.3,
+      top_p: 0.7,
+      provider_name: '神笔AI',
+      model_name: 'shenbi-setting'
     }
   ]
 }
@@ -238,22 +268,12 @@ export async function initializeDefaultProviders(): Promise<boolean> {
 // 使用默认数据初始化功能配置
 function initializeFeatureConfigsWithDefaults(): void {
   try {
-    // 获取第一个供应商和模型作为默认配置
+    // 获取所有供应商
     const allProviders = getAllProviders()
     if (allProviders.length === 0) {
       console.log('没有可用的供应商，跳过功能配置初始化')
       return
     }
-    
-    const firstProvider = allProviders[0]
-    const providerModels = getModelsByProviderId(firstProvider.id)
-    
-    if (providerModels.length === 0) {
-      console.log(`供应商 ${firstProvider.name} 没有可用的模型，跳过功能配置初始化`)
-      return
-    }
-    
-    const firstModel = providerModels[0]
     
     // 为每个默认功能配置创建或更新配置
     for (const defaultConfig of DEFAULT_FEATURE_CONFIGS_DATA.configs) {
@@ -262,15 +282,44 @@ function initializeFeatureConfigsWithDefaults(): void {
         const existingConfig = getFeatureConfigByName(defaultConfig.feature_name)
         
         if (!existingConfig) {
-          // 使用第一个供应商和模型作为默认配置
-          createFeatureConfig({
-            feature_name: defaultConfig.feature_name,
-            provider_id: firstProvider.id,
-            model_id: firstModel.id,
-            temperature: defaultConfig.temperature,
-            top_p: defaultConfig.top_p
-          })
-          console.log(`为功能 ${defaultConfig.feature_name} 创建默认配置: 供应商=${firstProvider.name}, 模型=${firstModel.model}`)
+          // 根据配置中指定的供应商名称查找供应商
+          const targetProvider = allProviders.find(p => p.name === defaultConfig.provider_name)
+          if (!targetProvider) {
+            console.log(`未找到供应商 ${defaultConfig.provider_name}，跳过功能 ${defaultConfig.feature_name} 的配置`)
+            continue
+          }
+          
+          // 获取该供应商的所有模型
+          const providerModels = getModelsByProviderId(targetProvider.id)
+          if (providerModels.length === 0) {
+            console.log(`供应商 ${targetProvider.name} 没有可用的模型，跳过功能 ${defaultConfig.feature_name} 的配置`)
+            continue
+          }
+          
+          // 根据配置中指定的模型名称查找模型
+          const selectedModel = providerModels.find(m => m.model === defaultConfig.model_name)
+          if (!selectedModel) {
+            console.log(`未找到模型 ${defaultConfig.model_name}，使用供应商 ${targetProvider.name} 的第一个模型`)
+            const firstModel = providerModels[0]
+            createFeatureConfig({
+              feature_name: defaultConfig.feature_name,
+              provider_id: targetProvider.id,
+              model_id: firstModel.id,
+              temperature: defaultConfig.temperature,
+              top_p: defaultConfig.top_p
+            })
+            console.log(`为功能 ${defaultConfig.feature_name} 创建默认配置: 供应商=${targetProvider.name}, 模型=${firstModel.model}`)
+          } else {
+            // 创建功能配置
+            createFeatureConfig({
+              feature_name: defaultConfig.feature_name,
+              provider_id: targetProvider.id,
+              model_id: selectedModel.id,
+              temperature: defaultConfig.temperature,
+              top_p: defaultConfig.top_p
+            })
+            console.log(`为功能 ${defaultConfig.feature_name} 创建默认配置: 供应商=${targetProvider.name}, 模型=${selectedModel.model}`)
+          }
         }
       } catch (error) {
         console.error(`功能配置 ${defaultConfig.feature_name} 初始化失败:`, error)
