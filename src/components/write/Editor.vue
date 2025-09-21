@@ -1,8 +1,9 @@
-o<template>
+<template>
   <div class="h-full bg-[var(--bg-primary)] flex flex-col">
     <!-- 顶部操作栏 -->
     <HeaderToolbar :current-chapter="currentChapter" :saving="saving" :last-saved="lastSaved" :has-changes="hasChanges"
-      :is-streaming="isStreaming" @save-content="saveContent" @stop-streaming="handleStopStreaming" />
+      :is-streaming="isStreaming" :is-generating-summary="isGeneratingSummary" @save-content="saveContent"
+      @stop-streaming="handleStopStreaming" @generate-summary="startGenerateSummary" />
 
     <!-- 编辑器区域 - 精确填充可用空间，无外部滚动 -->
     <div class="flex-1 min-h-0">
@@ -13,17 +14,23 @@ o<template>
 
     <!-- 底部状态栏 -->
     <StatusBar :current-chapter="currentChapter" :content="content" :auto-save-status="autoSaveStatus"
-      :last-saved-time="lastSavedTime" :is-streaming="isStreaming" />
+      :last-saved-time="lastSavedTime" :is-streaming="isStreaming" :is-generating-summary="isGeneratingSummary" />
+
+    <!-- Toast 提示 -->
+    <Toast v-model:visible="toastVisible" :message="toastMessage" :type="toastType" />
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useChaptersStore } from '@/stores/chapters'
+import { useBooksStore } from '@/stores/books'
 import { streamingManager } from '@/utils'
+import { generateChapterSummary } from '@/services/chapterSummary'
 import HeaderToolbar from './editor/HeaderToolbar.vue'
 import StatusBar from './editor/StatusBar.vue'
 import ContentEditor from './editor/ContentEditor.vue'
+import Toast from '@/components/shared/Toast.vue'
 
 // 简单的防抖函数实现
 function debounce<T extends (...args: any[]) => any>(func: T, wait: number): T {
@@ -59,6 +66,12 @@ const lastSaved = ref(false)
 const autoSaveStatus = ref('')
 const lastSavedTime = ref<string | Date | null>(null)
 const isStreaming = ref(false)
+const isGeneratingSummary = ref(false)
+
+// Toast 提示状态
+const toastVisible = ref(false)
+const toastMessage = ref('')
+const toastType = ref<'success' | 'error' | 'info'>('success')
 
 // 监听当前章节变化
 watch(currentChapter, (newChapter) => {
@@ -140,6 +153,54 @@ const debouncedAutoSave = debounce(() => {
 // 停止流式输出
 const handleStopStreaming = () => {
   streamingManager.stopStreaming()
+}
+
+// 显示 Toast 提示
+const showToast = (message: string, type: 'success' | 'error' | 'info' = 'success') => {
+  toastMessage.value = message
+  toastType.value = type
+  toastVisible.value = true
+}
+
+// 开始生成梗概
+const startGenerateSummary = async () => {
+  if (!currentChapter.value || !currentChapter.value.content) return
+
+  isGeneratingSummary.value = true
+
+  try {
+    // 获取当前书籍信息
+    const booksStore = useBooksStore()
+    const currentBook = booksStore.books.find((book: any) => book.id === currentChapter.value?.book_id)
+
+    // 构建上下文 - 只传递必要参数：章节内容和全局设定
+    const context = {
+      content: currentChapter.value.content,
+      globalSettings: currentBook?.global_settings
+    }
+
+    // 生成梗概
+    const summary = await generateChapterSummary(context)
+
+    // 更新章节梗概到数据库
+    await chaptersStore.updateChapter(currentChapter.value.id, {
+      summary: summary
+    })
+
+    // 更新本地状态
+    if (currentChapter.value) {
+      currentChapter.value.summary = summary
+    }
+
+    // 使用 toast 提示成功
+    showToast('梗概生成成功', 'success')
+
+  } catch (error) {
+    console.error('生成章节梗概失败:', error)
+    showToast('生成章节梗概失败，请重试', 'error')
+  } finally {
+    isGeneratingSummary.value = false
+  }
 }
 
 // 开始流式写作（供父组件调用）

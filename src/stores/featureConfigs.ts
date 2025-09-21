@@ -21,7 +21,7 @@ export const useFeatureConfigsStore = defineStore('featureConfigs', () => {
     'basic_model': {
       temperature: 0.7,
       top_p: 0.9,
-      description: '用于基础操作，如章节梗概，词条维护，工具页面等'
+      description: '用于基础操作，如词条维护，工具页面等'
     },
     'chapter_planning': {
       temperature: 0.8,

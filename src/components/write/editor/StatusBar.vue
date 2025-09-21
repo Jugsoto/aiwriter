@@ -10,7 +10,11 @@
       <div class="flex-1 text-center">
         <span v-if="isStreaming" class="text-green-500 flex items-center justify-center gap-1">
           <span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
-          AI写作中...
+          神笔写作中
+        </span>
+        <span v-else-if="isGeneratingSummary" class="text-purple-500 flex items-center justify-center gap-1">
+          <span class="w-2 h-2 bg-purple-500 rounded-full animate-pulse"></span>
+          梗概生成中
         </span>
         <span v-else-if="autoSaveStatus" class="text-blue-500">
           {{ autoSaveStatus }}
@@ -50,6 +54,10 @@ const props = defineProps({
     default: null
   },
   isStreaming: {
+    type: Boolean,
+    default: false
+  },
+  isGeneratingSummary: {
     type: Boolean,
     default: false
   }
