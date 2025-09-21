@@ -10,7 +10,7 @@
     <div v-else class="h-full relative">
       <!-- 流式模式：使用 textarea -->
       <textarea v-if="isStreaming" :value="content" @input="handleInput"
-        class="w-full h-full px-4 py-3 bg-[var(--bg-primary)] text-[var(--text-primary)] outline-none resize-none font-mono leading-relaxed overflow-y-auto"
+        class="w-full h-full px-4 py-3 bg-[var(--bg-primary)] text-[var(--text-primary)] outline-none resize-none leading-relaxed overflow-y-auto"
         placeholder="在这里编写您的章节内容...">
       </textarea>
 
