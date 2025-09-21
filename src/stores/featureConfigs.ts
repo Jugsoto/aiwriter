@@ -36,13 +36,13 @@ export const useFeatureConfigsStore = defineStore('featureConfigs', () => {
       description: '用于创作书籍的正文内容'
     },
     'editing_review': {
-      temperature: 0.3,
-      top_p: 0.7,
+      temperature: 0.7,
+      top_p: 0.9,
       description: '用于内容的评价、校对和审核工作'
     },
     'setting_maintenance': {
-      temperature: 0.3,
-      top_p: 0.7,
+      temperature: 0.7,
+      top_p: 0.9,
       description: '用于维护和管理设定卡片的信息，包括更新、整理和优化设定内容'
     },
     'embedding_model': {

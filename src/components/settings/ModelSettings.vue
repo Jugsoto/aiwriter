@@ -67,7 +67,11 @@
                   class="w-full px-3 py-2 bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-lg text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--theme-bg)] transition-colors" />
               </div>
             </div>
-            <div class="flex justify-end mt-4">
+            <div class="flex justify-end mt-4 space-x-3">
+              <button @click="showTestModelModal = true" :disabled="!currentProvider.url || !currentProvider.key"
+                class="px-4 py-2 bg-green-700 text-white rounded-lg hover:bg-green-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200">
+                测试连接
+              </button>
               <button @click="saveProviderConfig" :disabled="!hasConfigChanges || providersStore.loading"
                 class="px-4 py-2 bg-[var(--theme-bg)] text-[var(--theme-text)] rounded-lg hover:bg-primary disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200">
                 保存配置
@@ -121,6 +125,17 @@
       @cancel="showProviderModal = false" />
     <ProviderModelModal v-model:visible="showModelModal" type="model" @confirm="handleAddModel"
       @cancel="showModelModal = false" />
+
+    <!-- 模型选择模态框 -->
+    <ModelSelectionModal v-model:visible="showTestModelModal" :models="sortedModels" @select="handleModelSelection" />
+
+    <!-- Toast提示 -->
+    <Toast v-model:visible="toastVisible" :message="toastMessage" :type="toastType"
+      :duration="toastType === 'info' ? 0 : 2000" />
+
+    <!-- 错误模态框 -->
+    <ErrorModal v-model:visible="errorModalVisible" :message="errorModalMessage" :error-details="errorModalDetails"
+      @close="errorModalVisible = false" />
   </div>
 </template>
 
@@ -128,15 +143,29 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { useProvidersStore } from '@/stores/providers'
 import ProviderModelModal from '@/components/modal/ProviderModelModal.vue'
+import ModelSelectionModal from '@/components/modal/ModelSelectionModal.vue'
+import Toast from '@/components/shared/Toast.vue'
+import ErrorModal from '@/components/shared/ErrorModal.vue'
 import { Plus, X } from 'lucide-vue-next'
 import { showConfirm } from '@/composables/useConfirm'
+import { testConnection } from '@/services/testConnection'
 import type { Provider } from '@/electron.d'
+import type { Model } from '@/electron.d'
 
 const providersStore = useProvidersStore()
 
 // 模态框状态
 const showProviderModal = ref(false)
 const showModelModal = ref(false)
+const showTestModelModal = ref(false)
+
+// Toast和错误模态框状态
+const toastVisible = ref(false)
+const toastMessage = ref('')
+const toastType = ref<'success' | 'error' | 'info'>('success')
+const errorModalVisible = ref(false)
+const errorModalMessage = ref('')
+const errorModalDetails = ref('')
 
 // 当前编辑的供应商数据
 const currentProvider = ref<Partial<Provider>>({
@@ -299,6 +328,67 @@ async function deleteModel(id: number) {
     await providersStore.deleteModel(id)
   } catch (error) {
     console.error('Failed to delete model:', error)
+  }
+}
+
+// 显示Toast提示
+const showToast = (message: string, type: 'success' | 'error' | 'info' = 'success', duration: number = 2000) => {
+  toastMessage.value = message
+  toastType.value = type
+  toastVisible.value = true
+
+  if (duration > 0) {
+    setTimeout(() => {
+      toastVisible.value = false
+    }, duration)
+  }
+}
+
+// 显示错误模态框
+const showErrorModal = (message: string, details?: string) => {
+  errorModalMessage.value = message
+  errorModalDetails.value = details || ''
+  errorModalVisible.value = true
+}
+
+// 处理模型选择（从模态窗）
+const handleModelSelection = (model: Model) => {
+  handleTestConnection(model.model)
+}
+
+// 处理测试连接
+const handleTestConnection = async (modelName: string) => {
+  if (!providersStore.selectedProviderId || !currentProvider.value.url || !currentProvider.value.key) {
+    showErrorModal('请先配置供应商的URL和Key')
+    return
+  }
+
+  const provider = providersStore.providers.find(p => p.id === providersStore.selectedProviderId)
+  if (!provider) {
+    showErrorModal('供应商不存在')
+    return
+  }
+
+  // 显示持续Toast提示
+  showToast('正在测试连接...', 'info', 0) // duration为0表示不自动隐藏
+
+  try {
+    const result = await testConnection(provider as Provider, modelName)
+
+    // 隐藏之前的Toast
+    toastVisible.value = false
+
+    if (result.success) {
+      showToast('连接成功', 'success')
+    } else {
+      showErrorModal(result.message, result.error)
+    }
+  } catch (error) {
+    // 隐藏之前的Toast
+    toastVisible.value = false
+
+    const errorMessage = error instanceof Error ? error.message : '未知错误'
+    showErrorModal('测试连接失败', errorMessage)
   }
 }
 

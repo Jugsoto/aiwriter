@@ -172,15 +172,15 @@ const DEFAULT_FEATURE_CONFIGS_DATA = {
     },
     {
       feature_name: 'editing_review',
-      temperature: 0.3,
-      top_p: 0.7,
+      temperature: 0.7,
+      top_p: 0.9,
       provider_name: '神笔AI',
       model_name: 'shenbi-editing'
     },
     {
       feature_name: 'embedding_model',
-      temperature: 0.1,
-      top_p: 0.5,
+      temperature: 0.7,
+      top_p: 0.9,
       provider_name: '神笔AI',
       model_name: 'shenbi-embedding'
     },

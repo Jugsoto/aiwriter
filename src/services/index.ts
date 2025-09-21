@@ -9,3 +9,6 @@ export * from './chapterSummary'
 
 // 内容写作服务
 export * from './contentWriting'
+
+// 连接测试服务
+export * from './testConnection'
