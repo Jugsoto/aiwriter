@@ -1,6 +1,7 @@
 import { chatCompletion, type ChatMessage } from './chat'
 import type { FeatureConfig } from '@/electron.d'
 import { useFeatureConfigsStore } from '@/stores/featureConfigs'
+import { CHAPTER_SUMMARY_SYSTEM_PROMPT } from './prompts'
 
 export interface ChapterSummaryContext {
   content: string
@@ -11,7 +12,6 @@ export interface ChapterSummaryOptions {
   maxTokens?: number
 }
 
-const SYSTEM_PROMPT = `你是一个AI助手，名字是神笔AI。请根据提供的章节内容和全局设定生成简洁准确的章节梗概。专注于内容本身的概括。`
 
 /**
  * 获取章节梗概功能配置 - 使用基础模型配置
@@ -66,7 +66,7 @@ export async function generateChapterSummary(
 
   // 构建消息数组
   const messages: ChatMessage[] = [
-    { role: 'system', content: SYSTEM_PROMPT },
+    { role: 'system', content: CHAPTER_SUMMARY_SYSTEM_PROMPT },
     { role: 'user', content: userPrompt }
   ]
 

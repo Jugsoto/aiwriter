@@ -1,3 +1,6 @@
+// 系统提示词管理
+export * from './prompts'
+
 // 通用聊天服务
 export * from './chat'
 

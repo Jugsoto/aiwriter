@@ -1,6 +1,7 @@
 import { streamChatCompletion, type ChatMessage } from './chat'
 import type { FeatureConfig } from '@/electron.d'
 import { useFeatureConfigsStore } from '@/stores/featureConfigs'
+import { CONTENT_WRITING_SYSTEM_PROMPT } from './prompts'
 
 export interface ContentWritingContext {
   selectedMessage: string // 选中的消息内容
@@ -22,14 +23,6 @@ export interface ContentWritingOptions {
   chapterSummaryCount?: number // 前文章节梗概数量
 }
 
-const SYSTEM_PROMPT = `你是一个专业的AI写作助手，专门帮助用户创作小说内容。你需要根据提供的上下文信息，生成连贯、生动的小说正文内容。
-
-写作要求：
-1. 内容要连贯自然，符合前文情节发展
-2. 语言要生动形象，具有文学性
-3. 要符合人物性格设定和世界观背景
-4. 段落要清晰，每段不宜过长
-5. 直接输出正文内容，不要包含推理过程`
 
 /**
  * 获取内容写作功能配置
@@ -129,7 +122,7 @@ export async function* streamContentWriting(
 
   // 构建消息数组
   const messages: ChatMessage[] = [
-    { role: 'system', content: SYSTEM_PROMPT }
+    { role: 'system', content: CONTENT_WRITING_SYSTEM_PROMPT }
   ]
 
   // 如果有历史消息且设置了上下文长度，则添加历史消息
