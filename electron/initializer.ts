@@ -18,9 +18,10 @@ const DEFAULT_PROVIDERS_DATA = {
         { model: "shenbi-base", tags: "think" },
         { model: "shenbi-chapter", tags: "tool" },
         { model: "shenbi-setting", tags: "tool" },
-        { model: "shenbi-editing", tags: "tool" },
+        { model: "shenbi-editor", tags: "tool" },
         { model: "shenbi-writing", tags: "tool" },
-        { model: "shenbi-embedding", tags: "embedding" }
+        { model: "shenbi-embedding", tags: "embedding" },
+        { model: "shenbi-reranker", tags: "reranker" }
       ]
     },
     {
@@ -175,7 +176,7 @@ const DEFAULT_FEATURE_CONFIGS_DATA = {
       temperature: 0.7,
       top_p: 0.9,
       provider_name: '神笔AI',
-      model_name: 'shenbi-editing'
+      model_name: 'shenbi-editor'
     },
     {
       feature_name: 'embedding_model',
@@ -186,8 +187,8 @@ const DEFAULT_FEATURE_CONFIGS_DATA = {
     },
     {
       feature_name: 'setting_maintenance',
-      temperature: 0.3,
-      top_p: 0.7,
+      temperature: 0.6,
+      top_p: 0.8,
       provider_name: '神笔AI',
       model_name: 'shenbi-setting'
     }
