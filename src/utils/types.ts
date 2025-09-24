@@ -48,6 +48,22 @@ export interface EnhancedMessageContext {
     status: string
     type: string
   }>
+  vectorSearchResults?: {
+    textChunks: Array<{
+      title: string
+      content: string
+      similarity: number
+      chapterTitle?: string
+      chunkIndex?: number
+    }>
+    settingChunks: Array<{
+      title: string
+      content: string
+      similarity: number
+      settingType?: string
+      starred?: boolean
+    }>
+  }
 }
 
 export interface CopilotSettings {

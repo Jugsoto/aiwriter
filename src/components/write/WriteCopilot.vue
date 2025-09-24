@@ -22,7 +22,7 @@ import { ref, onMounted, onUnmounted, watch } from 'vue'
 import CopilotHeader from './copilot/CopilotHeader.vue'
 import MessageList from './copilot/MessageList.vue'
 import InputArea from './copilot/InputArea.vue'
-import { streamChapterOutline, streamContentWriting, getContentWritingConfig, type ContentWritingContext } from '@/services'
+import { streamChapterOutline, streamContentWriting, getContentWritingConfig, type ContentWritingContext, searchInBook } from '@/services'
 import { streamingManager } from '@/utils'
 import type { Message, Conversation, EnhancedMessageContext } from '../../utils/types'
 import type { CopilotSettings } from '../../utils/types'
@@ -73,7 +73,7 @@ const booksStore = useBooksStore()
 
 // 消息处理
 // 发送消息
-const handleSendMessage = async (content: string | EnhancedMessageContext) => {
+const handleSendMessage = async (content: string | EnhancedMessageContext, queryText?: string) => {
   let userInput: string
   let enhancedContext: EnhancedMessageContext | undefined
 
@@ -96,6 +96,61 @@ const handleSendMessage = async (content: string | EnhancedMessageContext) => {
 
   if (!userInput.trim()) return
 
+  // 执行向量搜索（使用用户输入作为查询文本）
+  let vectorSearchResults = undefined
+  const searchQuery = queryText || userInput // 如果没有queryText，使用用户输入
+
+  if (searchQuery) {
+    try {
+      const featureConfig = await featureConfigsStore.getConfigByFeatureName('embedding_model')
+      if (featureConfig) {
+        const searchResults = await searchInBook(
+          props.bookId,
+          searchQuery,
+          featureConfig,
+          {
+            chapterLimit: 10,
+            settingLimit: 5,
+            minSimilarity: 0.1,
+            includeChapters: true,
+            includeSettings: true
+          }
+        )
+
+        // 格式化向量搜索结果
+        vectorSearchResults = {
+          textChunks: searchResults.topResults.chapters.map((chunk: any) => ({
+            title: `章节: ${chunk.chapterTitle} (片段${chunk.chunkIndex + 1})`,
+            content: chunk.chunkText,
+            similarity: chunk.similarity,
+            chapterTitle: chunk.chapterTitle,
+            chunkIndex: chunk.chunkIndex
+          })),
+          settingChunks: searchResults.topResults.settings.map((setting: any) => ({
+            title: setting.settingName,
+            content: setting.settingContent,
+            similarity: setting.similarity,
+            settingType: setting.settingType,
+            starred: setting.starred
+          }))
+        }
+
+        console.log('向量搜索完成:', {
+          textChunksCount: vectorSearchResults.textChunks.length,
+          settingChunksCount: vectorSearchResults.settingChunks.length
+        })
+      }
+    } catch (error) {
+      console.error('向量搜索失败:', error)
+      // 搜索失败时不影响正常流程
+    }
+  }
+
+  // 将向量搜索结果添加到增强上下文
+  if (enhancedContext && vectorSearchResults) {
+    enhancedContext.vectorSearchResults = vectorSearchResults
+  }
+
   // 创建并添加用户消息
   const userMessage = createUserMessage(userInput)
   messages.value.push(userMessage)
@@ -104,6 +159,9 @@ const handleSendMessage = async (content: string | EnhancedMessageContext) => {
   updateConversationState(userMessage)
 
   // 生成AI回复
+  // 开始向量搜索
+  console.log('开始向量搜索:', { query: searchQuery, bookId: props.bookId })
+
   await generateResponse(userInput.trim(), enhancedContext)
 }
 
@@ -180,8 +238,10 @@ const buildGenerationContext = async (enhancedContext?: EnhancedMessageContext) 
     previousChapterContent,
     recentChapterSummaries,
     globalSettings,
-    selectedSettings: enhancedContext?.selectedSettings || []
+    selectedSettings: enhancedContext?.selectedSettings || [],
+    vectorSearchResults: enhancedContext?.vectorSearchResults
   }
+
 }
 
 // 创建AI消息

@@ -14,6 +14,22 @@ export interface ChapterOutlineContext {
     status: string
     type: string
   }>
+  vectorSearchResults?: {
+    textChunks: Array<{
+      title: string
+      content: string
+      similarity: number
+      chapterTitle?: string
+      chunkIndex?: number
+    }>
+    settingChunks: Array<{
+      title: string
+      content: string
+      similarity: number
+      settingType?: string
+      starred?: boolean
+    }>
+  }
 }
 
 export interface ChapterOutlineOptions {
@@ -47,7 +63,7 @@ export async function getChapterOutlineConfig(): Promise<FeatureConfig> {
  * 构建章节细纲的用户提示词
  */
 export function buildChapterOutlinePrompt(context: ChapterOutlineContext): string {
-  const { content, previousChapterContent, recentChapterSummaries, globalSettings, selectedSettings } = context
+  const { content, previousChapterContent, recentChapterSummaries, globalSettings, selectedSettings, vectorSearchResults } = context
 
   let prompt = ''
 
@@ -81,6 +97,29 @@ ${recentChapterSummaries.join('\n')}`
       当前状态：${setting.status}
       全部设定：${setting.content}`
     })
+  }
+
+  if (vectorSearchResults) {
+    
+    if (vectorSearchResults.textChunks && vectorSearchResults.textChunks.length > 0) {
+      prompt += `\n\n相关文本片段（基于语义匹配，相似度降序排列）：`
+      vectorSearchResults.textChunks.forEach((chunk, index) => {
+        prompt += `\n${index + 1}. [${chunk.title}] (相似度: ${(chunk.similarity * 100).toFixed(1)}%)
+        ${chunk.content}`
+      })
+    }
+
+    if (vectorSearchResults.settingChunks && vectorSearchResults.settingChunks.length > 0) {
+      prompt += `\n\n相关设定片段（基于语义匹配，相似度降序排列）：`
+      vectorSearchResults.settingChunks.forEach((chunk, index) => {
+        const typeInfo = chunk.settingType ? ` [${chunk.settingType}]` : ''
+        const starInfo = chunk.starred ? ' ★' : ''
+        prompt += `\n${index + 1}. [${chunk.title}]${typeInfo}${starInfo} (相似度: ${(chunk.similarity * 100).toFixed(1)}%)
+        ${chunk.content}`
+      })
+    }
+  } else {
+    console.log('向量搜索结果未包含在提示词中: vectorSearchResults 为 null 或 undefined')
   }
 
   if (content) {

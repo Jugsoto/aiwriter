@@ -172,7 +172,7 @@ const handleSend = () => {
       }))
     }
 
-    emit('send-message', enhancedContext)
+    emit('send-message', enhancedContext, inputText.value.trim())
     inputText.value = ''
     adjustTextareaHeight()
   }
