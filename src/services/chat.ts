@@ -150,7 +150,7 @@ export async function* streamChatCompletion(
       },
       messages: messages.map(msg => ({
         role: msg.role,
-        content: msg.content.substring(0, 500) + (msg.content.length > 500 ? '...' : '') // 截断过长的内容
+        content: msg.content
       })),
       fullMessages: messages // 完整的消息内容
     }

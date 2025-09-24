@@ -519,8 +519,55 @@ const handleStartWriting = async (message: Message) => {
     // 获取内容写作功能配置
     const featureConfig = await getContentWritingConfig()
 
-    // 构建内容写作上下文
-    const context = await buildContentWritingContext(message)
+    // 执行向量搜索（使用消息内容作为查询文本）
+    let vectorSearchResults = undefined
+    try {
+      const embeddingConfig = await featureConfigsStore.getConfigByFeatureName('embedding_model')
+      if (embeddingConfig) {
+        const searchResults = await searchInBook(
+          props.bookId,
+          message.content,
+          embeddingConfig,
+          {
+            chapterLimit: 8,
+            settingLimit: 4,
+            minSimilarity: 0.15,
+            includeChapters: true,
+            includeSettings: true
+          }
+        )
+
+        // 格式化向量搜索结果
+        vectorSearchResults = {
+          textChunks: searchResults.topResults.chapters.map((chunk: any) => ({
+            title: `章节: ${chunk.chapterTitle} (片段${chunk.chunkIndex + 1})`,
+            content: chunk.chunkText,
+            similarity: chunk.similarity,
+            chapterTitle: chunk.chapterTitle,
+            chunkIndex: chunk.chunkIndex
+          })),
+          settingChunks: searchResults.topResults.settings.map((setting: any) => ({
+            title: setting.settingName,
+            content: setting.settingContent,
+            similarity: setting.similarity,
+            settingType: setting.settingType,
+            starred: setting.starred
+          }))
+        }
+
+        console.log('写作时向量搜索完成:', {
+          textChunksCount: vectorSearchResults.textChunks.length,
+          settingChunksCount: vectorSearchResults.settingChunks.length,
+          query: message.content
+        })
+      }
+    } catch (error) {
+      console.error('写作时向量搜索失败:', error)
+      // 搜索失败时不影响正常写作流程
+    }
+
+    // 构建内容写作上下文（包含向量搜索结果）
+    const context = await buildContentWritingContext(message, vectorSearchResults)
 
     // 创建流式生成器
     const streamGenerator = streamContentWriting(context, featureConfig, {})
@@ -536,7 +583,7 @@ const handleStartWriting = async (message: Message) => {
 }
 
 // 构建内容写作上下文
-const buildContentWritingContext = async (message: Message): Promise<ContentWritingContext> => {
+const buildContentWritingContext = async (message: Message, vectorSearchResults?: any): Promise<ContentWritingContext> => {
   const [previousChapterContent, recentChapterSummaries, globalSettings] = await Promise.all([
     getPreviousChapterContent(),
     getRecentChapterSummaries(),
@@ -553,7 +600,8 @@ const buildContentWritingContext = async (message: Message): Promise<ContentWrit
       content: setting.content,
       status: setting.status,
       type: setting.type
-    }))
+    })),
+    vectorSearchResults
   }
 }
 

@@ -14,6 +14,22 @@ export interface ContentWritingContext {
     type: string
   }> // 选择的设定
   globalSettings?: string // 前局设定（全局设定）
+  vectorSearchResults?: {
+    textChunks: Array<{
+      title: string
+      content: string
+      similarity: number
+      chapterTitle?: string
+      chunkIndex?: number
+    }>
+    settingChunks: Array<{
+      title: string
+      content: string
+      similarity: number
+      settingType?: string
+      starred?: boolean
+    }>
+  } // 向量搜索结果
 }
 
 export interface ContentWritingOptions {
@@ -47,12 +63,13 @@ export async function getContentWritingConfig(): Promise<FeatureConfig> {
  * 构建内容写作的用户提示词
  */
 export function buildContentWritingPrompt(context: ContentWritingContext): string {
-  const { 
-    selectedMessage, 
-    previousChapterContent, 
-    recentChapterSummaries, 
-    selectedSettings, 
-    globalSettings 
+  const {
+    selectedMessage,
+    previousChapterContent,
+    recentChapterSummaries,
+    selectedSettings,
+    globalSettings,
+    vectorSearchResults
   } = context
 
   let prompt = ''
@@ -94,6 +111,28 @@ ${recentChapterSummaries.join('\n')}
       设定内容：${setting.content}`
     })
     prompt += '\n\n'
+  }
+
+  if (vectorSearchResults) {
+    if (vectorSearchResults.textChunks && vectorSearchResults.textChunks.length > 0) {
+      prompt += `相关文本片段（基于语义匹配，相似度降序排列）：`
+      vectorSearchResults.textChunks.forEach((chunk, index) => {
+        prompt += `\n${index + 1}. [${chunk.title}] (相似度: ${(chunk.similarity * 100).toFixed(1)}%)
+        ${chunk.content}`
+      })
+      prompt += '\n\n'
+    }
+
+    if (vectorSearchResults.settingChunks && vectorSearchResults.settingChunks.length > 0) {
+      prompt += `相关设定片段（基于语义匹配，相似度降序排列）：`
+      vectorSearchResults.settingChunks.forEach((chunk, index) => {
+        const typeInfo = chunk.settingType ? ` [${chunk.settingType}]` : ''
+        const starInfo = chunk.starred ? ' ★' : ''
+        prompt += `\n${index + 1}. [${chunk.title}]${typeInfo}${starInfo} (相似度: ${(chunk.similarity * 100).toFixed(1)}%)
+        ${chunk.content}`
+      })
+      prompt += '\n\n'
+    }
   }
 
   prompt += `用户的写作要求：
