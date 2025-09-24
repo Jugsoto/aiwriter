@@ -20,10 +20,10 @@
                   <div class="w-2 h-2 bg-[var(--text-tertiary)] rounded-full animate-bounce"></div>
                 </div>
                 <span class="text-sm text-[var(--text-secondary)]">
-                  {{ message.isReasoning ? '深度思考中...' : '思考过程' }}
+                  {{ getReasoningTitle(message) }}
                 </span>
               </div>
-              <ChevronDown class="w-4 h-4 text-[var(--text-tertiary)] transition-transform"
+              <ChevronDown v-if="!message.isReasoning" class="w-4 h-4 text-[var(--text-tertiary)] transition-transform"
                 :class="{ 'rotate-180': message.showReasoning }" />
             </div>
             <!-- 推理内容 -->
@@ -95,7 +95,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { ref, watch, nextTick } from 'vue'
 import { marked } from 'marked'
 import { Edit, Copy, ChevronDown, PenTool } from 'lucide-vue-next'
 import type { Message, MessageListProps } from '../../../utils/types'
@@ -137,6 +137,22 @@ const renderMarkdown = (content: string): string => {
     console.error('Markdown parsing error:', error)
     return content
   }
+}
+
+// 获取推理消息标题
+const getReasoningTitle = (message: Message): string => {
+  if (message.isReasoning) {
+    // 检查是否是搜索状态消息
+    if (message.reasoningContent?.includes('搜索') || message.reasoningContent?.includes('记忆')) {
+      return '记忆搜索中...'
+    }
+    return '深度思考中...'
+  }
+  // 检查是否是搜索完成消息
+  if (message.reasoningContent?.includes('搜索完成') || message.reasoningContent?.includes('找到')) {
+    return '记忆搜索'
+  }
+  return '思考过程'
 }
 
 // 切换推理消息显示状态
@@ -199,6 +215,15 @@ watch(() => props.messages, (newMessages) => {
     } else if (message.role === 'assistant' && !message.isReasoning && message.content) {
       // 开始输出正式内容时自动收起推理消息
       message.showReasoning = false
+    }
+  })
+}, { deep: true })
+
+// 监听消息变化，自动滚动到底部
+watch(() => props.messages, () => {
+  nextTick(() => {
+    if (messagesContainer.value) {
+      messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight
     }
   })
 }, { deep: true })

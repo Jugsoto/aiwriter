@@ -16,7 +16,7 @@
     <!-- 底部状态栏 -->
     <StatusBar :current-chapter="currentChapter" :content="content" :auto-save-status="autoSaveStatus"
       :last-saved-time="lastSavedTime" :is-streaming="isStreaming" :is-generating-summary="isGeneratingSummary"
-      :is-updating-memory="isUpdatingMemory" />
+      :is-updating-memory="isUpdatingMemory" :is-searching-memory="isSearchingMemory" />
 
     <!-- Toast 提示 -->
     <Toast v-model:visible="toastVisible" :message="toastMessage" :type="toastType" />
@@ -75,6 +75,7 @@ const lastSavedTime = ref<string | Date | null>(null)
 const isStreaming = ref(false)
 const isGeneratingSummary = ref(false)
 const isUpdatingMemory = ref(false)
+const isSearchingMemory = ref(false)
 
 // Toast 提示状态
 const toastVisible = ref(false)
@@ -285,6 +286,11 @@ const startStreamingWriting = (streamGenerator: AsyncGenerator<string, void, unk
   }
 }
 
+// 处理记忆搜索状态（供父组件调用）
+const handleMemorySearchStatus = (isSearching: boolean) => {
+  isSearchingMemory.value = isSearching
+}
+
 // 处理流式内容
 const processStreamContent = async (
   streamGenerator: AsyncGenerator<string, void, unknown>,
@@ -335,7 +341,8 @@ const processStreamContent = async (
 // 暴露方法给父组件
 defineExpose({
   startStreamingWriting,
-  handleStopStreaming
+  handleStopStreaming,
+  handleMemorySearchStatus
 })
 
 // 监听流式写作事件

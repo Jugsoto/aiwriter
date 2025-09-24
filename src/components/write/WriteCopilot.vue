@@ -96,11 +96,30 @@ const handleSendMessage = async (content: string | EnhancedMessageContext, query
 
   if (!userInput.trim()) return
 
+  // 创建并添加用户消息
+  const userMessage = createUserMessage(userInput)
+  messages.value.push(userMessage)
+
+  // 管理对话状态
+  updateConversationState(userMessage)
+
   // 执行向量搜索（使用用户输入作为查询文本）
   let vectorSearchResults = undefined
   const searchQuery = queryText || userInput // 如果没有queryText，使用用户输入
 
   if (searchQuery) {
+    // 添加向量搜索状态消息
+    const searchStatusMessage: Message = {
+      id: `search-${Date.now()}`,
+      role: 'assistant',
+      content: '',
+      timestamp: new Date(),
+      reasoningContent: '正在搜索相关记忆...',
+      isReasoning: true,
+      showReasoning: true
+    }
+    messages.value.push(searchStatusMessage)
+
     try {
       const featureConfig = await featureConfigsStore.getConfigByFeatureName('embedding_model')
       if (featureConfig) {
@@ -139,10 +158,16 @@ const handleSendMessage = async (content: string | EnhancedMessageContext, query
           textChunksCount: vectorSearchResults.textChunks.length,
           settingChunksCount: vectorSearchResults.settingChunks.length
         })
+
+        // 更新搜索状态消息为完成状态
+        searchStatusMessage.reasoningContent = `记忆搜索完成！找到 ${vectorSearchResults.textChunks.length} 个相关文本片段，${vectorSearchResults.settingChunks.length} 个相关设定`
+        searchStatusMessage.isReasoning = false
       }
     } catch (error) {
       console.error('向量搜索失败:', error)
-      // 搜索失败时不影响正常流程
+      // 搜索失败时更新状态消息
+      searchStatusMessage.reasoningContent = '记忆搜索失败，将继续生成回复...'
+      searchStatusMessage.isReasoning = false
     }
   }
 
@@ -151,16 +176,8 @@ const handleSendMessage = async (content: string | EnhancedMessageContext, query
     enhancedContext.vectorSearchResults = vectorSearchResults
   }
 
-  // 创建并添加用户消息
-  const userMessage = createUserMessage(userInput)
-  messages.value.push(userMessage)
-
-  // 管理对话状态
-  updateConversationState(userMessage)
-
   // 生成AI回复
-  // 开始向量搜索
-  console.log('开始向量搜索:', { query: searchQuery, bookId: props.bookId })
+  console.log('开始生成回复:', { query: searchQuery, bookId: props.bookId })
 
   await generateResponse(userInput.trim(), enhancedContext)
 }
@@ -521,6 +538,8 @@ const handleStartWriting = async (message: Message) => {
 
     // 执行向量搜索（使用消息内容作为查询文本）
     let vectorSearchResults = undefined
+
+    // 正文写作时不显示向量搜索状态消息，但执行搜索
     try {
       const embeddingConfig = await featureConfigsStore.getConfigByFeatureName('embedding_model')
       if (embeddingConfig) {
@@ -577,8 +596,31 @@ const handleStartWriting = async (message: Message) => {
       detail: { streamGenerator }
     })
     window.dispatchEvent(event)
+
+    // 监听流式写作完成事件
+    const handleStreamComplete = () => {
+      // 触发写作完成事件
+      const completeEvent = new CustomEvent('writing-complete', {
+        detail: { message: message.content }
+      })
+      window.dispatchEvent(completeEvent)
+      window.removeEventListener('streaming-stopped', handleStreamComplete)
+    }
+
+    window.addEventListener('streaming-stopped', handleStreamComplete)
+
+    // 设置超时，防止事件监听卡死
+    setTimeout(() => {
+      window.removeEventListener('streaming-stopped', handleStreamComplete)
+    }, 60000) // 60秒超时
+
   } catch (error) {
     console.error('WriteCopilot: 内容写作失败', error)
+    // 出错时也要触发完成事件
+    const completeEvent = new CustomEvent('writing-complete', {
+      detail: { message: message.content, error: error }
+    })
+    window.dispatchEvent(completeEvent)
   }
 }
 

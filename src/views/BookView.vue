@@ -314,17 +314,38 @@ const handleStartWriting = async (message: any) => {
   // 调用编辑器的流式写作功能
   if (editorRef.value) {
     try {
-      // 这里需要获取 WriteCopilot 的流式生成器
-      // 由于 WriteCopilot 是子组件，我们需要通过事件传递消息内容
-      // 让 WriteCopilot 处理具体的流式生成逻辑
+      // 设置记忆搜索状态
+      editorRef.value.handleMemorySearchStatus(true)
 
       // 创建一个自定义事件，让 WriteCopilot 处理
       const event = new CustomEvent('content-writing-request', {
         detail: { message }
       })
       window.dispatchEvent(event)
+
+      // 监听写作完成事件，清除搜索状态
+      const handleWritingComplete = () => {
+        if (editorRef.value) {
+          editorRef.value.handleMemorySearchStatus(false)
+        }
+        window.removeEventListener('writing-complete', handleWritingComplete)
+      }
+
+      window.addEventListener('writing-complete', handleWritingComplete)
+
+      // 设置超时，防止状态卡死
+      setTimeout(() => {
+        if (editorRef.value) {
+          editorRef.value.handleMemorySearchStatus(false)
+        }
+        window.removeEventListener('writing-complete', handleWritingComplete)
+      }, 30000) // 30秒超时
     } catch (error) {
       console.error('BookView: 开始写作失败', error)
+      // 出错时也要清除搜索状态
+      if (editorRef.value) {
+        editorRef.value.handleMemorySearchStatus(false)
+      }
     }
   }
 }
