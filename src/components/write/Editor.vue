@@ -3,7 +3,8 @@
     <!-- 顶部操作栏 -->
     <HeaderToolbar :current-chapter="currentChapter" :saving="saving" :last-saved="lastSaved" :has-changes="hasChanges"
       :is-streaming="isStreaming" :is-generating-summary="isGeneratingSummary" @save-content="saveContent"
-      @stop-streaming="handleStopStreaming" @generate-summary="startGenerateSummary" />
+      @stop-streaming="handleStopStreaming" @generate-summary="startGenerateSummary"
+      @update-memory-start="handleUpdateMemoryStart" @update-memory-end="handleUpdateMemoryEnd" />
 
     <!-- 编辑器区域 - 精确填充可用空间，无外部滚动 -->
     <div class="flex-1 min-h-0">
@@ -14,10 +15,15 @@
 
     <!-- 底部状态栏 -->
     <StatusBar :current-chapter="currentChapter" :content="content" :auto-save-status="autoSaveStatus"
-      :last-saved-time="lastSavedTime" :is-streaming="isStreaming" :is-generating-summary="isGeneratingSummary" />
+      :last-saved-time="lastSavedTime" :is-streaming="isStreaming" :is-generating-summary="isGeneratingSummary"
+      :is-updating-memory="isUpdatingMemory" />
 
     <!-- Toast 提示 -->
     <Toast v-model:visible="toastVisible" :message="toastMessage" :type="toastType" />
+
+    <!-- 错误模态窗 -->
+    <ErrorModal v-model:visible="errorModalVisible" :message="errorModalMessage" :error-details="errorModalDetails"
+      @close="errorModalVisible = false" />
   </div>
 </template>
 
@@ -31,6 +37,7 @@ import HeaderToolbar from './editor/HeaderToolbar.vue'
 import StatusBar from './editor/StatusBar.vue'
 import ContentEditor from './editor/ContentEditor.vue'
 import Toast from '@/components/shared/Toast.vue'
+import ErrorModal from '@/components/shared/ErrorModal.vue'
 
 // 简单的防抖函数实现
 function debounce<T extends (...args: any[]) => any>(func: T, wait: number): T {
@@ -67,11 +74,17 @@ const autoSaveStatus = ref('')
 const lastSavedTime = ref<string | Date | null>(null)
 const isStreaming = ref(false)
 const isGeneratingSummary = ref(false)
+const isUpdatingMemory = ref(false)
 
 // Toast 提示状态
 const toastVisible = ref(false)
 const toastMessage = ref('')
 const toastType = ref<'success' | 'error' | 'info'>('success')
+
+// 错误模态窗状态
+const errorModalVisible = ref(false)
+const errorModalMessage = ref('')
+const errorModalDetails = ref('')
 
 // 监听当前章节变化
 watch(currentChapter, (newChapter) => {
@@ -162,6 +175,13 @@ const showToast = (message: string, type: 'success' | 'error' | 'info' = 'succes
   toastVisible.value = true
 }
 
+// 显示错误模态窗
+const showErrorModal = (message: string, details?: string) => {
+  errorModalMessage.value = message
+  errorModalDetails.value = details || ''
+  errorModalVisible.value = true
+}
+
 // 开始生成梗概
 const startGenerateSummary = async () => {
   if (!currentChapter.value || !currentChapter.value.content) return
@@ -200,6 +220,23 @@ const startGenerateSummary = async () => {
     showToast('生成章节梗概失败，请重试', 'error')
   } finally {
     isGeneratingSummary.value = false
+  }
+}
+
+// 处理记忆更新开始
+const handleUpdateMemoryStart = () => {
+  isUpdatingMemory.value = true
+}
+
+// 处理记忆更新结束
+const handleUpdateMemoryEnd = (success: boolean) => {
+  isUpdatingMemory.value = false
+  // 可以根据成功状态显示不同的提示
+  if (success) {
+    showToast('记忆更新成功', 'success')
+  } else {
+    // 错误时使用错误模态窗而不是Toast
+    showErrorModal('记忆更新失败', '更新章节记忆时发生错误，请检查配置后重试')
   }
 }
 

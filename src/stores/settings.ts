@@ -1,6 +1,8 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import type { Setting } from '@/electron.d'
+import { updateSettingMemory } from '@/services/settingMemory'
+import { useFeatureConfigsStore } from './featureConfigs'
 
 export const useSettingsStore = defineStore('settings', () => {
   const settings = ref<Setting[]>([])
@@ -59,6 +61,31 @@ export const useSettingsStore = defineStore('settings', () => {
       const newSetting = await window.electronAPI.createSetting(data)
       // 将新设定添加到本地数组，而不是重新加载
       settings.value.push(newSetting)
+      
+      // 创建向量时必须有名字，另外两项（内容和状态）任选其一
+      if (data.name) { // 只要有名字就创建向量，内容和状态是可选的
+        try {
+          const featureConfigsStore = useFeatureConfigsStore()
+         const embeddingConfig = featureConfigsStore.getConfigByFeatureName('embedding_model')
+          
+          if (embeddingConfig) {
+            console.log('新设定包含内容，自动创建向量记忆...')
+            const result = await updateSettingMemory(newSetting, embeddingConfig)
+            
+            if (result.success) {
+              console.log('向量记忆创建成功')
+            } else {
+              console.warn('向量记忆创建失败:', result.error)
+            }
+          } else {
+            console.warn('未找到嵌入配置，跳过向量创建')
+          }
+        } catch (memoryError) {
+          console.error('创建向量记忆时出错:', memoryError)
+          // 不中断主流程，只记录错误
+        }
+      }
+      
       return newSetting
     } catch (err) {
       error.value = err instanceof Error ? err.message : '创建设定失败'
@@ -76,6 +103,30 @@ export const useSettingsStore = defineStore('settings', () => {
       const index = settings.value.findIndex(s => s.id === id)
       if (index !== -1) {
         settings.value[index] = updatedSetting
+      }
+      
+      // 更新时检测设定内容和当前状态两个文本的变化，任意一个变化就更新向量
+      if (data.content !== undefined || data.status !== undefined) {
+        try {
+          const featureConfigsStore = useFeatureConfigsStore()
+          const embeddingConfig = featureConfigsStore.getConfigByFeatureName('embedding_model')
+          
+          if (embeddingConfig) {
+            console.log('内容更新，自动更新向量记忆...')
+            const result = await updateSettingMemory(updatedSetting, embeddingConfig)
+            
+            if (result.success) {
+              console.log('向量记忆更新成功')
+            } else {
+              console.warn('向量记忆更新失败:', result.error)
+            }
+          } else {
+            console.warn('未找到嵌入配置，跳过向量更新')
+          }
+        } catch (memoryError) {
+          console.error('更新向量记忆时出错:', memoryError)
+          // 不中断主流程，只记录错误
+        }
       }
       
       return updatedSetting

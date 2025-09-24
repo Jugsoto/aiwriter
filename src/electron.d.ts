@@ -82,6 +82,23 @@ declare global {
         }>
       }>
       
+      // 章节向量相关API
+      createChapterVector: (data: { book_id: number; chapter_id: number; chunk_index: number; chunk_text: string; embedding: Uint8Array; token_count: number }) => Promise<ChapterVector>
+      getChapterVectorsByBookId: (bookId: number) => Promise<ChapterVector[]>
+      getChapterVectorsByChapterId: (chapterId: number) => Promise<ChapterVector[]>
+      deleteChapterVectorsByChapterId: (chapterId: number) => Promise<{ success: boolean }>
+      deleteChapterVectorsByBookId: (bookId: number) => Promise<{ success: boolean }>
+      searchSimilarChapterVectors: (bookId: number, queryEmbedding: Uint8Array, limit: number, excludeChapterId?: number) => Promise<ChapterVector[]>
+      
+      // 设定向量相关API
+      createSettingVector: (data: { book_id: number; setting_id: number; setting_content: string; embedding: Uint8Array; token_count: number }) => Promise<SettingVector>
+      getSettingVectorBySettingId: (settingId: number) => Promise<SettingVector | undefined>
+      getSettingVectorsByBookId: (bookId: number) => Promise<SettingVector[]>
+      updateSettingVector: (settingId: number, data: { setting_content?: string; embedding?: Uint8Array; token_count?: number }) => Promise<SettingVector>
+      deleteSettingVectorBySettingId: (settingId: number) => Promise<{ success: boolean }>
+      deleteSettingVectorsByBookId: (bookId: number) => Promise<{ success: boolean }>
+      searchSimilarSettingVectors: (bookId: number, queryEmbedding: Uint8Array, limit: number) => Promise<SettingVector[]>
+      
       // 应用信息相关API
       getAppVersion: () => Promise<string>
       openExternal: (url: string) => Promise<void>
@@ -142,6 +159,33 @@ export interface Model {
   tags: string
   created_at: string
   updated_at: string
+}
+
+// 章节向量类型定义
+export interface ChapterVector {
+  id: number
+  book_id: number
+  chapter_id: number
+  chunk_index: number
+  chunk_text: string
+  embedding: Uint8Array
+  token_count: number
+  created_at: string
+  updated_at: string
+  distance?: number
+}
+
+// 设定向量类型定义
+export interface SettingVector {
+  id: number
+  book_id: number
+  setting_id: number
+  setting_content: string
+  embedding: Uint8Array
+  token_count: number
+  created_at: string
+  updated_at: string
+  distance?: number
 }
 
 // 功能配置类型定义

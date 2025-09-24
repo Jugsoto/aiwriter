@@ -27,7 +27,7 @@
       </div>
     </div>
 
-    <!-- 下半部分：设定内容 -->
+    <!-- 下半部分：设定内容和状态 -->
     <div class="p-3 flex-1 overflow-y-auto">
       <div v-if="setting.content" class="mb-2">
         <p class="text-xs text-[var(--text-secondary)] mb-1">设定内容：</p>
@@ -35,8 +35,14 @@
           {{ setting.content }}
         </p>
       </div>
-      <div v-else class="text-xs text-[var(--text-secondary)] italic">
-        暂无设定内容
+      <div v-if="setting.status" class="mb-2">
+        <p class="text-xs text-[var(--text-secondary)] mb-1">当前状态：</p>
+        <p class="text-xs text-[var(--text-primary)] line-clamp-3">
+          {{ setting.status }}
+        </p>
+      </div>
+      <div v-if="!setting.content && !setting.status" class="text-xs text-[var(--text-secondary)] italic">
+        暂无设定内容和状态
       </div>
     </div>
   </div>

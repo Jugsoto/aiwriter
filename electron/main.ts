@@ -39,7 +39,22 @@ import {
   getUsageStatisticsByDateRange,
   getUsageStatisticsByProvider,
   getUsageStatisticsByModel,
-  getUsageStatisticsSummary
+  getUsageStatisticsSummary,
+  // 章节向量相关
+  createChapterVector,
+  getChapterVectorsByBookId,
+  getChapterVectorsByChapterId,
+  deleteChapterVectorsByChapterId,
+  deleteChapterVectorsByBookId,
+  searchSimilarChapterVectors,
+  // 设定向量相关
+  createSettingVector,
+  getSettingVectorBySettingId,
+  getSettingVectorsByBookId,
+  updateSettingVector,
+  deleteSettingVectorBySettingId,
+  deleteSettingVectorsByBookId,
+  searchSimilarSettingVectors
 } from './database'
 import { initializeDefaultProviders } from './initializer'
 
@@ -506,6 +521,63 @@ ipcMain.handle('get-usage-statistics-summary', () => {
   return getUsageStatisticsSummary()
 })
 
+// 章节向量相关IPC处理
+ipcMain.handle('create-chapter-vector', (_event: any, data: { book_id: number; chapter_id: number; chunk_index: number; chunk_text: string; embedding: Buffer; token_count: number }) => {
+  return createChapterVector(data)
+})
+
+ipcMain.handle('get-chapter-vectors-by-book-id', (_event: any, bookId: number) => {
+  return getChapterVectorsByBookId(bookId)
+})
+
+ipcMain.handle('get-chapter-vectors-by-chapter-id', (_event: any, chapterId: number) => {
+  return getChapterVectorsByChapterId(chapterId)
+})
+
+ipcMain.handle('delete-chapter-vectors-by-chapter-id', (_event: any, chapterId: number) => {
+  deleteChapterVectorsByChapterId(chapterId)
+  return { success: true }
+})
+
+ipcMain.handle('delete-chapter-vectors-by-book-id', (_event: any, bookId: number) => {
+  deleteChapterVectorsByBookId(bookId)
+  return { success: true }
+})
+
+ipcMain.handle('search-similar-chapter-vectors', (_event: any, bookId: number, queryEmbedding: Buffer, limit: number, excludeChapterId?: number) => {
+  return searchSimilarChapterVectors(bookId, queryEmbedding, limit, excludeChapterId)
+})
+
+// 设定向量相关IPC处理
+ipcMain.handle('create-setting-vector', (_event: any, data: { book_id: number; setting_id: number; setting_content: string; embedding: Buffer; token_count: number }) => {
+  return createSettingVector(data)
+})
+
+ipcMain.handle('get-setting-vector-by-setting-id', (_event: any, settingId: number) => {
+  return getSettingVectorBySettingId(settingId)
+})
+
+ipcMain.handle('get-setting-vectors-by-book-id', (_event: any, bookId: number) => {
+  return getSettingVectorsByBookId(bookId)
+})
+
+ipcMain.handle('update-setting-vector', (_event: any, settingId: number, data: { setting_content?: string; embedding?: Buffer; token_count?: number }) => {
+  return updateSettingVector(settingId, data)
+})
+
+ipcMain.handle('delete-setting-vector-by-setting-id', (_event: any, settingId: number) => {
+  deleteSettingVectorBySettingId(settingId)
+  return { success: true }
+})
+
+ipcMain.handle('delete-setting-vectors-by-book-id', (_event: any, bookId: number) => {
+  deleteSettingVectorsByBookId(bookId)
+  return { success: true }
+})
+
+ipcMain.handle('search-similar-setting-vectors', (_event: any, bookId: number, queryEmbedding: Buffer, limit: number) => {
+  return searchSimilarSettingVectors(bookId, queryEmbedding, limit)
+})
 
 // 应用退出时关闭数据库
 app.on('before-quit', () => {

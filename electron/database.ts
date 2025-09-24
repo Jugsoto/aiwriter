@@ -1,6 +1,12 @@
 import Database from 'better-sqlite3'
 import path from 'path'
 import { app } from 'electron'
+import fs from 'fs'
+import { fileURLToPath } from 'url'
+
+// Get __dirname equivalent for ES modules
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = path.dirname(__filename)
 
 // 数据库实例变量
 let db: Database.Database | null = null
@@ -15,6 +21,29 @@ function getDatabase(): any {
   if (!db) {
     const dbPath = getDbPath()
     db = new Database(dbPath)
+
+    // 加载 vec0 扩展
+    try {
+      // 开发环境和生产环境的 vec0.dll 路径不同
+      let vec0Path: string
+      if (app.isPackaged) {
+        // 生产环境：从 resources 目录加载
+        vec0Path = path.join(process.resourcesPath, 'vec0.dll')
+      } else {
+        // 开发环境：从项目 resources 目录加载
+        vec0Path = path.join(__dirname, '..', 'resources', 'vec0.dll')
+      }
+
+      // 检查文件是否存在
+      if (fs.existsSync(vec0Path)) {
+        db.loadExtension(vec0Path)
+        console.log('Successfully loaded vec0 extension from:', vec0Path)
+      } else {
+        console.warn('vec0.dll not found at:', vec0Path)
+      }
+    } catch (error) {
+      console.error('Failed to load vec0 extension:', error)
+    }
   }
   return db
 }
@@ -148,6 +177,47 @@ function initDatabase() {
     db.exec('CREATE INDEX IF NOT EXISTS idx_usage_provider_id ON usage_statistics (provider_id)')
     db.exec('CREATE INDEX IF NOT EXISTS idx_usage_model_id ON usage_statistics (model_id)')
     db.exec('CREATE INDEX IF NOT EXISTS idx_usage_feature_name ON usage_statistics (feature_name)')
+
+    // 创建章节向量存储表（使用 vec0 的向量类型）
+    db.exec(`
+      CREATE TABLE IF NOT EXISTS chapter_vectors (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        book_id INTEGER NOT NULL,
+        chapter_id INTEGER NOT NULL,
+        chunk_index INTEGER NOT NULL,
+        chunk_text TEXT NOT NULL,
+        embedding BLOB NOT NULL,
+        token_count INTEGER DEFAULT 0,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (book_id) REFERENCES books (id) ON DELETE CASCADE,
+        FOREIGN KEY (chapter_id) REFERENCES chapters (id) ON DELETE CASCADE,
+        UNIQUE(book_id, chapter_id, chunk_index)
+      )
+    `)
+
+    // 创建设定向量存储表（使用 vec0 的向量类型）
+    db.exec(`
+      CREATE TABLE IF NOT EXISTS setting_vectors (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        book_id INTEGER NOT NULL,
+        setting_id INTEGER NOT NULL,
+        setting_content TEXT NOT NULL,
+        embedding BLOB NOT NULL,
+        token_count INTEGER DEFAULT 0,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (book_id) REFERENCES books (id) ON DELETE CASCADE,
+        FOREIGN KEY (setting_id) REFERENCES settings (id) ON DELETE CASCADE,
+        UNIQUE(book_id, setting_id)
+      )
+    `)
+
+    // 创建向量表索引
+    db.exec('CREATE INDEX IF NOT EXISTS idx_chapter_vectors_book_id ON chapter_vectors (book_id)')
+    db.exec('CREATE INDEX IF NOT EXISTS idx_chapter_vectors_chapter_id ON chapter_vectors (chapter_id)')
+    db.exec('CREATE INDEX IF NOT EXISTS idx_setting_vectors_book_id ON setting_vectors (book_id)')
+    db.exec('CREATE INDEX IF NOT EXISTS idx_setting_vectors_setting_id ON setting_vectors (setting_id)')
     
     // 检查现有数据
     const count = db.prepare('SELECT COUNT(*) as count FROM books').get() as { count: number }
@@ -360,6 +430,60 @@ interface UpdateChapterData {
   content?: string
   summary?: string
   order_index?: number
+}
+
+// 章节向量相关操作
+interface ChapterVector {
+  id: number
+  book_id: number
+  chapter_id: number
+  chunk_index: number
+  chunk_text: string
+  embedding: Buffer
+  token_count: number
+  created_at: string
+  updated_at: string
+}
+
+interface CreateChapterVectorData {
+  book_id: number
+  chapter_id: number
+  chunk_index: number
+  chunk_text: string
+  embedding: Buffer
+  token_count?: number
+}
+
+interface UpdateChapterVectorData {
+  chunk_text?: string
+  embedding?: Buffer
+  token_count?: number
+}
+
+// 设定向量相关操作
+interface SettingVector {
+  id: number
+  book_id: number
+  setting_id: number
+  setting_content: string
+  embedding: Buffer
+  token_count: number
+  created_at: string
+  updated_at: string
+}
+
+interface CreateSettingVectorData {
+  book_id: number
+  setting_id: number
+  setting_content: string
+  embedding: Buffer
+  token_count?: number
+}
+
+interface UpdateSettingVectorData {
+  setting_content?: string
+  embedding?: Buffer
+  token_count?: number
 }
 
 // 获取所有书籍
@@ -1072,6 +1196,271 @@ function getUsageStatisticsSummary(): {
   }
 }
 
+// 章节向量相关操作函数
+
+// 根据章节ID获取所有向量
+function getChapterVectorsByChapterId(chapterId: number): ChapterVector[] {
+  const db = getDatabase()
+  const stmt = db.prepare(`
+    SELECT * FROM chapter_vectors
+    WHERE chapter_id = ?
+    ORDER BY chunk_index ASC
+  `)
+  return stmt.all(chapterId) as ChapterVector[]
+}
+
+// 根据书籍ID获取所有向量
+function getChapterVectorsByBookId(bookId: number): ChapterVector[] {
+  const db = getDatabase()
+  const stmt = db.prepare(`
+    SELECT * FROM chapter_vectors
+    WHERE book_id = ?
+    ORDER BY chapter_id ASC, chunk_index ASC
+  `)
+  return stmt.all(bookId) as ChapterVector[]
+}
+
+// 创建章节向量
+function createChapterVector(data: CreateChapterVectorData): ChapterVector {
+  const db = getDatabase()
+  const stmt = db.prepare(`
+    INSERT INTO chapter_vectors (book_id, chapter_id, chunk_index, chunk_text, embedding, token_count)
+    VALUES (?, ?, ?, ?, ?, ?)
+  `)
+  const result = stmt.run(
+    data.book_id,
+    data.chapter_id,
+    data.chunk_index,
+    data.chunk_text,
+    data.embedding,
+    data.token_count || 0
+  )
+
+  return getChapterVectorById(result.lastInsertRowid as number)!
+}
+
+// 根据ID获取章节向量
+function getChapterVectorById(id: number): ChapterVector | undefined {
+  const db = getDatabase()
+  const stmt = db.prepare('SELECT * FROM chapter_vectors WHERE id = ?')
+  return stmt.get(id) as ChapterVector | undefined
+}
+
+// 更新章节向量
+function updateChapterVector(id: number, data: UpdateChapterVectorData): ChapterVector {
+  const db = getDatabase()
+  const fields: string[] = []
+  const values: any[] = []
+
+  if (data.chunk_text !== undefined) {
+    fields.push('chunk_text = ?')
+    values.push(data.chunk_text)
+  }
+  if (data.embedding !== undefined) {
+    fields.push('embedding = ?')
+    values.push(data.embedding)
+  }
+  if (data.token_count !== undefined) {
+    fields.push('token_count = ?')
+    values.push(data.token_count)
+  }
+
+  if (fields.length > 0) {
+    fields.push('updated_at = CURRENT_TIMESTAMP')
+    values.push(id)
+
+    const stmt = db.prepare(`
+      UPDATE chapter_vectors SET ${fields.join(', ')} WHERE id = ?
+    `)
+    stmt.run(...values)
+  }
+
+  return getChapterVectorById(id)!
+}
+
+// 删除章节向量
+function deleteChapterVector(id: number): void {
+  const db = getDatabase()
+  const stmt = db.prepare('DELETE FROM chapter_vectors WHERE id = ?')
+  stmt.run(id)
+}
+
+// 删除章节的所有向量
+function deleteChapterVectorsByChapterId(chapterId: number): void {
+  const db = getDatabase()
+  const stmt = db.prepare('DELETE FROM chapter_vectors WHERE chapter_id = ?')
+  stmt.run(chapterId)
+}
+
+// 删除书籍的所有章节向量
+function deleteChapterVectorsByBookId(bookId: number): void {
+  const db = getDatabase()
+  const stmt = db.prepare('DELETE FROM chapter_vectors WHERE book_id = ?')
+  stmt.run(bookId)
+}
+
+// 设定向量相关操作函数
+
+// 根据设定ID获取向量
+function getSettingVectorBySettingId(settingId: number): SettingVector | undefined {
+  const db = getDatabase()
+  const stmt = db.prepare('SELECT * FROM setting_vectors WHERE setting_id = ?')
+  return stmt.get(settingId) as SettingVector | undefined
+}
+
+// 根据书籍ID获取所有设定向量
+function getSettingVectorsByBookId(bookId: number): SettingVector[] {
+  const db = getDatabase()
+  const stmt = db.prepare(`
+    SELECT * FROM setting_vectors
+    WHERE book_id = ?
+    ORDER BY created_at ASC
+  `)
+  return stmt.all(bookId) as SettingVector[]
+}
+
+// 创建设定向量
+function createSettingVector(data: CreateSettingVectorData): SettingVector {
+  const db = getDatabase()
+  const stmt = db.prepare(`
+    INSERT INTO setting_vectors (book_id, setting_id, setting_content, embedding, token_count)
+    VALUES (?, ?, ?, ?, ?)
+  `)
+  const result = stmt.run(
+    data.book_id,
+    data.setting_id,
+    data.setting_content,
+    data.embedding,
+    data.token_count || 0
+  )
+
+  return getSettingVectorById(result.lastInsertRowid as number)!
+}
+
+// 根据ID获取设定向量
+function getSettingVectorById(id: number): SettingVector | undefined {
+  const db = getDatabase()
+  const stmt = db.prepare('SELECT * FROM setting_vectors WHERE id = ?')
+  return stmt.get(id) as SettingVector | undefined
+}
+
+// 更新设定向量
+function updateSettingVector(id: number, data: UpdateSettingVectorData): SettingVector {
+  const db = getDatabase()
+  const fields: string[] = []
+  const values: any[] = []
+
+  if (data.setting_content !== undefined) {
+    fields.push('setting_content = ?')
+    values.push(data.setting_content)
+  }
+  if (data.embedding !== undefined) {
+    fields.push('embedding = ?')
+    values.push(data.embedding)
+  }
+  if (data.token_count !== undefined) {
+    fields.push('token_count = ?')
+    values.push(data.token_count)
+  }
+
+  if (fields.length > 0) {
+    fields.push('updated_at = CURRENT_TIMESTAMP')
+    values.push(id)
+
+    const stmt = db.prepare(`
+      UPDATE setting_vectors SET ${fields.join(', ')} WHERE id = ?
+    `)
+    stmt.run(...values)
+  }
+
+  return getSettingVectorById(id)!
+}
+
+// 删除设定向量
+function deleteSettingVector(id: number): void {
+  const db = getDatabase()
+  const stmt = db.prepare('DELETE FROM setting_vectors WHERE id = ?')
+  stmt.run(id)
+}
+
+// 根据设定ID删除向量
+function deleteSettingVectorBySettingId(settingId: number): void {
+  const db = getDatabase()
+  const stmt = db.prepare('DELETE FROM setting_vectors WHERE setting_id = ?')
+  stmt.run(settingId)
+}
+
+// 删除书籍的所有设定向量
+function deleteSettingVectorsByBookId(bookId: number): void {
+  const db = getDatabase()
+  const stmt = db.prepare('DELETE FROM setting_vectors WHERE book_id = ?')
+  stmt.run(bookId)
+}
+
+// 向量相似度搜索函数
+// 注意：这里需要根据实际的向量数据库和相似度计算方法来实现
+// 由于SQLite没有内置的向量相似度函数，这里提供基本的接口
+
+// 在书籍内搜索相似的文本块
+function searchSimilarChapterVectors(
+  bookId: number,
+  queryEmbedding: Buffer,
+  limit: number = 5,
+  excludeChapterId?: number
+): ChapterVector[] {
+  const db = getDatabase()
+
+  try {
+    // 使用 vec0 的向量相似度搜索功能
+    const stmt = db.prepare(`
+      SELECT
+        cv.*,
+        vec_distance_L2(cv.embedding, ?) as distance
+      FROM chapter_vectors cv
+      WHERE cv.book_id = ? ${excludeChapterId ? 'AND cv.chapter_id != ?' : ''}
+      ORDER BY distance ASC
+      LIMIT ?
+    `)
+
+    const params = excludeChapterId
+      ? [queryEmbedding, bookId, excludeChapterId, limit]
+      : [queryEmbedding, bookId, limit]
+    return stmt.all(...params) as ChapterVector[]
+  } catch (error) {
+    console.error('Vector search failed, falling back to simple search:', error)
+    // 如果 vec0 不可用，返回空数组
+    return []
+  }
+}
+
+// 在书籍内搜索相似的设定
+function searchSimilarSettingVectors(
+  bookId: number,
+  queryEmbedding: Buffer,
+  limit: number = 3
+): SettingVector[] {
+  const db = getDatabase()
+
+  try {
+    // 使用 vec0 的向量相似度搜索功能
+    const stmt = db.prepare(`
+      SELECT
+        sv.*,
+        vec_distance_L2(sv.embedding, ?) as distance
+      FROM setting_vectors sv
+      WHERE sv.book_id = ?
+      ORDER BY distance ASC
+      LIMIT ?
+    `)
+
+    return stmt.all(queryEmbedding, bookId, limit) as SettingVector[]
+  } catch (error) {
+    console.error('Vector search failed, falling back to simple search:', error)
+    // 如果 vec0 不可用，返回空数组
+    return []
+  }
+}
+
 export {
   initDatabase,
   getAllBooks,
@@ -1115,5 +1504,26 @@ export {
   getUsageStatisticsByDateRange,
   getUsageStatisticsByProvider,
   getUsageStatisticsByModel,
-  getUsageStatisticsSummary
+  getUsageStatisticsSummary,
+  // 章节向量相关
+  getChapterVectorsByChapterId,
+  getChapterVectorsByBookId,
+  createChapterVector,
+  getChapterVectorById,
+  updateChapterVector,
+  deleteChapterVector,
+  deleteChapterVectorsByChapterId,
+  deleteChapterVectorsByBookId,
+  // 设定向量相关
+  getSettingVectorBySettingId,
+  getSettingVectorsByBookId,
+  createSettingVector,
+  getSettingVectorById,
+  updateSettingVector,
+  deleteSettingVector,
+  deleteSettingVectorBySettingId,
+  deleteSettingVectorsByBookId,
+  // 向量搜索
+  searchSimilarChapterVectors,
+  searchSimilarSettingVectors
 }

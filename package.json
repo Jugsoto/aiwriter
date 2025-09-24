@@ -82,6 +82,10 @@
       {
         "from": "node_modules/better-sqlite3/build/Release",
         "to": "better-sqlite3"
+      },
+      {
+        "from": "resources/vec0.dll",
+        "to": "vec0.dll"
       }
     ]
   }

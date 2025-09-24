@@ -20,6 +20,11 @@
           <span class="w-2 h-2 bg-purple-500 rounded-full animate-pulse"></span>
           梗概生成中
         </span>
+        <span v-else-if="isUpdatingMemory"
+          class="text-orange-500 inline-flex items-center gap-1 px-3 py-1 bg-orange-500/10 rounded-full">
+          <span class="w-2 h-2 bg-orange-500 rounded-full animate-pulse"></span>
+          记忆更新中
+        </span>
         <span v-else-if="autoSaveStatus" class="text-blue-500 inline-block px-3 py-1 bg-blue-500/10 rounded-full">
           {{ autoSaveStatus }}
         </span>
@@ -62,6 +67,10 @@ const props = defineProps({
     default: false
   },
   isGeneratingSummary: {
+    type: Boolean,
+    default: false
+  },
+  isUpdatingMemory: {
     type: Boolean,
     default: false
   }

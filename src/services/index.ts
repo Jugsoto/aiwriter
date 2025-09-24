@@ -15,3 +15,18 @@ export * from './contentWriting'
 
 // 连接测试服务
 export * from './testConnection'
+
+// 文本分块服务
+export * from './textChunk'
+
+// 嵌入服务
+export * from './embedding'
+
+// 章节记忆服务
+export * from './chapterMemory'
+
+// 设定记忆服务
+export * from './settingMemory'
+
+// 向量搜索服务
+export * from './vectorSearch'

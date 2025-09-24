@@ -65,6 +65,28 @@ const api = {
   getUsageStatisticsByProvider: (providerId: number) => ipcRenderer.invoke('get-usage-statistics-by-provider', providerId),
   getUsageStatisticsByModel: (modelId: number) => ipcRenderer.invoke('get-usage-statistics-by-model', modelId),
   getUsageStatisticsSummary: () => ipcRenderer.invoke('get-usage-statistics-summary'),
+
+  // 章节向量相关API
+  createChapterVector: (data: { book_id: number; chapter_id: number; chunk_index: number; chunk_text: string; embedding: Buffer; token_count: number }) =>
+    ipcRenderer.invoke('create-chapter-vector', data),
+  getChapterVectorsByBookId: (bookId: number) => ipcRenderer.invoke('get-chapter-vectors-by-book-id', bookId),
+  getChapterVectorsByChapterId: (chapterId: number) => ipcRenderer.invoke('get-chapter-vectors-by-chapter-id', chapterId),
+  deleteChapterVectorsByChapterId: (chapterId: number) => ipcRenderer.invoke('delete-chapter-vectors-by-chapter-id', chapterId),
+  deleteChapterVectorsByBookId: (bookId: number) => ipcRenderer.invoke('delete-chapter-vectors-by-book-id', bookId),
+  searchSimilarChapterVectors: (bookId: number, queryEmbedding: Uint8Array, limit: number, excludeChapterId?: number) =>
+    ipcRenderer.invoke('search-similar-chapter-vectors', bookId, queryEmbedding, limit, excludeChapterId),
+
+  // 设定向量相关API
+  createSettingVector: (data: { book_id: number; setting_id: number; setting_content: string; embedding: Uint8Array; token_count: number }) =>
+    ipcRenderer.invoke('create-setting-vector', data),
+  getSettingVectorBySettingId: (settingId: number) => ipcRenderer.invoke('get-setting-vector-by-setting-id', settingId),
+  getSettingVectorsByBookId: (bookId: number) => ipcRenderer.invoke('get-setting-vectors-by-book-id', bookId),
+  updateSettingVector: (settingId: number, data: { setting_content?: string; embedding?: Uint8Array; token_count?: number }) =>
+    ipcRenderer.invoke('update-setting-vector', settingId, data),
+  deleteSettingVectorBySettingId: (settingId: number) => ipcRenderer.invoke('delete-setting-vector-by-setting-id', settingId),
+  deleteSettingVectorsByBookId: (bookId: number) => ipcRenderer.invoke('delete-setting-vectors-by-book-id', bookId),
+  searchSimilarSettingVectors: (bookId: number, queryEmbedding: Uint8Array, limit: number) =>
+    ipcRenderer.invoke('search-similar-setting-vectors', bookId, queryEmbedding, limit),
   
   // 应用信息相关API
   getAppVersion: () => ipcRenderer.invoke('get-app-version'),
