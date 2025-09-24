@@ -72,8 +72,10 @@
         </button>
         <button @click="handleStop" title="终止对话"
           class="p-2 border border-[var(--border-color)] bg-[var(--bg-primary)] rounded-lg hover:bg-[var(--bg-secondary)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          :disabled="!disabled">
-          <Square class="w-4 h-4" />
+          :disabled="!isStreaming">
+          <!-- 流式输出时显示旋转的暂停图标 -->
+          <Pause v-if="isStreaming" class="w-4 h-4 animate-spin" />
+          <Square v-else class="w-4 h-4" />
         </button>
       </div>
       <button @click="handleSend" :disabled="disabled || !inputText.trim()"
@@ -89,14 +91,20 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, onMounted, onUnmounted, nextTick } from 'vue'
-import { AtSign, Trash2, Square, Send, User, Globe, FileText, ChevronUp, ChevronDown, X } from 'lucide-vue-next'
+import { ref, watch, onMounted, onUnmounted, nextTick, computed } from 'vue'
+import { AtSign, Trash2, Square, Send, User, Globe, FileText, ChevronUp, ChevronDown, X, Pause } from 'lucide-vue-next'
 import type { InputAreaProps, EnhancedMessageContext } from '../../../utils/types'
 import type { Setting } from '@/electron.d'
 import SettingSelectionModal from '@/components/modal/SettingSelectionModal.vue'
 
 const props = defineProps<InputAreaProps>()
 const emit = defineEmits(['send-message', 'at-resource', 'clear-conversation', 'stop-conversation', 'entry-setting', 'worldview', 'character-profile', 'settings-updated', 'settings-selected'])
+
+// 计算属性：检查是否有消息正在流式输出
+const isStreaming = computed(() => {
+  const hasStreaming = props.messages?.some(msg => msg.isStreaming) || false
+  return hasStreaming
+})
 
 const inputText = ref('')
 const inputRef = ref<HTMLTextAreaElement>()
@@ -161,6 +169,7 @@ const handleWorldview = () => {
 
 const handleSend = () => {
   if (inputText.value.trim()) {
+    console.log('InputArea: 发送消息:', inputText.value.trim())
     // 构建增强的消息上下文
     const enhancedContext: EnhancedMessageContext = {
       userInput: inputText.value.trim(),

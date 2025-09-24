@@ -109,6 +109,11 @@ const emit = defineEmits<{
 }>()
 const messagesContainer = ref<HTMLElement>()
 
+// 标记是否为用户手动操作（如点击推理消息）
+const isUserAction = ref(false)
+// 记录上一次消息状态，用于检测流式输出结束
+const lastMessageStatus = ref<Map<string, { isStreaming: boolean, contentLength: number }>>(new Map())
+
 // 编辑 modal 状态
 const editModalVisible = ref(false)
 const editingMessage = ref<Message | null>(null)
@@ -158,7 +163,14 @@ const getReasoningTitle = (message: Message): string => {
 // 切换推理消息显示状态
 const toggleReasoning = (message: Message) => {
   if (message.reasoningContent) {
+    // 标记这是用户手动触发的展开/收起操作
+    isUserAction.value = true
     message.showReasoning = !message.showReasoning
+
+    // 延迟重置标记，确保滚动监听能检测到
+    setTimeout(() => {
+      isUserAction.value = false
+    }, 100)
   }
 }
 
@@ -206,6 +218,58 @@ const handleEditCancel = () => {
   editingMessage.value = null
 }
 
+// 滚动到底部的辅助函数
+const scrollToBottom = (smooth = false) => {
+  nextTick(() => {
+    if (!messagesContainer.value) {
+      console.warn('滚动失败：messagesContainer 未找到')
+      return
+    }
+
+    console.log(`执行滚动操作: smooth=${smooth}, scrollHeight=${messagesContainer.value.scrollHeight}`)
+
+    if (smooth) {
+      messagesContainer.value.scrollTo({
+        top: messagesContainer.value.scrollHeight,
+        behavior: 'smooth'
+      })
+    } else {
+      messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight
+    }
+  })
+}
+
+// 检测AI消息流式输出是否结束
+const checkStreamingEnd = (messages: Message[]): boolean => {
+  let hasStreamingEnd = false
+
+  messages.forEach(message => {
+    if (message.role === 'assistant' && message.content) {
+      const messageId = message.id
+      const currentStatus = {
+        isStreaming: message.isStreaming ?? false,
+        contentLength: message.content.length
+      }
+
+      const lastStatus = lastMessageStatus.value.get(messageId)
+
+      if (lastStatus) {
+        // 检测流式输出结束：之前是流式状态，现在不是了，或者内容长度不再变化且不是流式状态
+        if ((lastStatus.isStreaming && !currentStatus.isStreaming) ||
+          (!currentStatus.isStreaming && lastStatus.contentLength !== currentStatus.contentLength)) {
+          console.log(`检测到消息 ${messageId} 流式输出结束`)
+          hasStreamingEnd = true
+        }
+      }
+
+      // 更新状态记录
+      lastMessageStatus.value.set(messageId, currentStatus)
+    }
+  })
+
+  return hasStreamingEnd
+}
+
 // 监听推理状态变化，自动展开推理消息
 watch(() => props.messages, (newMessages) => {
   newMessages.forEach(message => {
@@ -219,14 +283,51 @@ watch(() => props.messages, (newMessages) => {
   })
 }, { deep: true })
 
-// 监听消息变化，自动滚动到底部
-watch(() => props.messages, () => {
+// 监听消息变化，处理自动滚动
+watch(() => props.messages, (newMessages, oldMessages) => {
+  // 如果是用户手动操作（如点击推理消息），不自动滚动
+  if (isUserAction.value) {
+    return
+  }
+
   nextTick(() => {
-    if (messagesContainer.value) {
-      messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight
+    if (!messagesContainer.value) return
+
+    let shouldScroll = false
+    let useSmooth = false
+
+    // 情况1：初始加载消息
+    if (!oldMessages && newMessages.length > 0) {
+      console.log('初始加载消息，滚动到底部')
+      shouldScroll = true
+      useSmooth = false
+    }
+    // 情况2：有新消息添加
+    else if (oldMessages && newMessages.length > oldMessages.length) {
+      console.log('检测到新消息添加，滚动到底部')
+      shouldScroll = true
+      useSmooth = true
+    }
+    // 情况3：检测AI流式输出结束
+    else if (oldMessages && newMessages.length === oldMessages.length) {
+      const streamingEnded = checkStreamingEnd(newMessages)
+      if (streamingEnded) {
+        console.log('检测到AI流式输出结束，滚动到底部')
+        shouldScroll = true
+        useSmooth = true
+      }
+    }
+
+    if (shouldScroll) {
+      scrollToBottom(useSmooth)
     }
   })
 }, { deep: true })
+
+// 暴露给父组件的方法
+defineExpose({
+  scrollToBottom
+})
 </script>
 
 <style scoped>

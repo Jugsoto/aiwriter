@@ -6,6 +6,7 @@ export interface Message {
   reasoningContent?: string // 推理内容
   isReasoning?: boolean // 是否正在推理
   showReasoning?: boolean // 是否显示推理内容
+  isStreaming?: boolean // 是否正在流式输出
 }
 
 export interface Conversation {
@@ -36,6 +37,7 @@ export interface InputAreaProps {
   settingsLoading?: boolean
   bookId?: number
   selectedSettings?: any[]
+  messages?: Message[]
 }
 
 export interface EnhancedMessageContext {

@@ -9,7 +9,7 @@
       @start-writing="handleStartWriting" ref="messageListRef" />
 
     <InputArea :disabled="isLoading" :starred-settings="starredSettings" :settings-loading="settingsLoading"
-      :book-id="bookId" :selected-settings="selectedSettings" @send-message="handleSendMessage"
+      :book-id="bookId" :selected-settings="selectedSettings" :messages="messages" @send-message="handleSendMessage"
       @at-resource="handleAtResource" @clear-conversation="handleClearConversation"
       @stop-conversation="handleStopConversation" @entry-setting="handleEntrySetting" @worldview="handleWorldview"
       @character-profile="handleCharacterProfile" @settings-updated="loadStarredSettings"
@@ -18,7 +18,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, watch } from 'vue'
+import { ref, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import CopilotHeader from './copilot/CopilotHeader.vue'
 import MessageList from './copilot/MessageList.vue'
 import InputArea from './copilot/InputArea.vue'
@@ -99,6 +99,13 @@ const handleSendMessage = async (content: string | EnhancedMessageContext, query
   // 创建并添加用户消息
   const userMessage = createUserMessage(userInput)
   messages.value.push(userMessage)
+
+  // 用户消息发送后立即滚动到底部
+  nextTick(() => {
+    if (messageListRef.value) {
+      messageListRef.value.scrollToBottom()
+    }
+  })
 
   // 管理对话状态
   updateConversationState(userMessage)
@@ -267,7 +274,8 @@ const createAIMessages = () => {
     id: `assistant-${Date.now()}`,
     role: 'assistant',
     content: '',
-    timestamp: new Date()
+    timestamp: new Date(),
+    isStreaming: true // 标记为正在流式输出
   }
 
   const reasoningMessage: Message = {
@@ -277,7 +285,8 @@ const createAIMessages = () => {
     timestamp: new Date(),
     reasoningContent: '',
     isReasoning: true,
-    showReasoning: true
+    showReasoning: true,
+    isStreaming: true // 标记为正在流式输出
   }
 
   messages.value.push(reasoningMessage, aiMessage)
@@ -364,6 +373,13 @@ const streamAIResponse = async (
     }
   } finally {
     reasoningMessage.isReasoning = false
+    // 流式输出结束，更新消息状态
+    aiMessage.isStreaming = false
+    reasoningMessage.isStreaming = false
+
+    // 触发响应式更新
+    messages.value = [...messages.value]
+
     // 立即更新加载状态
     if (streamController.signal.aborted) {
       isLoading.value = false
