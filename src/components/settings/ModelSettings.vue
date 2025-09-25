@@ -45,6 +45,34 @@
       </div>
 
       <div v-else class="space-y-6">
+        <!-- 特殊供应商卡片 - 神笔AI、硅基流动、Deepseek -->
+        <div v-if="isSpecialProvider"
+          class="bg-[var(--bg-primary)] p-6 rounded-xl border border-[var(--border-color)] relative">
+          <!-- 问号图标 - 右上角 -->
+          <button @click="showInfoModal = true"
+            class="absolute top-3 right-3 w-6 h-6 flex items-center justify-center bg-[var(--bg-secondary)] text-[var(--text-secondary)] rounded-full border border-[var(--border-color)] hover:bg-[var(--hover-bg)] hover:text-[var(--theme-bg)] transition-all duration-200"
+            title="查看介绍">
+            <HelpCircle class="w-4 h-4" />
+          </button>
+          <div class="flex flex-col items-center text-center">
+            <!-- Logo -->
+            <img :src="getProviderIcon(currentProvider.name)" :alt="currentProvider.name" class="w-12 h-12 mb-1" />
+            <!-- 供应商名称 -->
+            <h3 class="text-xl font-semibold text-[var(--text-primary)] mb-2">{{ currentProvider.name }}</h3>
+            <!-- 操作按钮区域 -->
+            <div class="flex space-x-4">
+              <button @click="openOfficialWebsite"
+                class="px-4 py-1 bg-[var(--bg-secondary)] text-[var(--theme-bg)] rounded-full border border-[var(--theme-bg)] hover:bg-[var(--theme-bg)] hover:text-white transition-all duration-200">
+                官网注册
+              </button>
+              <button @click="openRechargePage"
+                class="px-4 py-1 bg-[var(--bg-secondary)] text-[var(--theme-bg)] rounded-full border border-[var(--theme-bg)] hover:bg-[var(--theme-bg)] hover:text-white transition-all duration-200">
+                余额充值
+              </button>
+            </div>
+          </div>
+        </div>
+
         <!-- 供应商配置卡片 -->
         <div class="space-y-6 bg-[var(--bg-primary)] p-6 rounded-xl border border-[var(--border-color)]">
           <div>
@@ -69,11 +97,11 @@
             </div>
             <div class="flex justify-end mt-4 space-x-3">
               <button @click="showTestModelModal = true" :disabled="!currentProvider.url || !currentProvider.key"
-                class="px-4 py-2 border border-green-700 bg-[var(--bg-secondary)] text-green-700 rounded-full hover:bg-green-700 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200">
+                class="px-4 py-1 border border-green-700 bg-[var(--bg-secondary)] text-green-700 rounded-full hover:bg-green-700 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200">
                 测试连接
               </button>
               <button @click="saveProviderConfig" :disabled="!hasConfigChanges || providersStore.loading"
-                class="px-4 py-2 border border-[var(--theme-bg)] bg-[var(--bg-secondary)] text-[var(--theme-bg)] rounded-full hover:bg-[var(--theme-bg)] hover:text-white disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200">
+                class="px-4 py-1 border border-[var(--theme-bg)] bg-[var(--bg-secondary)] text-[var(--theme-bg)] rounded-full hover:bg-[var(--theme-bg)] hover:text-white disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200">
                 保存配置
               </button>
             </div>
@@ -140,6 +168,10 @@
     <FetchModelsModal v-model:visible="showFetchModelsModal" :models="fetchedModels" :existing-models="sortedModels"
       @add-model="addFetchedModel" @remove-model="removeFetchedModel" @close="showFetchModelsModal = false" />
 
+    <!-- 信息模态框 -->
+    <InfoModal v-model:visible="showInfoModal" :title="getInfoModalTitle()" :message="getInfoModalMessage()"
+      @close="showInfoModal = false" />
+
     <!-- Toast提示 -->
     <Toast v-model:visible="toastVisible" :message="toastMessage" :type="toastType"
       :duration="toastType === 'info' ? 0 : 2000" />
@@ -158,7 +190,8 @@ import ModelSelectionModal from '@/components/modal/ModelSelectionModal.vue'
 import FetchModelsModal from '@/components/modal/FetchModelsModal.vue'
 import Toast from '@/components/shared/Toast.vue'
 import ErrorModal from '@/components/shared/ErrorModal.vue'
-import { Plus, X } from 'lucide-vue-next'
+import InfoModal from '@/components/shared/InfoModal.vue'
+import { Plus, X, HelpCircle } from 'lucide-vue-next'
 import { showConfirm } from '@/composables/useConfirm'
 import { testConnection } from '@/services/testConnection'
 import { fetchModelsFromService as fetchModelsService } from '@/services/fetchModels'
@@ -172,6 +205,7 @@ const showProviderModal = ref(false)
 const showModelModal = ref(false)
 const showTestModelModal = ref(false)
 const showFetchModelsModal = ref(false)
+const showInfoModal = ref(false)
 
 // Toast和错误模态框状态
 const toastVisible = ref(false)
@@ -216,8 +250,73 @@ const sortedModels = computed(() => {
   })
 })
 
-// 获取供应商图标
-const getProviderIcon = (providerName: string): string => {
+// 计算是否为特殊供应商（神笔AI、硅基流动、Deepseek）
+const isSpecialProvider = computed(() => {
+  if (!currentProvider.value.name) return false
+  const specialProviders = ['神笔AI', '硅基流动', 'DeepSeek']
+  return specialProviders.includes(currentProvider.value.name)
+})
+
+// 获取特殊供应商的官网链接
+const getOfficialWebsiteUrl = (providerName: string): string => {
+  const urlMap: Record<string, string> = {
+    '神笔AI': 'https://ai.qgming.com/',
+    '硅基流动': 'https://cloud.siliconflow.cn/i/BT2o4ohd',
+    'DeepSeek': 'https://platform.deepseek.com/'
+  }
+  return urlMap[providerName] || '#'
+}
+
+// 获取特殊供应商的充值链接
+const getRechargeUrl = (providerName: string): string => {
+  const urlMap: Record<string, string> = {
+    '神笔AI': 'https://ai.qgming.com/console/topup',
+    '硅基流动': 'https://cloud.siliconflow.cn/me/expensebill',
+    'DeepSeek': 'https://platform.deepseek.com/top_up'
+  }
+  return urlMap[providerName] || '#'
+}
+
+// 打开官网注册页面
+const openOfficialWebsite = () => {
+  if (!currentProvider.value.name) return
+  const url = getOfficialWebsiteUrl(currentProvider.value.name)
+  if (url !== '#') {
+    window.electronAPI.openExternal(url)
+  }
+}
+
+// 打开余额充值页面
+const openRechargePage = () => {
+  if (!currentProvider.value.name) return
+  const url = getRechargeUrl(currentProvider.value.name)
+  if (url !== '#') {
+    window.electronAPI.openExternal(url)
+  }
+}
+
+// 获取信息模态窗标题
+const getInfoModalTitle = (): string => {
+  if (!currentProvider.value.name) return '供应商介绍'
+  return `${currentProvider.value.name} - 介绍`
+}
+
+// 获取信息模态窗内容
+const getInfoModalMessage = (): string => {
+  if (!currentProvider.value.name) return '暂无介绍信息'
+
+  const infoMap: Record<string, string> = {
+    '神笔AI': '神笔AI是专为神笔写作开发的AI模型服务平台，支持软件所需的所有全球顶尖AI模型，提供稳定的Gemini-2.5系列模型服务，对比官网节省80%，为用户提供高性价比高质量的AI服务。',
+    '硅基流动': '硅基流动是一个专业的AI模型服务平台，支持Qwen、Deepseek、Kimi等国内开源模型，提供稳定可靠的AI模型调用服务，支持多种应用场景。',
+    'DeepSeek': 'DeepSeek是深度求索公司开发的AI模型平台，官方API直供，稳定性高，速度快，提供强大的语言模型服务，支持多种自然语言处理任务。'
+  }
+
+  return infoMap[currentProvider.value.name] || `${currentProvider.value.name}是一个AI模型服务供应商，为用户提供优质的AI模型调用服务。`
+}
+
+// 获取供应商图标（处理undefined情况）
+const getProviderIcon = (providerName: string | undefined): string => {
+  if (!providerName) return new URL('../../assets/providers/other.png', import.meta.url).href
   // 定义供应商图标映射（直接匹配初始化器中的确切名称）
   const iconMap: Record<string, string> = {
     // 直接匹配初始化器中的供应商名称
