@@ -69,11 +69,11 @@
             </div>
             <div class="flex justify-end mt-4 space-x-3">
               <button @click="showTestModelModal = true" :disabled="!currentProvider.url || !currentProvider.key"
-                class="px-4 py-2 bg-green-700 text-white rounded-lg hover:bg-green-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200">
+                class="px-4 py-2 border border-green-700 bg-[var(--bg-secondary)] text-green-700 rounded-full hover:bg-green-700 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200">
                 测试连接
               </button>
               <button @click="saveProviderConfig" :disabled="!hasConfigChanges || providersStore.loading"
-                class="px-4 py-2 bg-[var(--theme-bg)] text-[var(--theme-text)] rounded-lg hover:bg-primary disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200">
+                class="px-4 py-2 border border-[var(--theme-bg)] bg-[var(--bg-secondary)] text-[var(--theme-bg)] rounded-full hover:bg-[var(--theme-bg)] hover:text-white disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200">
                 保存配置
               </button>
             </div>
@@ -85,11 +85,18 @@
           <div>
             <div class="flex items-center justify-between mb-4">
               <h3 class="text-lg font-semibold text-[var(--text-primary)]">模型管理</h3>
-              <button @click="showModelModal = true"
-                class="w-8 h-8 flex items-center justify-center bg-[var(--theme-bg)] text-[var(--theme-text)] rounded-full border border-[var(--border-color)] hover:bg-primary transition-all duration-200"
-                title="添加模型">
-                <Plus class="w-4 h-4" />
-              </button>
+              <div class="flex items-center space-x-2">
+                <button @click="fetchModelsFromService"
+                  class="px-3 py-2 text-sm bg-[var(--theme-bg)] text-[var(--theme-text)] rounded-full border border-[var(--border-color)] hover:bg-blue-700 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed h-8 flex items-center"
+                  title="获取模型" :disabled="!currentProvider.url || providersStore.loading">
+                  获取模型
+                </button>
+                <button @click="showModelModal = true"
+                  class="w-8 h-8 flex items-center justify-center bg-[var(--theme-bg)] text-[var(--theme-text)] rounded-full border border-[var(--border-color)] hover:bg-primary transition-all duration-200"
+                  title="添加模型">
+                  <Plus class="w-4 h-4" />
+                </button>
+              </div>
             </div>
             <div class="space-y-3">
               <div v-for="model in sortedModels" :key="model.id"
@@ -129,6 +136,10 @@
     <!-- 模型选择模态框 -->
     <ModelSelectionModal v-model:visible="showTestModelModal" :models="sortedModels" @select="handleModelSelection" />
 
+    <!-- 获取模型模态框 -->
+    <FetchModelsModal v-model:visible="showFetchModelsModal" :models="fetchedModels" :existing-models="sortedModels"
+      @add-model="addFetchedModel" @remove-model="removeFetchedModel" @close="showFetchModelsModal = false" />
+
     <!-- Toast提示 -->
     <Toast v-model:visible="toastVisible" :message="toastMessage" :type="toastType"
       :duration="toastType === 'info' ? 0 : 2000" />
@@ -144,11 +155,13 @@ import { ref, computed, onMounted, watch } from 'vue'
 import { useProvidersStore } from '@/stores/providers'
 import ProviderModelModal from '@/components/modal/ProviderModelModal.vue'
 import ModelSelectionModal from '@/components/modal/ModelSelectionModal.vue'
+import FetchModelsModal from '@/components/modal/FetchModelsModal.vue'
 import Toast from '@/components/shared/Toast.vue'
 import ErrorModal from '@/components/shared/ErrorModal.vue'
 import { Plus, X } from 'lucide-vue-next'
 import { showConfirm } from '@/composables/useConfirm'
 import { testConnection } from '@/services/testConnection'
+import { fetchModelsFromService as fetchModelsService } from '@/services/fetchModels'
 import type { Provider } from '@/electron.d'
 import type { Model } from '@/electron.d'
 
@@ -158,6 +171,7 @@ const providersStore = useProvidersStore()
 const showProviderModal = ref(false)
 const showModelModal = ref(false)
 const showTestModelModal = ref(false)
+const showFetchModelsModal = ref(false)
 
 // Toast和错误模态框状态
 const toastVisible = ref(false)
@@ -166,6 +180,9 @@ const toastType = ref<'success' | 'error' | 'info'>('success')
 const errorModalVisible = ref(false)
 const errorModalMessage = ref('')
 const errorModalDetails = ref('')
+
+// 获取的模型列表
+const fetchedModels = ref<string[]>([])
 
 // 当前编辑的供应商数据
 const currentProvider = ref<Partial<Provider>>({
@@ -232,15 +249,19 @@ const parseTags = (tags: string): string[] => {
 
 // 选择供应商
 function selectProvider(providerId: number) {
-  providersStore.selectProvider(providerId)
-  const provider = providersStore.providers.find(p => p.id === providerId)
+  try {
+    providersStore.selectProvider(providerId)
+    const provider = providersStore.providers.find(p => p.id === providerId)
 
-  if (provider) {
-    currentProvider.value = {
-      name: provider.name,
-      url: provider.url || '',
-      key: provider.key || ''
+    if (provider) {
+      currentProvider.value = {
+        name: provider.name,
+        url: provider.url || '',
+        key: provider.key || ''
+      }
     }
+  } catch (error) {
+    console.error('Error selecting provider:', error)
   }
 }
 
@@ -389,6 +410,81 @@ const handleTestConnection = async (modelName: string) => {
 
     const errorMessage = error instanceof Error ? error.message : '未知错误'
     showErrorModal('测试连接失败', errorMessage)
+  }
+}
+
+// 获取模型服务
+const fetchModelsFromService = async () => {
+  if (!providersStore.selectedProviderId || !currentProvider.value.url || !currentProvider.value.key) {
+    showErrorModal('请先配置供应商的URL和Key')
+    return
+  }
+
+  const provider = providersStore.providers.find(p => p.id === providersStore.selectedProviderId)
+  if (!provider) {
+    showErrorModal('供应商不存在')
+    return
+  }
+
+  // 显示持续Toast提示
+  showToast('正在获取模型列表...', 'info', 0)
+
+  try {
+    const result = await fetchModelsService(currentProvider.value.url, currentProvider.value.key)
+
+    // 隐藏之前的Toast
+    toastVisible.value = false
+
+    if (result.success) {
+      fetchedModels.value = result.models
+      showFetchModelsModal.value = true
+    } else {
+      throw new Error(result.error || '获取模型列表失败')
+    }
+  } catch (error) {
+    // 隐藏之前的Toast
+    toastVisible.value = false
+
+    const errorMessage = error instanceof Error ? error.message : '未知错误'
+    showErrorModal('获取模型列表失败', errorMessage)
+  }
+}
+
+// 添加获取的模型
+const addFetchedModel = async (modelName: string) => {
+  if (!providersStore.selectedProviderId) return
+
+  try {
+    await providersStore.createModel({
+      provider_id: providersStore.selectedProviderId,
+      model: modelName,
+      tags: ''
+    })
+  } catch (error) {
+    console.error('Failed to add fetched model:', error)
+    showErrorModal('添加模型失败', error instanceof Error ? error.message : '未知错误')
+  }
+}
+
+// 移除获取的模型
+const removeFetchedModel = async (modelName: string) => {
+  if (!providersStore.selectedProviderId) return
+
+  // 找到要删除的模型
+  const modelToDelete = providersStore.models.find(
+    model => model.model === modelName && model.provider_id === providersStore.selectedProviderId
+  )
+
+  if (!modelToDelete) {
+    showErrorModal('未找到要删除的模型')
+    return
+  }
+
+  try {
+    await providersStore.deleteModel(modelToDelete.id)
+  } catch (error) {
+    console.error('Failed to remove fetched model:', error)
+    showErrorModal('删除模型失败', error instanceof Error ? error.message : '未知错误')
   }
 }
 
