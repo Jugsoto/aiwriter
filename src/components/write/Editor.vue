@@ -4,7 +4,8 @@
     <HeaderToolbar :current-chapter="currentChapter" :saving="saving" :last-saved="lastSaved" :has-changes="hasChanges"
       :is-streaming="isStreaming" :is-generating-summary="isGeneratingSummary" @save-content="saveContent"
       @stop-streaming="handleStopStreaming" @generate-summary="startGenerateSummary"
-      @update-memory-start="handleUpdateMemoryStart" @update-memory-end="handleUpdateMemoryEnd" />
+      @update-memory-start="handleUpdateMemoryStart" @update-memory-end="handleUpdateMemoryEnd"
+      @update-settings-start="handleUpdateSettingsStart" @update-settings-end="handleUpdateSettingsEnd" />
 
     <!-- 编辑器区域 - 精确填充可用空间，无外部滚动 -->
     <div class="flex-1 min-h-0">
@@ -16,7 +17,8 @@
     <!-- 底部状态栏 -->
     <StatusBar :current-chapter="currentChapter" :content="content" :auto-save-status="autoSaveStatus"
       :last-saved-time="lastSavedTime" :is-streaming="isStreaming" :is-generating-summary="isGeneratingSummary"
-      :is-updating-memory="isUpdatingMemory" :is-searching-memory="isSearchingMemory" />
+      :is-updating-memory="isUpdatingMemory" :is-searching-memory="isSearchingMemory"
+      :is-updating-settings="isUpdatingSettings" />
 
     <!-- Toast 提示 -->
     <Toast v-model:visible="toastVisible" :message="toastMessage" :type="toastType" />
@@ -76,6 +78,7 @@ const isStreaming = ref(false)
 const isGeneratingSummary = ref(false)
 const isUpdatingMemory = ref(false)
 const isSearchingMemory = ref(false)
+const isUpdatingSettings = ref(false)
 
 // Toast 提示状态
 const toastVisible = ref(false)
@@ -238,6 +241,21 @@ const handleUpdateMemoryEnd = (success: boolean) => {
   } else {
     // 错误时使用错误模态窗而不是Toast
     showErrorModal('记忆更新失败', '更新章节记忆时发生错误，请检查配置后重试')
+  }
+}
+
+// 处理设定更新开始
+const handleUpdateSettingsStart = () => {
+  isUpdatingSettings.value = true
+}
+
+// 处理设定更新结束
+const handleUpdateSettingsEnd = (success: boolean) => {
+  isUpdatingSettings.value = false
+  if (success) {
+    showToast('设定更新成功', 'success')
+  } else {
+    showErrorModal('设定更新失败', '更新设定时发生错误，请检查配置后重试')
   }
 }
 

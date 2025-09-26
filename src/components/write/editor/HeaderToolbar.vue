@@ -18,9 +18,11 @@
           class="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin"></span>
         {{ isUpdatingMemory ? '更新中...' : '更新记忆' }}
       </button>
-      <button
-        class="flex items-center gap-1 px-2 py-1.5 text-sm border border-[var(--border-color)] bg-[var(--bg-primary)] rounded-full hover:bg-[var(--bg-secondary)] transition-colors">
-        按钮3
+      <button @click="updateSettings" :disabled="!currentChapter || !currentChapter.content || isUpdatingSettings"
+        class="flex items-center gap-1 px-2 py-1.5 text-sm border border-[var(--border-color)] bg-[var(--bg-primary)] rounded-full hover:bg-[var(--bg-secondary)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+        <span v-if="isUpdatingSettings"
+          class="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin"></span>
+        {{ isUpdatingSettings ? '更新中...' : '更新设定' }}
       </button>
       <!-- 停止流式输出按钮 - 仅在流式写作时显示 -->
       <button v-if="isStreaming" @click="stopStreaming"
@@ -35,7 +37,9 @@
 <script setup lang="ts">
 import type { Chapter } from '@/electron.d'
 import { createChapterMemoryService } from '@/services/chapterMemory'
+import { analyzeAndUpdateSettings, getSettingUpdateConfig } from '@/services/settingUpdate'
 import { useFeatureConfigsStore } from '@/stores/featureConfigs'
+import { useSettingsStore } from '@/stores/settings'
 import { ref } from 'vue'
 
 // 定义props
@@ -73,11 +77,15 @@ const emit = defineEmits<{
   generateSummary: [summary: string]
   updateMemoryStart: []
   updateMemoryEnd: [success: boolean]
+  updateSettingsStart: []
+  updateSettingsEnd: [success: boolean]
 }>()
 
 // 状态管理
 const featureConfigsStore = useFeatureConfigsStore()
+const settingsStore = useSettingsStore()
 const isUpdatingMemory = ref(false)
+const isUpdatingSettings = ref(false)
 
 // 更新章节记忆
 const updateMemory = async () => {
@@ -130,6 +138,48 @@ const updateMemory = async () => {
     emit('updateMemoryEnd', false) // 发出记忆更新失败事件
   } finally {
     isUpdatingMemory.value = false
+  }
+}
+
+// 更新设定
+const updateSettings = async () => {
+  if (!props.currentChapter || !props.currentChapter.content) return
+
+  try {
+    isUpdatingSettings.value = true
+    emit('updateSettingsStart') // 发出设定更新开始事件
+
+    // 获取设定更新功能配置
+    const config = await getSettingUpdateConfig()
+
+    // 获取当前书籍的所有设定
+    await settingsStore.loadSettings(props.currentChapter.book_id)
+    const allSettings = settingsStore.settings
+
+    // 构建上下文
+    const context = {
+      chapterContent: props.currentChapter.content,
+      bookId: props.currentChapter.book_id,
+      settings: allSettings
+    }
+
+    // 执行设定更新分析
+    const result = await analyzeAndUpdateSettings(context, config)
+
+    if (result.success) {
+      // 成功时通过事件通知父组件
+      emit('updateSettingsEnd', true)
+    } else {
+      // 错误时通过事件通知父组件
+      console.error('设定更新失败:', result.message)
+      emit('updateSettingsEnd', false)
+    }
+
+  } catch (error) {
+    console.error('更新设定失败:', error)
+    emit('updateSettingsEnd', false) // 发出设定更新失败事件
+  } finally {
+    isUpdatingSettings.value = false
   }
 }
 

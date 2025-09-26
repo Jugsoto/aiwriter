@@ -30,3 +30,12 @@ export * from './settingMemory'
 
 // 向量搜索服务
 export * from './vectorSearch'
+
+// 设定更新服务
+export * from './settingUpdate'
+
+// 设定更新工具
+export * from './settingUpdateTools'
+
+// 工具调用服务
+export * from './toolCalling'

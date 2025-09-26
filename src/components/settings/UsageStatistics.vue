@@ -127,7 +127,8 @@
                 <div class="text-xs">{{ stat.provider_name }}</div>
                 <div class="text-xs text-[var(--text-secondary)]">{{ stat.model_name }}</div>
               </td>
-              <td class="py-2 px-3 text-[var(--text-primary)]">{{ stat.feature_name }}</td>
+              <td class="py-2 px-3 text-[var(--text-primary)]">{{
+                featureConfigsStore.getFeatureDisplayName(stat.feature_name) || stat.feature_name || '未知功能' }}</td>
               <td class="py-2 px-3 text-right text-[var(--text-primary)]">{{ formatNumber(stat.input_tokens) }}</td>
               <td class="py-2 px-3 text-right text-[var(--text-primary)]">{{ formatNumber(stat.output_tokens) }}
               </td>
@@ -168,6 +169,7 @@
 import { ref, onMounted, nextTick, watch, computed, onUnmounted } from 'vue'
 import * as echarts from 'echarts'
 import type { UsageStatistic } from '@/electron.d'
+import { useFeatureConfigsStore } from '@/stores/featureConfigs'
 
 // 响应式数据
 interface SummaryData {
@@ -189,6 +191,9 @@ interface SummaryData {
     total_tokens: number
   }>
 }
+
+// 创建 featureConfigs store 实例
+const featureConfigsStore = useFeatureConfigsStore()
 
 const summary = ref<SummaryData>({
   total_calls: 0,
@@ -298,7 +303,8 @@ const processFeatureData = () => {
 
   // 使用所有历史数据进行功能统计，不受时间筛选影响
   allUsageStatistics.value.forEach(stat => {
-    const featureName = stat.feature_name || '未知功能'
+    // 使用中文功能名称
+    const featureName = featureConfigsStore.getFeatureDisplayName(stat.feature_name) || stat.feature_name || '未知功能'
     const existing = featureMap.get(featureName) || { inputTokens: 0, outputTokens: 0, totalTokens: 0 }
     existing.inputTokens += stat.input_tokens
     existing.outputTokens += stat.output_tokens
