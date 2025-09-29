@@ -99,11 +99,50 @@ declare global {
       deleteSettingVectorsByBookId: (bookId: number) => Promise<{ success: boolean }>
       searchSimilarSettingVectors: (bookId: number, queryEmbedding: Uint8Array, limit: number) => Promise<SettingVector[]>
       
+      // 提示词相关API
+      getPrompts: () => Promise<Prompt[]>
+      getPromptsByCategory: (category: string) => Promise<Prompt[]>
+      getPrompt: (id: number) => Promise<Prompt | undefined>
+      createPrompt: (data: { name: string; content: string; category: string; is_default?: number; description?: string; author?: string; version?: string; url?: string }) => Promise<Prompt>
+      updatePrompt: (id: number, data: { name?: string; content?: string; category?: string; is_default?: number; description?: string; author?: string; version?: string; url?: string }) => Promise<Prompt>
+      deletePrompt: (id: number) => Promise<{ success: boolean }>
+      getPromptSelection: (category: string) => Promise<PromptSelection | undefined>
+      getAllPromptSelections: () => Promise<PromptSelection[]>
+      setPromptSelection: (data: { category: string; prompt_id: number }) => Promise<PromptSelection>
+      deletePromptSelection: (category: string) => Promise<{ success: boolean }>
+      getDefaultPromptByCategory: (category: string) => Promise<Prompt | undefined>
+      getSelectedPromptByCategory: (category: string) => Promise<Prompt | undefined>
+      setDefaultPromptForCategory: (category: string, promptId: number) => Promise<{ success: boolean }>
+      
       // 应用信息相关API
       getAppVersion: () => Promise<string>
       openExternal: (url: string) => Promise<void>
     }
   }
+}
+
+// 提示词类型定义
+export interface Prompt {
+  id: number
+  name: string
+  content: string
+  category: string
+  is_default: number
+  description: string
+  author: string
+  version: string
+  url: string
+  created_at: string
+  updated_at: string
+}
+
+// 提示词选择类型定义
+export interface PromptSelection {
+  id: number
+  category: string
+  prompt_id: number
+  created_at: string
+  updated_at: string
 }
 
 // 书籍类型定义

@@ -54,9 +54,24 @@ import {
   updateSettingVector,
   deleteSettingVectorBySettingId,
   deleteSettingVectorsByBookId,
-  searchSimilarSettingVectors
+  searchSimilarSettingVectors,
+  // 提示词相关
+  getAllPrompts,
+  getPromptsByCategory,
+  getPromptById,
+  createPrompt,
+  updatePrompt,
+  deletePrompt,
+  getPromptSelectionByCategory,
+  getAllPromptSelections,
+  setPromptSelection,
+  deletePromptSelection,
+  getDefaultPromptByCategory,
+  getSelectedPromptByCategory,
+  setDefaultPromptForCategory
 } from './database'
 import { initializeDefaultProviders } from './initializer'
+import { initializeDefaultPrompts } from './promptInitializer'
 
 let win: InstanceType<typeof BrowserWindow> | null = null
 
@@ -111,6 +126,16 @@ app.whenReady().then(async () => {
       console.log('Default providers initialization completed')
     } else {
       console.log('Default providers initialization skipped or failed')
+    }
+    
+    // 初始化默认提示词
+    console.log('Initializing default prompts...')
+    const promptInitSuccess = await initializeDefaultPrompts()
+    
+    if (promptInitSuccess) {
+      console.log('Default prompts initialization completed')
+    } else {
+      console.log('Default prompts initialization skipped or failed')
     }
     
     // 创建窗口
@@ -577,6 +602,62 @@ ipcMain.handle('delete-setting-vectors-by-book-id', (_event: any, bookId: number
 
 ipcMain.handle('search-similar-setting-vectors', (_event: any, bookId: number, queryEmbedding: Buffer, limit: number) => {
   return searchSimilarSettingVectors(bookId, queryEmbedding, limit)
+})
+
+// 提示词相关IPC处理
+ipcMain.handle('get-prompts', () => {
+  return getAllPrompts()
+})
+
+ipcMain.handle('get-prompts-by-category', (_event: any, category: string) => {
+  return getPromptsByCategory(category)
+})
+
+ipcMain.handle('get-prompt', (_event: any, id: number) => {
+  return getPromptById(id)
+})
+
+ipcMain.handle('create-prompt', (_event: any, data: { name: string; content: string; category: string; is_default?: number; description?: string; author?: string; version?: string; url?: string }) => {
+  return createPrompt(data)
+})
+
+ipcMain.handle('update-prompt', (_event: any, id: number, data: { name?: string; content?: string; category?: string; is_default?: number; description?: string; author?: string; version?: string; url?: string }) => {
+  return updatePrompt(id, data)
+})
+
+ipcMain.handle('delete-prompt', (_event: any, id: number) => {
+  deletePrompt(id)
+  return { success: true }
+})
+
+ipcMain.handle('get-prompt-selection', (_event: any, category: string) => {
+  return getPromptSelectionByCategory(category)
+})
+
+ipcMain.handle('get-all-prompt-selections', () => {
+  return getAllPromptSelections()
+})
+
+ipcMain.handle('set-prompt-selection', (_event: any, data: { category: string; prompt_id: number }) => {
+  return setPromptSelection(data)
+})
+
+ipcMain.handle('delete-prompt-selection', (_event: any, category: string) => {
+  deletePromptSelection(category)
+  return { success: true }
+})
+
+ipcMain.handle('get-default-prompt-by-category', (_event: any, category: string) => {
+  return getDefaultPromptByCategory(category)
+})
+
+ipcMain.handle('get-selected-prompt-by-category', (_event: any, category: string) => {
+  return getSelectedPromptByCategory(category)
+})
+
+ipcMain.handle('set-default-prompt-for-category', (_event: any, category: string, promptId: number) => {
+  setDefaultPromptForCategory(category, promptId)
+  return { success: true }
 })
 
 // 应用退出时关闭数据库

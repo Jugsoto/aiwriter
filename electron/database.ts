@@ -219,6 +219,39 @@ function initDatabase() {
     db.exec('CREATE INDEX IF NOT EXISTS idx_setting_vectors_book_id ON setting_vectors (book_id)')
     db.exec('CREATE INDEX IF NOT EXISTS idx_setting_vectors_setting_id ON setting_vectors (setting_id)')
     
+    // 创建提示词表
+    db.exec(`
+      CREATE TABLE IF NOT EXISTS prompts (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL,
+        content TEXT NOT NULL,
+        category TEXT NOT NULL,
+        is_default INTEGER DEFAULT 0,
+        description TEXT DEFAULT '',
+        author TEXT DEFAULT '',
+        version TEXT DEFAULT '',
+        url TEXT DEFAULT '',
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      )
+    `)
+    
+    // 创建提示词选择表
+    db.exec(`
+      CREATE TABLE IF NOT EXISTS prompt_selections (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        category TEXT NOT NULL UNIQUE,
+        prompt_id INTEGER NOT NULL,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (prompt_id) REFERENCES prompts (id) ON DELETE CASCADE
+      )
+    `)
+    
+    // 创建提示词表索引
+    db.exec('CREATE INDEX IF NOT EXISTS idx_prompts_category ON prompts (category)')
+    db.exec('CREATE INDEX IF NOT EXISTS idx_prompts_is_default ON prompts (category, is_default)')
+    
     // 检查现有数据
     const count = db.prepare('SELECT COUNT(*) as count FROM books').get() as { count: number }
     console.log(`Database initialized successfully with ${count.count} existing books`)
@@ -1461,6 +1494,241 @@ function searchSimilarSettingVectors(
   }
 }
 
+// 提示词相关数据结构
+interface Prompt {
+  id: number
+  name: string
+  content: string
+  category: string
+  is_default: number
+  description: string
+  author: string
+  version: string
+  url: string
+  created_at: string
+  updated_at: string
+}
+
+interface CreatePromptData {
+  name: string
+  content: string
+  category: string
+  is_default?: number
+  description?: string
+  author?: string
+  version?: string
+  url?: string
+}
+
+interface UpdatePromptData {
+  name?: string
+  content?: string
+  category?: string
+  is_default?: number
+  description?: string
+  author?: string
+  version?: string
+  url?: string
+}
+
+interface PromptSelection {
+  id: number
+  category: string
+  prompt_id: number
+  created_at: string
+  updated_at: string
+}
+
+interface CreatePromptSelectionData {
+  category: string
+  prompt_id: number
+}
+
+// 获取所有提示词
+function getAllPrompts(): Prompt[] {
+  const db = getDatabase()
+  const stmt = db.prepare('SELECT * FROM prompts ORDER BY category, is_default DESC, name')
+  return stmt.all() as Prompt[]
+}
+
+// 根据分类获取提示词
+function getPromptsByCategory(category: string): Prompt[] {
+  const db = getDatabase()
+  const stmt = db.prepare('SELECT * FROM prompts WHERE category = ? ORDER BY is_default DESC, name')
+  return stmt.all(category) as Prompt[]
+}
+
+// 根据ID获取提示词
+function getPromptById(id: number): Prompt | undefined {
+  const db = getDatabase()
+  const stmt = db.prepare('SELECT * FROM prompts WHERE id = ?')
+  return stmt.get(id) as Prompt | undefined
+}
+
+// 创建新提示词
+function createPrompt(data: CreatePromptData): Prompt {
+  const db = getDatabase()
+  const stmt = db.prepare(`
+    INSERT INTO prompts (name, content, category, is_default, description, author, version, url)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+  `)
+  const result = stmt.run(
+    data.name,
+    data.content,
+    data.category,
+    data.is_default ?? 0,
+    data.description || '',
+    data.author || '',
+    data.version || '',
+    data.url || ''
+  )
+  
+  return getPromptById(result.lastInsertRowid as number)!
+}
+
+// 更新提示词
+function updatePrompt(id: number, data: UpdatePromptData): Prompt {
+  const db = getDatabase()
+  const fields: string[] = []
+  const values: any[] = []
+
+  if (data.name !== undefined) {
+    fields.push('name = ?')
+    values.push(data.name)
+  }
+  if (data.content !== undefined) {
+    fields.push('content = ?')
+    values.push(data.content)
+  }
+  if (data.category !== undefined) {
+    fields.push('category = ?')
+    values.push(data.category)
+  }
+  if (data.is_default !== undefined) {
+    fields.push('is_default = ?')
+    values.push(data.is_default)
+  }
+  if (data.description !== undefined) {
+    fields.push('description = ?')
+    values.push(data.description)
+  }
+  if (data.author !== undefined) {
+    fields.push('author = ?')
+    values.push(data.author)
+  }
+  if (data.version !== undefined) {
+    fields.push('version = ?')
+    values.push(data.version)
+  }
+  if (data.url !== undefined) {
+    fields.push('url = ?')
+    values.push(data.url)
+  }
+
+  if (fields.length > 0) {
+    fields.push('updated_at = CURRENT_TIMESTAMP')
+    values.push(id)
+
+    const stmt = db.prepare(`
+      UPDATE prompts SET ${fields.join(', ')} WHERE id = ?
+    `)
+    stmt.run(...values)
+  }
+
+  return getPromptById(id)!
+}
+
+// 删除提示词
+function deletePrompt(id: number): void {
+  const db = getDatabase()
+  const stmt = db.prepare('DELETE FROM prompts WHERE id = ?')
+  stmt.run(id)
+}
+
+// 获取提示词选择
+function getPromptSelectionByCategory(category: string): PromptSelection | undefined {
+  const db = getDatabase()
+  const stmt = db.prepare('SELECT * FROM prompt_selections WHERE category = ?')
+  return stmt.get(category) as PromptSelection | undefined
+}
+
+// 获取所有提示词选择
+function getAllPromptSelections(): PromptSelection[] {
+  const db = getDatabase()
+  const stmt = db.prepare('SELECT * FROM prompt_selections')
+  return stmt.all() as PromptSelection[]
+}
+
+// 创建或更新提示词选择
+function setPromptSelection(data: CreatePromptSelectionData): PromptSelection {
+  const db = getDatabase()
+  
+  // 检查是否已存在该分类的选择
+  const existing = getPromptSelectionByCategory(data.category)
+  
+  if (existing) {
+    // 更新现有选择
+    const stmt = db.prepare(`
+      UPDATE prompt_selections SET prompt_id = ?, updated_at = CURRENT_TIMESTAMP WHERE category = ?
+    `)
+    stmt.run(data.prompt_id, data.category)
+    return getPromptSelectionByCategory(data.category)!
+  } else {
+    // 创建新选择
+    const stmt = db.prepare(`
+      INSERT INTO prompt_selections (category, prompt_id) VALUES (?, ?)
+    `)
+    const result = stmt.run(data.category, data.prompt_id)
+    
+    const stmt2 = db.prepare('SELECT * FROM prompt_selections WHERE id = ?')
+    return stmt2.get(result.lastInsertRowid) as PromptSelection
+  }
+}
+
+// 删除提示词选择
+function deletePromptSelection(category: string): void {
+  const db = getDatabase()
+  const stmt = db.prepare('DELETE FROM prompt_selections WHERE category = ?')
+  stmt.run(category)
+}
+
+// 获取分类的默认提示词
+function getDefaultPromptByCategory(category: string): Prompt | undefined {
+  const db = getDatabase()
+  const stmt = db.prepare(`
+    SELECT p.* FROM prompts p
+    WHERE p.category = ? AND p.is_default = 1
+    ORDER BY p.id
+    LIMIT 1
+  `)
+  return stmt.get(category) as Prompt | undefined
+}
+
+// 获取分类的已选择提示词
+function getSelectedPromptByCategory(category: string): Prompt | undefined {
+  const db = getDatabase()
+  const stmt = db.prepare(`
+    SELECT p.* FROM prompts p
+    JOIN prompt_selections ps ON p.id = ps.prompt_id
+    WHERE ps.category = ?
+    LIMIT 1
+  `)
+  return stmt.get(category) as Prompt | undefined
+}
+
+// 设置分类的默认提示词
+function setDefaultPromptForCategory(category: string, promptId: number): void {
+  const db = getDatabase()
+  
+  // 首先将该分类下所有提示词的is_default设为0
+  const stmt1 = db.prepare('UPDATE prompts SET is_default = 0 WHERE category = ?')
+  stmt1.run(category)
+  
+  // 然后将指定提示词的is_default设为1
+  const stmt2 = db.prepare('UPDATE prompts SET is_default = 1 WHERE id = ?')
+  stmt2.run(promptId)
+}
+
 export {
   initDatabase,
   getAllBooks,
@@ -1525,5 +1793,19 @@ export {
   deleteSettingVectorsByBookId,
   // 向量搜索
   searchSimilarChapterVectors,
-  searchSimilarSettingVectors
+  searchSimilarSettingVectors,
+  // 提示词相关
+  getAllPrompts,
+  getPromptsByCategory,
+  getPromptById,
+  createPrompt,
+  updatePrompt,
+  deletePrompt,
+  getPromptSelectionByCategory,
+  getAllPromptSelections,
+  setPromptSelection,
+  deletePromptSelection,
+  getDefaultPromptByCategory,
+  getSelectedPromptByCategory,
+  setDefaultPromptForCategory
 }

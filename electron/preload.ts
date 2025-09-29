@@ -88,6 +88,21 @@ const api = {
   searchSimilarSettingVectors: (bookId: number, queryEmbedding: Uint8Array, limit: number) =>
     ipcRenderer.invoke('search-similar-setting-vectors', bookId, queryEmbedding, limit),
   
+  // 提示词相关API
+  getPrompts: () => ipcRenderer.invoke('get-prompts'),
+  getPromptsByCategory: (category: string) => ipcRenderer.invoke('get-prompts-by-category', category),
+  getPrompt: (id: number) => ipcRenderer.invoke('get-prompt', id),
+  createPrompt: (data: { name: string; content: string; category: string; is_default?: number; description?: string; author?: string; version?: string; url?: string }) => ipcRenderer.invoke('create-prompt', data),
+  updatePrompt: (id: number, data: { name?: string; content?: string; category?: string; is_default?: number; description?: string; author?: string; version?: string; url?: string }) => ipcRenderer.invoke('update-prompt', id, data),
+  deletePrompt: (id: number) => ipcRenderer.invoke('delete-prompt', id),
+  getPromptSelection: (category: string) => ipcRenderer.invoke('get-prompt-selection', category),
+  getAllPromptSelections: () => ipcRenderer.invoke('get-all-prompt-selections'),
+  setPromptSelection: (data: { category: string; prompt_id: number }) => ipcRenderer.invoke('set-prompt-selection', data),
+  deletePromptSelection: (category: string) => ipcRenderer.invoke('delete-prompt-selection', category),
+  getDefaultPromptByCategory: (category: string) => ipcRenderer.invoke('get-default-prompt-by-category', category),
+  getSelectedPromptByCategory: (category: string) => ipcRenderer.invoke('get-selected-prompt-by-category', category),
+  setDefaultPromptForCategory: (category: string, promptId: number) => ipcRenderer.invoke('set-default-prompt-for-category', category, promptId),
+  
   // 应用信息相关API
   getAppVersion: () => ipcRenderer.invoke('get-app-version'),
   openExternal: (url: string) => ipcRenderer.invoke('open-external', url)
