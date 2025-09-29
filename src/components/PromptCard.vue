@@ -57,7 +57,7 @@
 </template>
 
 <script setup lang="ts">
-import { Edit, Trash2, User, Tag, ExternalLink, Eye } from 'lucide-vue-next'
+import { Edit, Trash2, User, Tag, Eye } from 'lucide-vue-next'
 import type { Prompt } from '../electron'
 
 interface Props {
@@ -104,6 +104,9 @@ const handleView = () => {
 .line-clamp-2 {
   display: -webkit-box;
   -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  display: -webkit-box;
+  line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
