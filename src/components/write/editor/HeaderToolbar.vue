@@ -24,6 +24,12 @@
           class="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin"></span>
         {{ isUpdatingSettings ? '更新中...' : '更新设定' }}
       </button>
+      <button @click="reviewChapter" :disabled="!currentChapter || !currentChapter.content || isReviewingChapter"
+        class="flex items-center gap-1 px-2 py-1.5 text-sm border border-[var(--border-color)] bg-[var(--bg-primary)] rounded-full hover:bg-[var(--bg-secondary)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+        <span v-if="isReviewingChapter"
+          class="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin"></span>
+        {{ isReviewingChapter ? '评估中...' : '章节评估' }}
+      </button>
       <!-- 停止流式输出按钮 - 仅在流式写作时显示 -->
       <button v-if="isStreaming" @click="stopStreaming"
         class="flex items-center gap-1 px-3 py-1.5 text-sm border border-red-300 bg-red-50 text-red-700 rounded-full hover:bg-red-100 transition-colors animate-pulse">
@@ -67,6 +73,10 @@ const props = defineProps({
   isGeneratingSummary: {
     type: Boolean,
     default: false
+  },
+  isReviewingChapter: {
+    type: Boolean,
+    default: false
   }
 })
 
@@ -79,6 +89,7 @@ const emit = defineEmits<{
   updateMemoryEnd: [success: boolean]
   updateSettingsStart: []
   updateSettingsEnd: [success: boolean]
+  reviewChapter: []
 }>()
 
 // 状态管理
@@ -199,5 +210,13 @@ const generateSummary = async () => {
 
   // 触发自定义事件，通知父组件开始生成梗概
   emit('generateSummary', '')
+}
+
+// 章节评估
+const reviewChapter = () => {
+  if (!props.currentChapter || !props.currentChapter.content) return
+
+  // 触发自定义事件，通知父组件开始章节评估
+  emit('reviewChapter')
 }
 </script>

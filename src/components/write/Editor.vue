@@ -2,10 +2,11 @@
   <div class="h-full bg-[var(--bg-primary)] flex flex-col">
     <!-- 顶部操作栏 -->
     <HeaderToolbar :current-chapter="currentChapter" :saving="saving" :last-saved="lastSaved" :has-changes="hasChanges"
-      :is-streaming="isStreaming" :is-generating-summary="isGeneratingSummary" @save-content="saveContent"
-      @stop-streaming="handleStopStreaming" @generate-summary="startGenerateSummary"
-      @update-memory-start="handleUpdateMemoryStart" @update-memory-end="handleUpdateMemoryEnd"
-      @update-settings-start="handleUpdateSettingsStart" @update-settings-end="handleUpdateSettingsEnd" />
+      :is-streaming="isStreaming" :is-generating-summary="isGeneratingSummary"
+      :is-reviewing-chapter="isReviewingChapter" @save-content="saveContent" @stop-streaming="handleStopStreaming"
+      @generate-summary="startGenerateSummary" @update-memory-start="handleUpdateMemoryStart"
+      @update-memory-end="handleUpdateMemoryEnd" @update-settings-start="handleUpdateSettingsStart"
+      @update-settings-end="handleUpdateSettingsEnd" @review-chapter="startChapterReview" />
 
     <!-- 编辑器区域 - 精确填充可用空间，无外部滚动 -->
     <div class="flex-1 min-h-0">
@@ -18,7 +19,7 @@
     <StatusBar :current-chapter="currentChapter" :content="content" :auto-save-status="autoSaveStatus"
       :last-saved-time="lastSavedTime" :is-streaming="isStreaming" :is-generating-summary="isGeneratingSummary"
       :is-updating-memory="isUpdatingMemory" :is-searching-memory="isSearchingMemory"
-      :is-updating-settings="isUpdatingSettings" />
+      :is-updating-settings="isUpdatingSettings" :is-reviewing-chapter="isReviewingChapter" />
 
     <!-- Toast 提示 -->
     <Toast v-model:visible="toastVisible" :message="toastMessage" :type="toastType" />
@@ -26,6 +27,10 @@
     <!-- 错误模态窗 -->
     <ErrorModal v-model:visible="errorModalVisible" :message="errorModalMessage" :error-details="errorModalDetails"
       @close="errorModalVisible = false" />
+
+    <!-- 章节评估模态窗 -->
+    <ChapterReviewModal v-model:visible="chapterReviewModalVisible" :chapter-content="content"
+      :global-settings="globalSettings" :chapter-title="currentChapter?.title" @close="handleChapterReviewClose" />
   </div>
 </template>
 
@@ -40,6 +45,7 @@ import StatusBar from './editor/StatusBar.vue'
 import ContentEditor from './editor/ContentEditor.vue'
 import Toast from '@/components/shared/Toast.vue'
 import ErrorModal from '@/components/shared/ErrorModal.vue'
+import ChapterReviewModal from '@/components/modal/ChapterReviewModal.vue'
 
 // 简单的防抖函数实现
 function debounce<T extends (...args: any[]) => any>(func: T, wait: number): T {
@@ -64,6 +70,7 @@ function cleanEmptyParagraphs(text: string): string {
 }
 
 const chaptersStore = useChaptersStore()
+const booksStore = useBooksStore()
 
 // 计算属性
 const currentChapter = computed(() => chaptersStore.currentChapter)
@@ -79,6 +86,9 @@ const isGeneratingSummary = ref(false)
 const isUpdatingMemory = ref(false)
 const isSearchingMemory = ref(false)
 const isUpdatingSettings = ref(false)
+const isReviewingChapter = ref(false)
+const chapterReviewModalVisible = ref(false)
+const globalSettings = ref('')
 
 // Toast 提示状态
 const toastVisible = ref(false)
@@ -257,6 +267,33 @@ const handleUpdateSettingsEnd = (success: boolean) => {
   } else {
     showErrorModal('设定更新失败', '更新设定时发生错误，请检查配置后重试')
   }
+}
+
+// 开始章节评估
+const startChapterReview = async () => {
+  if (!currentChapter.value || !currentChapter.value.content) return
+
+  isReviewingChapter.value = true
+
+  try {
+    // 获取当前书籍的全局设定
+    const currentBook = booksStore.books.find((book: any) => book.id === currentChapter.value?.book_id)
+    globalSettings.value = currentBook?.global_settings || ''
+
+    // 显示章节评估模态窗口
+    chapterReviewModalVisible.value = true
+
+  } catch (error) {
+    console.error('开始章节评估失败:', error)
+    showToast('开始章节评估失败，请重试', 'error')
+  } finally {
+    isReviewingChapter.value = false
+  }
+}
+
+// 处理章节评估关闭
+const handleChapterReviewClose = () => {
+  chapterReviewModalVisible.value = false
 }
 
 // 开始流式写作（供父组件调用）
