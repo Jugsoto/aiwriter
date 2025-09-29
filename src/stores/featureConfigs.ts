@@ -12,7 +12,7 @@ export const useFeatureConfigsStore = defineStore('featureConfigs', () => {
     'basic_model': '基础模型',
     'chapter_planning': '章节细纲',
     'content_writing': '正文写作',
-    'editing_review': '编辑审核',
+    'chapter_review': '章节评估',
     'setting_maintenance': '设定维护',
     'embedding_model': '嵌入模型',
     

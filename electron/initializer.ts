@@ -172,11 +172,11 @@ const DEFAULT_FEATURE_CONFIGS_DATA = {
       model_name: 'shenbi-writing'
     },
     {
-      feature_name: 'editing_review',
+      feature_name: 'chapter_review',
       temperature: 0.7,
       top_p: 0.9,
       provider_name: '神笔AI',
-      model_name: 'shenbi-editor'
+      model_name: 'shenbi-review'
     },
     {
       feature_name: 'embedding_model',

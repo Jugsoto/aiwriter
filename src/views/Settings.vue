@@ -25,10 +25,9 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import { Brain, Settings, MessageSquare, BarChart3, Database, Info } from 'lucide-vue-next'
+import { Brain, Settings, BarChart3, Database, Info } from 'lucide-vue-next'
 import ModelSettings from '@/components/settings/ModelSettings.vue'
 import FeatureSettings from '@/components/settings/FeatureSettings.vue'
-import PromptManagement from '@/components/settings/PromptManagement.vue'
 import UsageStatistics from '@/components/settings/UsageStatistics.vue'
 import DataSettings from '@/components/settings/DataSettings.vue'
 import AboutUs from '@/components/settings/AboutUs.vue'
@@ -44,7 +43,6 @@ interface MenuItem {
 const menuItems: MenuItem[] = [
   { key: 'model', label: '模型设置', icon: Brain },
   { key: 'feature', label: '功能设置', icon: Settings },
-  { key: 'prompt', label: '提示词管理', icon: MessageSquare },
   { key: 'usage', label: '用量统计', icon: BarChart3 },
   { key: 'data', label: '数据设置', icon: Database },
   { key: 'about', label: '关于我们', icon: Info }
@@ -57,7 +55,6 @@ const activeTab = ref<string>('model')
 const componentMap: Record<string, any> = {
   model: ModelSettings,
   feature: FeatureSettings,
-  prompt: PromptManagement,
   usage: UsageStatistics,
   data: DataSettings,
   about: AboutUs

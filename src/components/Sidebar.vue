@@ -11,6 +11,11 @@
         title="工具页">
         <Wrench :size="20" class="text-[var(--icon-color)] dark:text-[var(--icon-color-dark)]" />
       </router-link>
+      <router-link to="/prompts"
+        class="nav-item flex items-center justify-center p-2 no-underline rounded-lg mx-2 transition-all duration-200 cursor-pointer border-none bg-transparent text-sm font-medium w-9 h-9 text-gray-600 dark:text-gray-400 hover:bg-gray-200 hover:text-gray-700 dark:hover:bg-gray-900 dark:hover:text-gray-300"
+        title="提示词">
+        <Sparkle :size="20" class="text-[var(--icon-color)] dark:text-[var(--icon-color-dark)]" />
+      </router-link>
     </div>
 
     <div class="flex flex-col gap-2">
@@ -31,7 +36,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import { Home, Wrench, Settings, Moon, Sun } from 'lucide-vue-next'
+import { Home, Wrench, Settings, Moon, Sun, Sparkle } from 'lucide-vue-next'
 import { useThemeStore } from '@/stores/theme'
 
 const themeStore = useThemeStore()
