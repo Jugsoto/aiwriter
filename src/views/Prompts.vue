@@ -66,7 +66,7 @@ const promptCategories: PromptCategory[] = [
     icon: FastForward
   },
   {
-    key: 'chapter_evaluation',
+    key: 'chapter_review',
     name: '章节评估',
     description: '用于评估章节质量的提示词',
     icon: Award
