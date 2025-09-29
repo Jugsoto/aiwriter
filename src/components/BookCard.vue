@@ -10,20 +10,19 @@
       </div>
     </div>
 
-    <!-- 悬停操作按钮 -->
-    <div class="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-      <div class="flex gap-1">
-        <button @click.stop="handleEdit"
-          class="p-1.5 bg-[var(--bg-primary)] rounded-full shadow-md hover:bg-[var(--hover-bg)] transition-colors"
-          title="编辑">
-          <Edit3 class="w-4 h-4 text-[var(--text-secondary)]" />
-        </button>
-        <button @click.stop="handleDelete"
-          class="p-1.5 bg-[var(--bg-primary)] rounded-full shadow-md hover:bg-[var(--hover-bg)] transition-colors"
-          title="删除">
-          <Trash2 class="w-4 h-4 text-red-500" />
-        </button>
-      </div>
+    <!-- 右上角操作按钮 -->
+    <div
+      class="absolute top-2 right-2 flex items-center gap-1 bg-[var(--bg-secondary)] px-2 rounded-full border border-[var(--border-color)] shadow-sm min-h-[28px] opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+      <button @click.stop="handleEdit"
+        class="px-1 py-1 text-[var(--text-secondary)] hover:text-green-600 hover:bg-green-100 rounded-full transition-all min-h-[20px] flex items-center"
+        title="编辑">
+        <Edit class="w-4 h-4" />
+      </button>
+      <button @click.stop="handleDelete"
+        class="px-1 py-1 text-[var(--text-secondary)] hover:text-red-600 hover:bg-red-100 rounded-full transition-all min-h-[20px] flex items-center"
+        title="删除">
+        <Trash2 class="w-4 h-4" />
+      </button>
     </div>
 
     <!-- 悬停时显示的时间 - 胶囊样式 -->
@@ -39,7 +38,7 @@
 <script setup lang="ts">
 import { useRouter } from 'vue-router'
 import type { Book } from '@/electron.d'
-import { Edit3, Trash2 } from 'lucide-vue-next'
+import { Edit, Trash2 } from 'lucide-vue-next'
 
 interface Props {
   book: Book

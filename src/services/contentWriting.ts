@@ -1,7 +1,7 @@
 import { streamChatCompletion, type ChatMessage } from './chat'
 import type { FeatureConfig } from '@/electron.d'
 import { useFeatureConfigsStore } from '@/stores/featureConfigs'
-import { CONTENT_WRITING_SYSTEM_PROMPT } from './prompts'
+import { getContentWritingPrompt } from './prompts'
 
 export interface ContentWritingContext {
   selectedMessage: string // 选中的消息内容
@@ -161,7 +161,7 @@ export async function* streamContentWriting(
 
   // 构建消息数组
   const messages: ChatMessage[] = [
-    { role: 'system', content: CONTENT_WRITING_SYSTEM_PROMPT }
+    { role: 'system', content: await getContentWritingPrompt() }
   ]
 
   // 如果有历史消息且设置了上下文长度，则添加历史消息

@@ -1,8 +1,8 @@
 <template>
   <div class="h-full flex flex-col">
     <!-- 顶部栏 -->
-    <div class="flex items-center justify-between px-6 py-3 border-b border-[var(--border-color)]">
-      <h1 class="text-2xl font-semibold text-[var(--text-primary)]">我的书架</h1>
+    <div class="flex items-center justify-between p-4 border-b border-[var(--border-color)]">
+      <h1 class="text-2xl font-semibold text-[var(--text-primary)]">作品管理</h1>
       <button @click="showAddModal = true"
         class="flex items-center gap-2 px-4 py-2 bg-[var(--theme-bg)] text-white rounded-lg hover:bg-blue-700 transition-colors">
         新增书籍
@@ -10,7 +10,7 @@
     </div>
 
     <!-- 主要内容区 -->
-    <div class="flex-1 overflow-auto p-6">
+    <div class="flex-1 overflow-auto p-6 bg-[var(--bg-secondary)]">
       <!-- 加载状态 -->
       <div v-if="booksStore.loading" class="flex items-center justify-center h-64">
         <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
@@ -28,10 +28,7 @@
       <!-- 空状态 -->
       <div v-else-if="booksStore.books.length === 0"
         class="flex flex-col items-center justify-center h-64 text-gray-500">
-        <svg class="w-16 h-16 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-            d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-        </svg>
+        <BookOpen class="w-16 h-16 mb-4 text-[var(--text-secondary)]" />
         <p class="text-lg">暂无书籍，点击右上角按钮添加</p>
       </div>
 
@@ -54,6 +51,7 @@ import { useBooksStore } from '@/stores/books'
 import { showConfirm } from '@/composables'
 import BookCard from '../components/BookCard.vue'
 import BookModal from '../components/modal/BookModal.vue'
+import { BookOpen } from 'lucide-vue-next'
 import type { Book } from '@/electron.d'
 
 const booksStore = useBooksStore()

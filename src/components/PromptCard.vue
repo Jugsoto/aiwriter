@@ -53,11 +53,18 @@
     <p class="text-sm text-[var(--text-secondary)] mb-3 line-clamp-2">
       {{ prompt.description || '暂无简介' }}
     </p>
+
+    <!-- 确认删除模态框 -->
+    <ConfirmModal :visible="showDeleteConfirm" title="删除提示词" :message="`确定要删除提示词「${prompt.name}」吗？`" confirm-text="删除"
+      cancel-text="取消" :dangerous="true" @update:visible="showDeleteConfirm = false" @confirm="confirmDelete"
+      @cancel="cancelDelete" />
   </div>
 </template>
 
 <script setup lang="ts">
+import { ref } from 'vue'
 import { Edit, Trash2, User, Tag, Eye } from 'lucide-vue-next'
+import ConfirmModal from './shared/ConfirmModal.vue'
 import type { Prompt } from '../electron'
 
 interface Props {
@@ -76,6 +83,9 @@ const emit = defineEmits<{
   delete: [prompt: Prompt]
 }>()
 
+// 删除确认状态
+const showDeleteConfirm = ref(false)
+
 // 处理编辑
 const handleEdit = () => {
   emit('edit', props.prompt, false)
@@ -83,7 +93,18 @@ const handleEdit = () => {
 
 // 处理删除
 const handleDelete = () => {
+  showDeleteConfirm.value = true
+}
+
+// 确认删除
+const confirmDelete = () => {
+  showDeleteConfirm.value = false
   emit('delete', props.prompt)
+}
+
+// 取消删除
+const cancelDelete = () => {
+  showDeleteConfirm.value = false
 }
 
 // 处理联系作者

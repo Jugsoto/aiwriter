@@ -1,7 +1,7 @@
 import { streamChatCompletion, type ChatMessage } from './chat'
 import type { FeatureConfig } from '@/electron.d'
 import { useFeatureConfigsStore } from '@/stores/featureConfigs'
-import { CHAPTER_OUTLINE_SYSTEM_PROMPT } from './prompts'
+import { getChapterOutlinePrompt } from './prompts'
 
 export interface ChapterOutlineContext {
   content?: string
@@ -147,7 +147,7 @@ export async function* streamChapterOutline(
 
   // 构建消息数组 - 第一条是系统提示，第二条是包含后台信息的user消息
   const messages: ChatMessage[] = [
-    { role: 'system', content: CHAPTER_OUTLINE_SYSTEM_PROMPT }
+    { role: 'system', content: await getChapterOutlinePrompt() }
   ]
 
   // 如果有历史消息且设置了上下文长度，则添加历史消息（排除推理内容）

@@ -7,11 +7,14 @@
         {{ isEdit ? '编辑提示词' : '添加提示词' }}
       </h3>
 
-      <div v-if="isDefaultPrompt" class="mb-4 p-3 bg-red-50 border border-red-200 rounded-md">
-        <p class="text-red-600 text-sm font-medium">默认提示词不可编辑，请先复制再修改</p>
-      </div>
 
-      <div class="mb-4 flex-1 flex flex-col gap-4 overflow-y-auto min-h-0 px-1">
+
+      <div class="mb-4 flex-1 flex flex-col gap-4 overflow-y-auto min-h-0 p-1">
+
+        <div v-if="isDefaultPrompt" class="mb-4 p-3 bg-red-50 border border-red-200 rounded-md">
+          <p class="text-red-600 text-sm font-medium">默认提示词不可编辑，请先复制再修改</p>
+        </div>
+
         <div>
           <label class="block text-sm font-medium text-[var(--text-secondary)] mb-2">
             提示词名称 <span class="text-red-500">*</span>
@@ -65,21 +68,11 @@
           <label class="block text-sm font-medium text-[var(--text-secondary)] mb-2">
             提示词内容 <span class="text-red-500">*</span>
           </label>
-          <textarea v-model="form.content" rows="12" required
-            class="w-full px-3 py-2 border border-[var(--border-color)] rounded-md bg-[var(--bg-secondary)] text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-blue-500 flex-1 resize-none font-mono text-sm"
+          <textarea v-model="form.content" rows="20" required
+            class="w-full px-3 py-2 border border-[var(--border-color)] rounded-md bg-[var(--bg-secondary)] text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-blue-500 flex-1 resize-none text-sm"
             placeholder="请输入提示词内容" />
         </div>
 
-        <!-- 提示 -->
-        <div class="text-xs text-[var(--text-secondary)] bg-[var(--bg-secondary)] p-3 rounded-md">
-          <p class="mb-1"><strong>提示：</strong></p>
-          <ul class="list-disc list-inside space-y-1">
-            <li>提示词内容支持多行文本，可以使用各种格式和标记</li>
-            <li>建议包含清晰的任务说明、格式要求和输出标准</li>
-            <li>可以使用 XML 标签、Markdown 等格式来组织内容</li>
-            <li>默认提示词不可编辑，请先复制再修改</li>
-          </ul>
-        </div>
       </div>
 
       <div class="flex justify-end gap-3">

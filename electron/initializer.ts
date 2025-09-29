@@ -18,7 +18,7 @@ const DEFAULT_PROVIDERS_DATA = {
         { model: "shenbi-base", tags: "think" },
         { model: "shenbi-chapter", tags: "tool" },
         { model: "shenbi-setting", tags: "tool" },
-        { model: "shenbi-editor", tags: "tool" },
+        { model: "shenbi-review", tags: "tool" },
         { model: "shenbi-writing", tags: "tool" },
         { model: "shenbi-embedding", tags: "embedding" },
         { model: "shenbi-reranker", tags: "reranker" }

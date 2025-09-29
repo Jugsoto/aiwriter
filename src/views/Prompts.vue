@@ -196,8 +196,6 @@ const editPrompt = (prompt: Prompt) => {
 
 // 删除提示词
 const handleDeletePrompt = async (prompt: Prompt) => {
-  if (!confirm(`确定要删除提示词"${prompt.name}"吗？`)) return
-
   try {
     await deletePromptService(prompt.id)
     await loadPrompts()
