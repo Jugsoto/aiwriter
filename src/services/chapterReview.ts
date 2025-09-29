@@ -143,7 +143,8 @@ export async function buildChapterReviewPrompt(context: ChapterReviewContext): P
  */
 export async function generateChapterReview(
   context: ChapterReviewContext,
-  featureConfig?: FeatureConfig
+  featureConfig?: FeatureConfig,
+  chapterId?: number
 ): Promise<ChapterReviewResult> {
   // 如果没有提供功能配置，则获取默认配置
   if (!featureConfig) {
@@ -180,10 +181,47 @@ export async function generateChapterReview(
       return fixChapterReviewResult(response.json_content)
     }
 
-    return response.json_content as ChapterReviewResult
+    const reviewResult = response.json_content as ChapterReviewResult
+
+    // 如果提供了章节ID，保存评估结果到数据库
+    if (chapterId) {
+      await saveChapterReview(chapterId, reviewResult)
+    }
+
+    return reviewResult
   } catch (error) {
     console.error('生成章节评估失败:', error)
     throw new Error('生成章节评估失败，请重试')
+  }
+}
+
+/**
+ * 保存章节评估结果到数据库
+ */
+export async function saveChapterReview(chapterId: number, reviewResult: ChapterReviewResult): Promise<void> {
+  try {
+    await window.electronAPI.updateChapter(chapterId, {
+      review_data: JSON.stringify(reviewResult)
+    })
+  } catch (error) {
+    console.error('保存章节评估结果失败:', error)
+    throw new Error('保存评估结果失败，请重试')
+  }
+}
+
+/**
+ * 获取章节评估结果
+ */
+export async function getChapterReview(chapterId: number): Promise<ChapterReviewResult | null> {
+  try {
+    const chapter = await window.electronAPI.getChapter(chapterId)
+    if (chapter && chapter.review_data) {
+      return JSON.parse(chapter.review_data) as ChapterReviewResult
+    }
+    return null
+  } catch (error) {
+    console.error('获取章节评估结果失败:', error)
+    return null
   }
 }
 

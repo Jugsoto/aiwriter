@@ -74,6 +74,7 @@ function initDatabase() {
         title TEXT NOT NULL,
         content TEXT DEFAULT '',
         summary TEXT DEFAULT '',
+        review_data TEXT DEFAULT '',
         order_index INTEGER DEFAULT 0,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -445,6 +446,7 @@ interface Chapter {
   title: string
   content: string
   summary: string
+  review_data: string
   order_index: number
   created_at: string
   updated_at: string
@@ -455,6 +457,7 @@ interface CreateChapterData {
   title: string
   content?: string
   summary?: string
+  review_data?: string
   order_index?: number
 }
 
@@ -462,6 +465,7 @@ interface UpdateChapterData {
   title?: string
   content?: string
   summary?: string
+  review_data?: string
   order_index?: number
 }
 
@@ -611,14 +615,15 @@ function createChapter(data: CreateChapterData): Chapter {
   const nextOrder = (result.max_order ?? -1) + 1
 
   const stmt = db.prepare(`
-    INSERT INTO chapters (book_id, title, content, summary, order_index)
-    VALUES (?, ?, ?, ?, ?)
+    INSERT INTO chapters (book_id, title, content, summary, review_data, order_index)
+    VALUES (?, ?, ?, ?, ?, ?)
   `)
   const runResult = stmt.run(
     data.book_id,
     data.title,
     data.content || '',
     data.summary || '',
+    data.review_data || '',
     data.order_index ?? nextOrder
   )
   
@@ -642,6 +647,10 @@ function updateChapter(id: number, data: UpdateChapterData): Chapter {
   if (data.summary !== undefined) {
     fields.push('summary = ?')
     values.push(data.summary)
+  }
+  if (data.review_data !== undefined) {
+    fields.push('review_data = ?')
+    values.push(data.review_data)
   }
   if (data.order_index !== undefined) {
     fields.push('order_index = ?')

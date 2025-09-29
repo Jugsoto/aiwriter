@@ -16,7 +16,7 @@ declare global {
       getChapters: (bookId: number) => Promise<Chapter[]>
       getChapter: (id: number) => Promise<Chapter | undefined>
       createChapter: (data: { book_id: number; title: string; content?: string; summary?: string; order_index?: number }) => Promise<Chapter>
-      updateChapter: (id: number, data: { title?: string; content?: string; summary?: string; order_index?: number }) => Promise<Chapter>
+      updateChapter: (id: number, data: { title?: string; content?: string; summary?: string; review_data?: string; order_index?: number }) => Promise<Chapter>
       updateChapterOrder: (id: number, orderIndex: number) => Promise<Chapter>
       deleteChapter: (id: number) => Promise<{ success: boolean }>
       
@@ -161,6 +161,7 @@ export interface Chapter {
   title: string
   content: string
   summary: string
+  review_data: string
   order_index: number
   created_at: string
   updated_at: string

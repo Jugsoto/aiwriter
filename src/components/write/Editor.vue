@@ -30,7 +30,8 @@
 
     <!-- 章节评估模态窗 -->
     <ChapterReviewModal v-model:visible="chapterReviewModalVisible" :chapter-content="content"
-      :global-settings="globalSettings" :chapter-title="currentChapter?.title" @close="handleChapterReviewClose" />
+      :global-settings="globalSettings" :chapter-title="currentChapter?.title" :chapter-id="currentChapter?.id"
+      @close="handleChapterReviewClose" />
   </div>
 </template>
 

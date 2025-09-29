@@ -70,7 +70,7 @@
           <h4 class="text-lg font-semibold text-[var(--text-primary)] mb-3">综合评价</h4>
           <div class="bg-[var(--bg-secondary)] rounded-lg p-4">
             <p class="text-[var(--text-primary)] leading-relaxed whitespace-pre-wrap">{{ reviewResult.overall_evaluation
-              }}</p>
+            }}</p>
           </div>
         </div>
 
@@ -151,6 +151,7 @@ interface Props {
   chapterContent: string
   globalSettings?: string
   chapterTitle?: string
+  chapterId?: number
 }
 
 interface Emits {
@@ -163,7 +164,8 @@ const props = withDefaults(defineProps<Props>(), {
   visible: false,
   chapterContent: '',
   globalSettings: '',
-  chapterTitle: ''
+  chapterTitle: '',
+  chapterId: undefined
 })
 
 const emit = defineEmits<Emits>()
@@ -195,15 +197,26 @@ const loadChapterReview = async () => {
   reviewResult.value = null
 
   try {
-    const { generateChapterReview } = await import('@/services/chapterReview')
+    const { generateChapterReview, getChapterReview } = await import('@/services/chapterReview')
 
+    // 如果有章节ID，先尝试从数据库获取已保存的评估结果
+    if (props.chapterId) {
+      const savedReview = await getChapterReview(props.chapterId)
+      if (savedReview) {
+        reviewResult.value = savedReview
+        loading.value = false
+        return
+      }
+    }
+
+    // 如果没有保存的评估结果，生成新的评估
     const context = {
       content: props.chapterContent,
       globalSettings: props.globalSettings,
       chapterTitle: props.chapterTitle
     }
 
-    reviewResult.value = await generateChapterReview(context)
+    reviewResult.value = await generateChapterReview(context, undefined, props.chapterId)
   } catch (err) {
     console.error('章节评估失败:', err)
     error.value = err instanceof Error ? err.message : '评估失败，请检查网络连接和配置'
@@ -226,9 +239,24 @@ const handleCancel = () => {
 }
 
 // 处理重试
-const handleRetry = () => {
+const handleRetry = async () => {
   resetState()
-  loadChapterReview()
+
+  // 重新评估时强制生成新的评估结果
+  try {
+    const { generateChapterReview } = await import('@/services/chapterReview')
+
+    const context = {
+      content: props.chapterContent,
+      globalSettings: props.globalSettings,
+      chapterTitle: props.chapterTitle
+    }
+
+    reviewResult.value = await generateChapterReview(context, undefined, props.chapterId)
+  } catch (err) {
+    console.error('重新评估失败:', err)
+    error.value = err instanceof Error ? err.message : '重新评估失败，请检查网络连接和配置'
+  }
 }
 </script>
 
