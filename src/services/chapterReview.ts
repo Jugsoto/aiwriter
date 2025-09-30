@@ -14,17 +14,26 @@ export interface ChapterReviewContext {
   content: string
   globalSettings?: string
   chapterTitle?: string
+  previousChapterContent?: string
+  previousChapterTitle?: string
+  firstFiveChaptersSummary?: string
+  bookId?: number
+  chapterId?: number
 }
 
 export interface ChapterReviewResult {
-  overall_score: number
-  plot_score: number
-  character_score: number
-  writing_score: number
+  plot_progression_score: number
+  character_performance_score: number
+  emotional_value_score: number
+  reading_pace_score: number
   overall_evaluation: string
   strengths: string[]
-  suggestions: string[]
-  improvement_directions: string[]
+  pitfalls: string[]
+  improvement_suggestions: string[]
+  plot_continuity_analysis?: string
+  continuity_strengths?: string[]
+  continuity_issues?: string[]
+  first_five_chapters_summary?: string
 }
 
 export interface ChapterReviewOptions {
@@ -54,7 +63,13 @@ export async function getChapterReviewConfig(): Promise<FeatureConfig> {
  * 构建章节评估的用户提示词
  */
 export async function buildChapterReviewPrompt(context: ChapterReviewContext): Promise<string> {
-  const { content, globalSettings, chapterTitle } = context
+  const {
+    content,
+    globalSettings,
+    previousChapterContent,
+    previousChapterTitle,
+    firstFiveChaptersSummary
+  } = context
 
   // 获取用户选择的章节评估提示词
   let systemPrompt = ''
@@ -69,54 +84,70 @@ export async function buildChapterReviewPrompt(context: ChapterReviewContext): P
 
   // 如果没有获取到用户提示词，使用默认提示词
   if (!systemPrompt) {
-    systemPrompt = `你是一个拥有10年网文阅读经验和小说平台资深编辑背景的专业评估师。请以资深网文读者的视角和编辑的专业标准，对提供的章节内容进行全面评估。
+    systemPrompt = `你是一个拥有10年网文阅读经验和小说平台资深编辑背景的专业评估师，名为神笔。请以资深网文读者的视角和编辑的专业标准，对提供的章节内容进行全面评估。
 
 <身份背景>
-- 10年网文读者：熟悉各类网文套路、爽点设置、读者心理
-- 小说平台资深编辑：精通网文市场趋势、读者偏好、商业价值评估
+- 10年网文读者：熟悉各类网文套路、爽点设置、读者心理、流行趋势
+- 小说平台资深编辑：精通网文市场趋势、读者偏好、商业价值评估标准
+- 专业评估师：具备客观、中肯的评估能力，能够提供建设性反馈
+- 神笔AI助手：专注于帮助作者提升写作质量，增强读者阅读体验
 </身份背景>
 
+<评估目标>
+- 帮助作者识别章节的优缺点，提供具体可行的改进建议
+- 确保评估结果客观公正，既肯定优点也不回避问题
+- 结合前文内容，分析剧情衔接的连贯性和一致性
+- 针对网文特点，评估章节的商业价值和读者吸引力
+- 提供实用的写作建议，帮助作者提升后续创作质量
+</评估目标>
+
+<评估原则>
+1. 客观性原则：基于事实和文本内容进行评估，避免主观臆断
+2. 针对性原则：评估要具体到具体段落、人物或情节，避免泛泛而谈
+3. 建设性原则：发现问题同时提供可行的改进方案
+4. 连贯性原则：结合前文内容，确保评估的上下文一致性
+5. 实用性原则：建议要具体可行，能够直接指导创作实践
+</评估原则>
+
 <评估维度>
-1. 情节结构 (plot_score): 1-10分
-   - 开篇吸引力：能否在3秒内抓住读者
-   - 节奏把控：爽点密度、高潮设置是否合理
-   - 悬念设计：是否埋下足够钩子让读者追更
-   - 逻辑连贯性：情节发展是否自然合理
+请从以下四个维度对章节进行评分（1-10分的整数）：
+1. 情节推进 (plot_progression_score):
+   - 本章是否有效推动了主线或关键支线？
+   - 是否有实质性的信息增量、关键转折或伏笔回收？
+   - 是否避免了"水章"、无效对话或原地打转？
+   - 与前文情节的衔接是否自然流畅？
 
-2. 人物塑造 (character_score): 1-10分
-   - 主角魅力：主角人设是否讨喜、有记忆点
-   - 配角存在感：配角是否工具化
-   - 人物成长：角色是否有明显变化或成长
-   - 对话真实度：对话是否符合人物身份和场景
+2. 人物表现 (character_performance_score):
+   - 角色（主/配）的行为、对话是否符合其人设？
+   - 是否展现了角色的性格、动机、成长或关系变化？
+   - 配角是否存在过度工具化的问题？
+   - 角色发展是否与前文保持一致？
 
-3. 文笔功底 (writing_score): 1-10分
-   - 语言流畅度：阅读是否顺畅无阻碍
-   - 描写生动性：画面感、代入感是否强烈
-   - 网文风格：是否符合目标读者阅读习惯
-   - 情绪渲染：能否有效调动读者情绪
+3. 情绪价值 (emotional_value_score):
+   - 是否成功激发了目标情绪（如爽、燃、虐、甜、悬疑等）？
+   - 能否引发读者的共鸣、评论或追更欲望？
+   - 情绪的铺垫、爆发与收束是否自然？
+   - 情绪发展是否与前文情绪基调协调？
 
-4. 网文特色 (overall_score): 1-10分
-   - 商业价值：章节是否具备爆款潜质
-   - 读者粘性：是否能让读者产生追更欲望
-   - 创新程度：在同类型作品中是否有亮点
-   - 市场契合度：是否符合当前网文市场趋势
+4. 阅读节奏 (reading_pace_score):
+   - 开篇是否足够抓人？结尾是否有强钩子？
+   - 整体行文是否流畅、简洁，无阅读障碍？
+   - 节奏快慢是否得当，符合网文快节奏的消费习惯？
+   - 与前文节奏是否协调一致？
 </评估维度>
 
 <输出格式>
-请严格按照以下JSON格式返回评估结果，不要包含任何其他内容：
-
+请严格按照以下JSON格式返回评估结果，根据评估维度中的方法给出评分及各项点评及建议内容，不要包含任何其他内容：
 {
-  "overall_score": 8,
-  "plot_score": 7,
-  "character_score": 9,
-  "writing_score": 8,
-  "overall_evaluation": "本章节整体质量良好，人物塑造尤为出色...",
-  "strengths": ["主角人设鲜明讨喜", "对话生动自然", "悬念设置到位"],
-  "suggestions": ["建议增加爽点密度", "部分描写可更简洁", "配角形象需更立体"],
-  "improvement_directions": ["优化情节节奏，增加高潮冲击力", "强化配角存在感", "提升开篇吸引力"]
+  "plot_progression_score": 6,
+  "character_performance_score": 6,
+  "emotional_value_score": 6,
+  "reading_pace_score": 6,
+  "overall_evaluation": "本章节整体质量良好，情绪价值尤为突出...",
+  "strengths": ["开篇悬念设置巧妙", "主角情绪爆发点极具感染力", "节奏把控张弛有度"],
+  "pitfalls": ["这是雷点1", "这是雷点2：第3段出现两处错别字", "这是雷点3"],
+  "improvement_suggestions": ["这是建议1", "这是建议3", "这是建议10"]
 }
-
-请确保所有评分都是1-10的整数，评价内容具体、实用，具有可操作性。
 </输出格式>`
   }
 
@@ -126,16 +157,68 @@ export async function buildChapterReviewPrompt(context: ChapterReviewContext): P
     userPrompt += `全局设定（世界观背景）：\n${globalSettings}\n\n`
   }
 
-  if (chapterTitle) {
-    userPrompt += `章节标题：${chapterTitle}\n\n`
+  // 添加前五章梗概信息
+  if (firstFiveChaptersSummary) {
+    userPrompt += `前五章梗概（故事背景）：\n${firstFiveChaptersSummary}\n\n`
   }
 
-  userPrompt += `请评估以下章节内容：\n\n${content}`
+  // 添加前一章节信息
+  if (previousChapterContent && previousChapterTitle) {
+    userPrompt += `前一章节信息（用于剧情衔接分析）：\n`
+    userPrompt += `章节内容：${previousChapterContent}\n\n`
+  }
+
+  userPrompt += `请评估以下当前章节内容：\n\n${content}`
 
   return JSON.stringify({
     system_prompt: systemPrompt,
     user_prompt: userPrompt
   })
+}
+
+/**
+ * 获取前一章节内容
+ */
+export async function getPreviousChapterContent(chapterId: number, bookId: number): Promise<{ content: string; title: string } | null> {
+  try {
+    const chapters = await window.electronAPI.getChapters(bookId)
+    const currentChapterIndex = chapters.findIndex(ch => ch.id === chapterId)
+    
+    if (currentChapterIndex > 0) {
+      const previousChapter = chapters[currentChapterIndex - 1]
+      return {
+        content: previousChapter.content,
+        title: previousChapter.title
+      }
+    }
+    return null
+  } catch (error) {
+    console.warn('获取前一章节内容失败:', error)
+    return null
+  }
+}
+
+/**
+ * 获取前五章梗概
+ */
+export async function getFirstFiveChaptersSummary(bookId: number): Promise<string> {
+  try {
+    const chapters = await window.electronAPI.getChapters(bookId)
+    const firstFiveChapters = chapters.slice(0, 5).filter(ch => ch.summary)
+    
+    if (firstFiveChapters.length === 0) {
+      return '暂无前五章梗概信息'
+    }
+    
+    const summaries = firstFiveChapters.map((ch, index) =>
+      `第${index + 1}章 "${ch.title}": ${ch.summary}`
+    )
+    
+    return summaries.join('\n\n')
+  } catch (error) {
+    console.warn('获取前五章梗概失败:', error)
+    return '获取前五章梗概失败'
+  }
 }
 
 /**
@@ -149,6 +232,22 @@ export async function generateChapterReview(
   // 如果没有提供功能配置，则获取默认配置
   if (!featureConfig) {
     featureConfig = await getChapterReviewConfig()
+  }
+
+  // 如果提供了章节ID和书籍ID，尝试获取前一章节内容和前五章梗概
+  if (chapterId && context.bookId) {
+    try {
+      const previousChapter = await getPreviousChapterContent(chapterId, context.bookId)
+      if (previousChapter) {
+        context.previousChapterContent = previousChapter.content
+        context.previousChapterTitle = previousChapter.title
+      }
+      
+      const summary = await getFirstFiveChaptersSummary(context.bookId)
+      context.firstFiveChaptersSummary = summary
+    } catch (error) {
+      console.warn('获取上下文信息失败，继续使用基础评估:', error)
+    }
   }
 
   const promptData = await buildChapterReviewPrompt(context)
@@ -170,8 +269,8 @@ export async function generateChapterReview(
 
     // 验证JSON结构
     const expectedFields = [
-      'overall_score', 'plot_score', 'character_score', 'writing_score',
-      'overall_evaluation', 'strengths', 'suggestions', 'improvement_directions'
+      'plot_progression_score', 'character_performance_score', 'emotional_value_score', 'reading_pace_score',
+      'overall_evaluation', 'strengths', 'pitfalls', 'improvement_suggestions'
     ]
 
     const validation = validateChapterReviewResult(response.json_content, expectedFields)
@@ -251,26 +350,26 @@ function validateChapterReviewResult(
  */
 function fixChapterReviewResult(result: Record<string, any>): ChapterReviewResult {
   const defaultResult: ChapterReviewResult = {
-    overall_score: 5,
-    plot_score: 5,
-    character_score: 5,
-    writing_score: 5,
+    plot_progression_score: 5,
+    character_performance_score: 5,
+    emotional_value_score: 5,
+    reading_pace_score: 5,
     overall_evaluation: '评估结果解析失败，请重试',
     strengths: ['评估功能正常，但结果解析异常'],
-    suggestions: ['请检查章节内容后重新评估'],
-    improvement_directions: ['系统需要进一步优化评估算法']
+    pitfalls: ['请检查章节内容后重新评估'],
+    improvement_suggestions: ['系统需要进一步优化评估算法']
   }
 
   // 合并默认值和实际结果
   return {
     ...defaultResult,
     ...result,
-    overall_score: Number(result.overall_score) || defaultResult.overall_score,
-    plot_score: Number(result.plot_score) || defaultResult.plot_score,
-    character_score: Number(result.character_score) || defaultResult.character_score,
-    writing_score: Number(result.writing_score) || defaultResult.writing_score,
+    plot_progression_score: Number(result.plot_progression_score) || defaultResult.plot_progression_score,
+    character_performance_score: Number(result.character_performance_score) || defaultResult.character_performance_score,
+    emotional_value_score: Number(result.emotional_value_score) || defaultResult.emotional_value_score,
+    reading_pace_score: Number(result.reading_pace_score) || defaultResult.reading_pace_score,
     strengths: Array.isArray(result.strengths) ? result.strengths : defaultResult.strengths,
-    suggestions: Array.isArray(result.suggestions) ? result.suggestions : defaultResult.suggestions,
-    improvement_directions: Array.isArray(result.improvement_directions) ? result.improvement_directions : defaultResult.improvement_directions
+    pitfalls: Array.isArray(result.pitfalls) ? result.pitfalls : defaultResult.pitfalls,
+    improvement_suggestions: Array.isArray(result.improvement_suggestions) ? result.improvement_suggestions : defaultResult.improvement_suggestions
   }
 }
