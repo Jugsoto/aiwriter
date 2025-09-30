@@ -84,6 +84,9 @@ export async function jsonChatCompletion(
     const content = response.choices[0]?.message?.content || ''
     let json_content: Record<string, any> | undefined
 
+    // 记录AI返回的原始内容，用于调试JSON格式错误
+    console.log('完整内容:', content)
+
     // 尝试解析JSON内容
     try {
       if (content) {

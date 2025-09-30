@@ -87,11 +87,22 @@ export default defineConfig({
   publicDir: 'public',
   build: {
     assetsDir: 'assets',
+    chunkSizeWarningLimit: 1000,
     rollupOptions: {
       output: {
         manualChunks: {
+          // 核心框架库
           vendor: ['vue', 'vue-router', 'pinia'],
-          lucide: ['lucide-vue-next']
+          // UI组件库
+          lucide: ['lucide-vue-next'],
+          // 图表库
+          echarts: ['echarts', 'vue-echarts'],
+          // AI相关库
+          ai: ['openai'],
+          // 工具库
+          utils: ['marked'],
+          // 数据库相关
+          database: ['better-sqlite3']
         }
       }
     }

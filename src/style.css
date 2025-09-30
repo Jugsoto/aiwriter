@@ -21,6 +21,14 @@
     --blue-100: #dbeafe;
     --icon-color: #000000;
     --icon-color-dark: #ffffff;
+
+    /* 评估区域颜色变量 - 浅色模式 */
+    --strength-bg: #f0fdf4;
+    --strength-border: #bbf7d0;
+    --pitfall-bg: #fefce8;
+    --pitfall-border: #fef08a;
+    --suggestion-bg: #eff6ff;
+    --suggestion-border: #bfdbfe;
   }
 
   .dark {
@@ -43,6 +51,14 @@
     --blue-100: #0078d4;
     --icon-color: #ffffff;
     --icon-color-dark: #ffffff;
+
+    /* 评估区域颜色变量 - 深色模式 */
+    --strength-bg: #052e16;
+    --strength-border: #166534;
+    --pitfall-bg: #422006;
+    --pitfall-border: #854d0e;
+    --suggestion-bg: #172554;
+    --suggestion-border: #1e40af;
   }
 }
 

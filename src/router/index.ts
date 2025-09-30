@@ -1,9 +1,10 @@
 import { createRouter, createWebHashHistory } from 'vue-router'
-import Home from '@/views/Home.vue'
-import Tools from '@/views/Tools.vue'
-import Settings from '@/views/Settings.vue'
-import BookView from '@/views/BookView.vue'
-import Prompts from '@/views/Prompts.vue'
+// 使用动态导入实现路由级别的代码分割
+const Home = () => import('@/views/Home.vue')
+const Tools = () => import('@/views/Tools.vue')
+const Settings = () => import('@/views/Settings.vue')
+const BookView = () => import('@/views/BookView.vue')
+const Prompts = () => import('@/views/Prompts.vue')
 
 const router = createRouter({
   history: createWebHashHistory(),

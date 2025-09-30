@@ -12,7 +12,7 @@
         </label>
         <textarea v-model="formData.global_settings"
           class="w-full px-3 py-2 border border-[var(--border-color)] rounded-md bg-[var(--bg-secondary)] text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-blue-500 flex-1 resize-none"
-          placeholder="请输入全局设定，合理的输入世界观、故事背景、特殊设计等..." rows="12"></textarea>
+          placeholder="请输入全局设定，合理的输入小说类型，剧情主线、故事背景、特殊设计等..." rows="12"></textarea>
       </div>
 
       <div class="flex justify-end gap-3">

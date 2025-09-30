@@ -93,7 +93,7 @@
         <!-- 优点分析 -->
         <div class="mb-6">
           <h4 class="text-lg font-semibold text-[var(--text-primary)] mb-3">优点分析</h4>
-          <div class="bg-green-50 border border-green-200 rounded-lg p-4">
+          <div class="bg-[var(--strength-bg)] border border-[var(--strength-border)] rounded-lg p-4">
             <ul class="space-y-2">
               <li v-for="(strength, index) in reviewResult.strengths" :key="index" class="flex items-start">
                 <CheckCircle class="w-4 h-4 text-green-500 mt-1 mr-2 flex-shrink-0" />
@@ -106,7 +106,7 @@
         <!-- 问题与不足 -->
         <div class="mb-6">
           <h4 class="text-lg font-semibold text-[var(--text-primary)] mb-3">问题与不足</h4>
-          <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+          <div class="bg-[var(--pitfall-bg)] border border-[var(--pitfall-border)] rounded-lg p-4">
             <ul class="space-y-2">
               <li v-for="(pitfall, index) in reviewResult.pitfalls" :key="index" class="flex items-start">
                 <AlertCircle class="w-4 h-4 text-yellow-500 mt-1 mr-2 flex-shrink-0" />
@@ -119,7 +119,7 @@
         <!-- 改进建议 -->
         <div class="mb-6">
           <h4 class="text-lg font-semibold text-[var(--text-primary)] mb-3">改进建议</h4>
-          <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+          <div class="bg-[var(--suggestion-bg)] border border-[var(--suggestion-border)] rounded-lg p-4">
             <ul class="space-y-2">
               <li v-for="(suggestion, index) in reviewResult.improvement_suggestions" :key="index"
                 class="flex items-start">
