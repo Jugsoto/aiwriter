@@ -2,20 +2,16 @@
   <transition name="fade">
     <div v-if="visible" class="fixed top-10 left-1/2 transform -translate-x-1/2 z-50">
       <div :class="[
-        'border rounded-lg px-4 py-3 shadow-lg min-w-[300px] max-w-[500px]',
-        type === 'success' ? 'bg-green-50 border-green-200' : '',
-        type === 'error' ? 'bg-red-50 border-red-200' : '',
-        type === 'info' ? 'bg-blue-50 border-blue-200' : ''
+        'border rounded-lg px-4 py-3 shadow-lg min-w-[300px] max-w-[500px] transition-colors duration-200',
+        type === 'success' ? 'toast-success' : '',
+        type === 'error' ? 'toast-error' : '',
+        type === 'info' ? 'toast-info' : ''
       ]">
         <div class="flex items-center gap-3">
-          <CheckCircle class="w-5 h-5 text-green-600 flex-shrink-0" v-if="type === 'success'" />
-          <AlertCircle class="w-5 h-5 text-red-600 flex-shrink-0" v-else-if="type === 'error'" />
-          <Info class="w-5 h-5 text-blue-600 flex-shrink-0" v-else />
-          <span class="text-sm font-medium" :class="[
-            type === 'success' ? 'text-green-800' : '',
-            type === 'error' ? 'text-red-800' : '',
-            type === 'info' ? 'text-blue-800' : ''
-          ]">{{ message }}</span>
+          <CheckCircle class="w-5 h-5 flex-shrink-0" v-if="type === 'success'" />
+          <AlertCircle class="w-5 h-5 flex-shrink-0" v-else-if="type === 'error'" />
+          <Info class="w-5 h-5 flex-shrink-0" v-else />
+          <span class="text-sm font-medium">{{ message }}</span>
         </div>
       </div>
     </div>
@@ -66,5 +62,44 @@ watch(() => props.visible, (newVal) => {
 .fade-enter-to,
 .fade-leave-from {
   opacity: 1;
+}
+
+.toast-success {
+  background-color: var(--strength-bg);
+  border-color: var(--strength-border);
+}
+
+.toast-error {
+  background-color: var(--pitfall-bg);
+  border-color: var(--pitfall-border);
+}
+
+.toast-info {
+  background-color: var(--suggestion-bg);
+  border-color: var(--suggestion-border);
+}
+
+.toast-success svg {
+  color: var(--strength-border);
+}
+
+.toast-error svg {
+  color: var(--pitfall-border);
+}
+
+.toast-info svg {
+  color: var(--suggestion-border);
+}
+
+.toast-success span {
+  color: var(--text-primary);
+}
+
+.toast-error span {
+  color: var(--text-primary);
+}
+
+.toast-info span {
+  color: var(--text-primary);
 }
 </style>

@@ -49,19 +49,24 @@
     <!-- 新增/编辑模态框 -->
     <BookModal v-if="showAddModal || showEditModal" :book="editingBook" :is-edit="showEditModal" @close="closeModal"
       @save="handleSave" />
+
+    <!-- Toast 提示 -->
+    <Toast :visible="toastVisible" :message="toastMessage" :type="toastType" @update:visible="toastVisible = $event" />
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { useBooksStore } from '@/stores/books'
-import { showConfirm } from '@/composables'
+import { showConfirm, useToast } from '@/composables'
 import BookCard from '../components/BookCard.vue'
 import BookModal from '../components/modal/BookModal.vue'
+import Toast from '../components/shared/Toast.vue'
 import { BookOpen, Download } from 'lucide-vue-next'
 import type { Book } from '@/electron.d'
 
 const booksStore = useBooksStore()
+const { toastVisible, toastMessage, toastType, showToast } = useToast()
 const showAddModal = ref(false)
 const showEditModal = ref(false)
 const editingBook = ref<Book | null>(null)
@@ -87,11 +92,16 @@ async function handleDelete(book: Book) {
   if (confirmed) {
     try {
       await booksStore.removeBook(book.id)
-      console.log('Book deleted successfully')
+      showToast({
+        message: '书籍删除成功',
+        type: 'success'
+      })
     } catch (err) {
       console.error('Failed to delete book:', err)
-      // 这里可以添加错误提示，但alert暂时保留用于兼容性
-      alert('删除书籍失败，请重试')
+      showToast({
+        message: '删除书籍失败，请重试',
+        type: 'error'
+      })
     }
   }
 }
@@ -106,13 +116,24 @@ async function handleSave(name: string) {
   try {
     if (showEditModal.value && editingBook.value) {
       await booksStore.updateBook(editingBook.value.id, name)
+      showToast({
+        message: '书籍更新成功',
+        type: 'success'
+      })
     } else {
       await booksStore.addBook(name)
+      showToast({
+        message: '书籍添加成功',
+        type: 'success'
+      })
     }
     closeModal()
   } catch (err) {
     console.error('Failed to save book:', err)
-    alert(err instanceof Error ? err.message : '操作失败，请重试')
+    showToast({
+      message: err instanceof Error ? err.message : '操作失败，请重试',
+      type: 'error'
+    })
   }
 }
 
@@ -122,12 +143,17 @@ async function handleImport() {
     const result = await booksStore.importBook()
     if (result.success) {
       console.log('书籍导入成功，书籍ID:', result.bookId)
-      // 可以添加成功提示
-      alert('书籍导入成功')
+      showToast({
+        message: '书籍导入成功',
+        type: 'success'
+      })
     }
   } catch (err) {
     console.error('导入书籍失败:', err)
-    alert(err instanceof Error ? err.message : '导入书籍失败，请重试')
+    showToast({
+      message: err instanceof Error ? err.message : '导入书籍失败，请重试',
+      type: 'error'
+    })
   }
 }
 
