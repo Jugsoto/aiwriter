@@ -8,14 +8,22 @@ export const useSettingsStore = defineStore('settings', () => {
   const settings = ref<Setting[]>([])
   const loading = ref(false)
   const error = ref<string | null>(null)
+  const currentBookId = ref<number | null>(null)
 
   // 根据书籍ID加载设定
   async function loadSettings(bookId: number) {
     try {
       loading.value = true
       error.value = null
+      
+      // 如果切换了书籍，清空当前设定数据
+      if (currentBookId.value !== bookId) {
+        settings.value = []
+      }
+      
       const loadedSettings = await window.electronAPI.getSettings(bookId)
       settings.value = loadedSettings
+      currentBookId.value = bookId
     } catch (err) {
       error.value = err instanceof Error ? err.message : '加载设定失败'
       console.error('Failed to load settings:', err)
@@ -29,11 +37,18 @@ export const useSettingsStore = defineStore('settings', () => {
     try {
       loading.value = true
       error.value = null
+      
+      // 如果切换了书籍，清空当前设定数据
+      if (currentBookId.value !== bookId) {
+        settings.value = []
+      }
+      
       const loadedSettings = await window.electronAPI.getSettingsByType(bookId, type)
       
       // 保留其他类型的设定，只更新当前类型的设定
       const otherTypeSettings = settings.value.filter(setting => setting.type !== type)
       settings.value = [...otherTypeSettings, ...loadedSettings]
+      currentBookId.value = bookId
     } catch (err) {
       error.value = err instanceof Error ? err.message : '加载设定失败'
       console.error('Failed to load settings by type:', err)
@@ -54,10 +69,23 @@ export const useSettingsStore = defineStore('settings', () => {
     }
   }
 
+  // 清空设定存储
+  function clearSettings() {
+    settings.value = []
+    currentBookId.value = null
+    error.value = null
+  }
+
   // 创建新设定
   async function createSetting(data: { book_id: number; type: string; name: string; content?: string; status?: string; starred?: boolean }) {
     try {
       error.value = null
+      
+      // 验证书籍ID是否匹配当前加载的书籍
+      if (currentBookId.value && currentBookId.value !== data.book_id) {
+        console.warn(`警告：尝试为书籍ID ${data.book_id} 创建设定，但当前加载的书籍ID是 ${currentBookId.value}`)
+      }
+      
       const newSetting = await window.electronAPI.createSetting(data)
       // 将新设定添加到本地数组，而不是重新加载
       settings.value.push(newSetting)
@@ -176,12 +204,14 @@ export const useSettingsStore = defineStore('settings', () => {
     settings,
     loading,
     error,
+    currentBookId,
     loadSettings,
     loadSettingsByType,
     getSetting,
     createSetting,
     updateSetting,
     deleteSetting,
-    toggleSettingStar
+    toggleSettingStar,
+    clearSettings
   }
 })

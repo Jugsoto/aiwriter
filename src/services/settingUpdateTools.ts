@@ -127,9 +127,33 @@ export function getAvailableTools(): OpenAIToolFunction[] {
  */
 export class ToolExecutor {
   private settingsStore: ReturnType<typeof useSettingsStore>
+  private updatedSettings: number[] = []
+  private addedSettings: number[] = []
 
   constructor() {
     this.settingsStore = useSettingsStore()
+  }
+
+  /**
+   * 获取更新和添加的设定ID
+   */
+  getUpdatedSettings(): number[] {
+    return [...this.updatedSettings]
+  }
+
+  /**
+   * 获取添加的设定ID
+   */
+  getAddedSettings(): number[] {
+    return [...this.addedSettings]
+  }
+
+  /**
+   * 重置跟踪数据
+   */
+  resetTracking() {
+    this.updatedSettings = []
+    this.addedSettings = []
   }
 
   /**
@@ -229,6 +253,11 @@ export class ToolExecutor {
 
       const updatedSetting = await this.settingsStore.updateSetting(setting_id, updateData)
       
+      // 跟踪更新的设定ID
+      if (!this.updatedSettings.includes(setting_id)) {
+        this.updatedSettings.push(setting_id)
+      }
+      
       return {
         tool_call_id: toolCallId,
         output: `设定更新成功: ${updatedSetting.name} (ID: ${updatedSetting.id})`
@@ -255,6 +284,28 @@ export class ToolExecutor {
     }
 
     try {
+      console.log('开始添加新设定:', {
+        book_id,
+        type,
+        name,
+        content_length: content?.length || 0,
+        status_length: status?.length || 0,
+        starred
+      })
+
+      // 检查是否已存在相同名称的设定（第二道防线）
+      const existingSetting = this.settingsStore.settings.find(
+        s => s.book_id === book_id && s.name === name
+      )
+      
+      if (existingSetting) {
+        console.log(`设定 "${name}" 已存在，ID: ${existingSetting.id}`)
+        return {
+          tool_call_id: toolCallId,
+          output: `设定 "${name}" 已存在 (ID: ${existingSetting.id})，请使用 update_setting 工具更新现有设定`
+        }
+      }
+
       const newSetting = await this.settingsStore.createSetting({
         book_id,
         type,
@@ -264,14 +315,25 @@ export class ToolExecutor {
         starred: starred || false
       })
       
+      console.log('新设定添加成功:', {
+        id: newSetting.id,
+        name: newSetting.name,
+        type: newSetting.type
+      })
+      
+      // 跟踪添加的设定ID
+      this.addedSettings.push(newSetting.id)
+      
       return {
         tool_call_id: toolCallId,
         output: `新设定添加成功: ${newSetting.name} (ID: ${newSetting.id}, 类型: ${newSetting.type})`
       }
     } catch (error) {
+      console.error('添加设定失败:', error)
+      const errorMessage = error instanceof Error ? error.message : '未知错误'
       return {
         tool_call_id: toolCallId,
-        output: `添加设定失败: ${error instanceof Error ? error.message : '未知错误'}`
+        output: `添加设定失败: ${errorMessage}`
       }
     }
   }

@@ -32,9 +32,11 @@ export interface SettingUpdateResult {
  * 构建设定更新分析的用户提示词
  */
 export function buildSettingUpdatePrompt(context: SettingUpdateContext): string {
-  const { chapterContent, settings } = context
+  const { chapterContent, settings, bookId } = context
   
   let prompt = `请分析以下章节内容，识别其中涉及的所有设定元素（人物、世界观、物品、组织等），并与现有设定进行对比分析。\n\n`
+  
+  prompt += `重要提示：当前书籍ID为 ${bookId}，所有新设定的添加操作都必须使用这个book_id。\n\n`
   
   prompt += `章节内容：\n${chapterContent}\n\n`
   
@@ -53,7 +55,7 @@ export function buildSettingUpdatePrompt(context: SettingUpdateContext): string 
   prompt += `   - 如果存在对应设定，使用 read_setting 工具读取详细信息\n`
   prompt += `   - 对比章节内容与设定内容的差异\n`
   prompt += `   - 如有需要，使用 update_setting 工具更新设定\n`
-  prompt += `   - 如果是全新的设定，使用 add_setting 工具添加\n`
+  prompt += `   - 如果是全新的设定，使用 add_setting 工具添加（必须使用 book_id: ${bookId}）\n`
   prompt += `3. 完成所有操作后，提供简要总结\n`
   
   return prompt
@@ -68,9 +70,30 @@ export async function analyzeAndUpdateSettings(
   featureConfig: FeatureConfig
 ): Promise<SettingUpdateResult> {
   try {
+    // 验证输入参数
+    if (!context.bookId || context.bookId <= 0) {
+      throw new Error('无效的书籍ID')
+    }
+    
+    if (!context.chapterContent || context.chapterContent.trim().length === 0) {
+      throw new Error('章节内容不能为空')
+    }
+    
+    // 验证设定数据
+    if (!Array.isArray(context.settings)) {
+      throw new Error('设定数据格式错误')
+    }
+    
+    console.log('开始设定更新分析:', {
+      bookId: context.bookId,
+      settingsCount: context.settings.length,
+      chapterContentLength: context.chapterContent.length
+    })
+    
     const toolExecutor = createToolExecutor()
-    const updatedSettings: number[] = []
-    const addedSettings: number[] = []
+    
+    // 重置跟踪数据
+    toolExecutor.resetTracking()
     
     // 构建用户提示词
     const userPrompt = buildSettingUpdatePrompt(context)
@@ -95,6 +118,17 @@ export async function analyzeAndUpdateSettings(
     
     console.log('AI分析响应:', response.content)
     
+    // 从工具执行器获取更新和添加的设定ID
+    const updatedSettings = toolExecutor.getUpdatedSettings()
+    const addedSettings = toolExecutor.getAddedSettings()
+    
+    console.log('设定更新统计:', {
+      updatedCount: updatedSettings.length,
+      addedCount: addedSettings.length,
+      updatedIds: updatedSettings,
+      addedIds: addedSettings
+    })
+    
     // 返回结果
     return {
       success: true,
@@ -106,11 +140,22 @@ export async function analyzeAndUpdateSettings(
     
   } catch (error) {
     console.error('设定更新分析失败:', error)
+    const errorMessage = error instanceof Error ? error.message : '未知错误'
+    console.error('详细错误信息:', errorMessage)
+    
+    // 记录详细的错误信息，包括上下文
+    console.error('设定更新失败上下文:', {
+      bookId: context.bookId,
+      settingsCount: context.settings.length,
+      chapterContentLength: context.chapterContent.length
+    })
+    
     return {
       success: false,
-      message: `设定更新失败: ${error instanceof Error ? error.message : '未知错误'}`,
+      message: `设定更新失败: ${errorMessage}`,
       updatedSettings: [],
-      addedSettings: []
+      addedSettings: [],
+      details: `错误详情: ${errorMessage}\n书籍ID: ${context.bookId}\n现有设定数量: ${context.settings.length}\n章节内容长度: ${context.chapterContent.length}`
     }
   }
 }

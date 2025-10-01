@@ -179,9 +179,17 @@ export async function handleMultiTurnToolCalls(
   while (iteration < maxIterations) {
     iteration++
     
+    // 在每次迭代中，重新构建包含原始上下文的消息
+    // 确保AI在每轮都能看到完整的设定列表信息
+    const messagesWithOriginalContext = [
+      messages[0], // 系统提示词
+      messages[1], // 原始用户消息（包含设定列表等重要上下文）
+      ...currentMessages.slice(2) // 后续的工具调用历史
+    ]
+    
     // 调用AI获取响应
     const response = await chatCompletionWithTools(
-      currentMessages,
+      messagesWithOriginalContext,
       tools,
       featureConfig,
       { temperature: 0.3 }

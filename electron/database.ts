@@ -22,6 +22,10 @@ function getDatabase(): any {
     const dbPath = getDbPath()
     db = new Database(dbPath)
 
+    // 启用外键约束
+    db.pragma('foreign_keys = ON')
+    console.log('Foreign key constraints enabled')
+
     // 加载 vec0 扩展
     try {
       // 开发环境和生产环境的 vec0.dll 路径不同
@@ -754,6 +758,13 @@ function getSettingById(id: number): Setting | undefined {
 // 创建新设定
 function createSetting(data: CreateSettingData): Setting {
   const db = getDatabase()
+  
+  // 首先验证书籍是否存在
+  const book = getBookById(data.book_id)
+  if (!book) {
+    throw new Error(`书籍ID ${data.book_id} 不存在，无法创建设定`)
+  }
+  
   const stmt = db.prepare(`
     INSERT INTO settings (book_id, type, name, content, status, starred)
     VALUES (?, ?, ?, ?, ?, ?)
