@@ -3,10 +3,17 @@
     <!-- 顶部栏 -->
     <div class="flex items-center justify-between p-4 border-b border-[var(--border-color)]">
       <h1 class="text-2xl font-semibold text-[var(--text-primary)]">作品管理</h1>
-      <button @click="showAddModal = true"
-        class="flex items-center gap-2 px-4 py-2 bg-[var(--theme-bg)] text-white rounded-lg hover:bg-blue-700 transition-colors">
-        新增书籍
-      </button>
+      <div class="flex items-center gap-2">
+        <button @click="handleImport"
+          class="flex items-center gap-2 px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors">
+          <Download class="w-4 h-4" />
+          导入书籍
+        </button>
+        <button @click="showAddModal = true"
+          class="flex items-center gap-2 px-4 py-2 bg-[var(--theme-bg)] text-white rounded-lg hover:bg-blue-700 transition-colors">
+          新增书籍
+        </button>
+      </div>
     </div>
 
     <!-- 主要内容区 -->
@@ -51,7 +58,7 @@ import { useBooksStore } from '@/stores/books'
 import { showConfirm } from '@/composables'
 import BookCard from '../components/BookCard.vue'
 import BookModal from '../components/modal/BookModal.vue'
-import { BookOpen } from 'lucide-vue-next'
+import { BookOpen, Download } from 'lucide-vue-next'
 import type { Book } from '@/electron.d'
 
 const booksStore = useBooksStore()
@@ -106,6 +113,21 @@ async function handleSave(name: string) {
   } catch (err) {
     console.error('Failed to save book:', err)
     alert(err instanceof Error ? err.message : '操作失败，请重试')
+  }
+}
+
+// 导入书籍
+async function handleImport() {
+  try {
+    const result = await booksStore.importBook()
+    if (result.success) {
+      console.log('书籍导入成功，书籍ID:', result.bookId)
+      // 可以添加成功提示
+      alert('书籍导入成功')
+    }
+  } catch (err) {
+    console.error('导入书籍失败:', err)
+    alert(err instanceof Error ? err.message : '导入书籍失败，请重试')
   }
 }
 

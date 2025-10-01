@@ -81,6 +81,38 @@ export const useBooksStore = defineStore('books', () => {
     }
   }
 
+  // 导出书籍
+  async function exportBook(id: number) {
+    try {
+      error.value = null
+      const result = await window.electronAPI.exportBook(id)
+      if (!result.success) {
+        throw new Error(result.error || '导出书籍失败')
+      }
+      return result
+    } catch (err) {
+      error.value = err instanceof Error ? err.message : '导出书籍失败'
+      throw err
+    }
+  }
+
+  // 导入书籍
+  async function importBook() {
+    try {
+      error.value = null
+      const result = await window.electronAPI.importBook()
+      if (!result.success) {
+        throw new Error(result.error || '导入书籍失败')
+      }
+      // 刷新书籍列表
+      await refreshBooks()
+      return result
+    } catch (err) {
+      error.value = err instanceof Error ? err.message : '导入书籍失败'
+      throw err
+    }
+  }
+
   return {
     books,
     loading,
@@ -90,6 +122,8 @@ export const useBooksStore = defineStore('books', () => {
     addBook,
     updateBook,
     removeBook,
-    updateBookGlobalSettings
+    updateBookGlobalSettings,
+    exportBook,
+    importBook
   }
 })

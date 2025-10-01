@@ -12,6 +12,10 @@ declare global {
       updateBook: (id: number, data: { name?: string; global_settings?: string }) => Promise<Book>
       deleteBook: (id: number) => Promise<{ success: boolean }>
       
+      // 书籍导入导出API
+      exportBook: (bookId: number) => Promise<{ success: boolean; filePath?: string; error?: string }>
+      importBook: () => Promise<{ success: boolean; bookId?: number; error?: string }>
+      
       // 章节相关API
       getChapters: (bookId: number) => Promise<Chapter[]>
       getChapter: (id: number) => Promise<Chapter | undefined>

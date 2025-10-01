@@ -12,6 +12,10 @@ const api = {
   updateBook: (id: number, data: { name?: string; global_settings?: string }) => ipcRenderer.invoke('update-book', id, data),
   deleteBook: (id: number) => ipcRenderer.invoke('delete-book', id),
   
+  // 书籍导入导出API
+  exportBook: (bookId: number) => ipcRenderer.invoke('export-book', bookId),
+  importBook: () => ipcRenderer.invoke('import-book'),
+  
   // 章节相关API
   getChapters: (bookId: number) => ipcRenderer.invoke('get-chapters', bookId),
   getChapter: (id: number) => ipcRenderer.invoke('get-chapter', id),
