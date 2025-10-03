@@ -154,21 +154,41 @@ export async function buildChapterReviewPrompt(context: ChapterReviewContext): P
   let userPrompt = ''
 
   if (globalSettings) {
-    userPrompt += `全局设定（世界观背景）：\n${globalSettings}\n\n`
+    userPrompt += `# 全局设定：
+1. 全局设定是本书的基础信息，如小说类型、主线暗线信息。
+2. 全局设定会贯穿整本书，影响所有章节的内容和走向。
+3. 全局设定会影响章节评估的标准和重点，请务必参考。
+# 以下是全局设定内容：
+${globalSettings}\n\n`
   }
 
   // 添加前五章梗概信息
   if (firstFiveChaptersSummary) {
-    userPrompt += `前五章梗概（故事背景）：\n${firstFiveChaptersSummary}\n\n`
+    userPrompt += `# 前五章梗概：
+1. 前五章梗概是对故事开篇的简要总结，帮助理解故事背景和人物关系。
+2. 前五章梗概会影响当前章节的评估标准，特别是剧情连贯性分析。
+3. 前五章梗概会帮助你更好的理解故事发展脉络和人物成长轨迹。
+# 以下是前五章梗概内容：
+${firstFiveChaptersSummary}\n\n`
   }
 
   // 添加前一章节信息
   if (previousChapterContent && previousChapterTitle) {
-    userPrompt += `前一章节信息（用于剧情衔接分析）：\n`
-    userPrompt += `章节内容：${previousChapterContent}\n\n`
+    userPrompt += `# 前一章节信息：
+1. 前一章节内容是紧接当前章节的上一个章节内容。
+2. 在评估当前章节时，必须参考前一章节保持剧情连贯性分析。
+3. 前一章节信息会影响情节推进、人物发展和情绪价值的评估标准。
+# 以下是前一章节内容：
+章节标题：${previousChapterTitle}
+章节内容：${previousChapterContent}\n\n`
   }
 
-  userPrompt += `请评估以下当前章节内容：\n\n${content}`
+  userPrompt += `# 当前章节内容：
+1. 当前章节内容是本次评估的主要对象，请基于以上所有上下文信息进行全面评估。
+2. 评估时要结合前文内容，分析剧情衔接的连贯性和一致性。
+3. 请严格按照评估维度和原则进行客观、专业的评估。
+# 以下是当前章节内容：
+${content}`
 
   return JSON.stringify({
     system_prompt: systemPrompt,

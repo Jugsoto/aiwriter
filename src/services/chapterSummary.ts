@@ -41,10 +41,20 @@ export function buildChapterSummaryPrompt(context: ChapterSummaryContext): strin
   let prompt = ''
 
   if (globalSettings) {
-    prompt += `全局设定（世界观背景）：\n${globalSettings}\n\n`
+    prompt += `# 全局设定（世界观背景）：
+1. 全局设定是本书的基础信息，如小说类型、主线暗线信息。
+2. 全局设定会贯穿整本书，影响所有章节的内容和走向。
+3. 全局设定会影响章节梗概的生成，请务必参考。
+# 以下是全局设定内容：
+${globalSettings}\n\n`
   }
 
-  prompt += `请根据以下章节内容生成简洁准确的章节梗概（100-200字左右）：\n\n${content}`
+  prompt += `# 当前章节内容（待生成梗概）：
+1. 当前章节内容是本次生成梗概的主要对象，请基于以上上下文信息生成准确梗概。
+2. 梗概要简洁明了，突出章节核心情节和关键发展。
+3. 梗概要控制在100-200字左右，确保信息完整且精炼。
+# 以下是当前章节内容：
+${content}`
 
   return prompt
 }

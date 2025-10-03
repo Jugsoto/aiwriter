@@ -68,17 +68,30 @@ export function buildChapterOutlinePrompt(context: ChapterOutlineContext): strin
   let prompt = ''
 
   if (globalSettings) {
-    prompt += `全局设定（世界观背景）：
+    prompt += `以下是神笔写作提供的上下文信息，为更好的创作提供背景设定，最新状态，历史记忆等 
+    # 全局设定：
+   1. 全局设定是本书的基础信息，如小说类型，主线暗线信息。
+   2. 全局设定会贯穿整本书，影响所有章节的内容和走向。
+   3. 全局设定会影响章节细纲及章节正文的生成，请务必参考。
+   # 以下是全局设定内容：
 ${globalSettings}`
   }
 
   if (previousChapterContent) {
-    prompt += `\n前文章节内容（作为前文参考）：
+    prompt += `\n # 前文章节：
+    1. 前文章节内容是紧接当前章节的上一个章节内容。
+    2. 在新章节创作时不许参考前文章节保持剧情流畅。
+    3. 新章节写作时禁止照搬前文章节内容。
+    # 以下是前文章节内容：
 ${previousChapterContent}`
   }
 
   if (recentChapterSummaries && recentChapterSummaries.length > 0) {
-    prompt += `\n最近${recentChapterSummaries.length}章章节概括（把握剧情发展）：
+    prompt += `\n # 最近${recentChapterSummaries.length}章章节概括：
+    1. 最近章节概括是对前几章内容的简要总结，帮助保持剧情连贯。
+    2. 最近章节概括会影响当前章节的内容和走向，请务必参考。
+    3. 最近章节概括会帮助你更好的理解故事背景和人物关系。
+    # 以下是最近章节概括内容：
 ${recentChapterSummaries.join('\n')}`
   }
 
@@ -90,7 +103,11 @@ ${recentChapterSummaries.join('\n')}`
       'entry': '其他设定'
     }
     
-    prompt += `\n当前选中的设定信息：`
+    prompt += `\n # 用户选中的设定信息：
+    1. 选中的设定信息是用户特别指定需要参考的设定内容。
+    2. 选中的设定信息会影响章节细纲及章节正文的生成，请务必参考。
+    3. 选中的设定信息会帮助你更好的理解故事背景和人物关系。
+    # 以下是用户选中的设定内容：`
     selectedSettings.forEach((setting, index) => {
       const chineseType = typeMap[setting.type] || setting.type
       prompt += `\n${index + 1}. [${chineseType}] ${setting.name}
@@ -102,7 +119,11 @@ ${recentChapterSummaries.join('\n')}`
   if (vectorSearchResults) {
     
     if (vectorSearchResults.textChunks && vectorSearchResults.textChunks.length > 0) {
-      prompt += `\n\n相关文本片段（基于语义匹配，相似度降序排列）：`
+      prompt += `\n # 相关文本片段：
+      1. 相关文本片段是基于当前章节内容进行语义匹配得到的。
+      2. 注意相关文本片段为历史内容，可能与当前章节时间线不符，请谨慎参考。
+      3. 使用相关文本片段时请注意与当前章节内容的衔接和一致性。
+      # 以下是相关文本片段内容：`
       vectorSearchResults.textChunks.forEach((chunk, index) => {
         prompt += `\n${index + 1}. [${chunk.title}] (相似度: ${(chunk.similarity * 100).toFixed(1)}%)
         ${chunk.content}`
@@ -110,7 +131,11 @@ ${recentChapterSummaries.join('\n')}`
     }
 
     if (vectorSearchResults.settingChunks && vectorSearchResults.settingChunks.length > 0) {
-      prompt += `\n\n相关设定片段（基于语义匹配，相似度降序排列）：`
+      prompt += `\n # 相关设定片段：
+      1. 相关设定片段是基于当前章节内容进行语义匹配得到的。
+      2. 相关设定片段为设定库内容，通常为长期设定，请务必参考。
+      3. 注意有些设定在当前章节时间线可能已经过时，请谨慎参考。
+      # 以下是相关设定片段内容：`
       vectorSearchResults.settingChunks.forEach((chunk, index) => {
         const typeInfo = chunk.settingType ? ` [${chunk.settingType}]` : ''
         const starInfo = chunk.starred ? ' ★' : ''
@@ -123,7 +148,12 @@ ${recentChapterSummaries.join('\n')}`
   }
 
   if (content) {
-    prompt += `\n\n现有内容：${content}`
+    prompt += `\n # 现有内容：
+    1. 现有内容是当前章节的初始内容，可能是用户提供的草稿或部分完成的章节。
+    2. 现有内容会影响章节细纲及章节正文的生成，请务必参考。
+    3. 现有内容会帮助你更好的理解当前章节的主题和方向。
+    # 以下是现有内容：
+    ${content}`
   }
 
   return prompt
