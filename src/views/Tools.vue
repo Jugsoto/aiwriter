@@ -1,5 +1,5 @@
 <template>
-  <div class="p-6 h-full overflow-y-auto">
+  <div class="p-5 h-full overflow-y-auto">
     <!-- 页面标题 -->
     <h1 class="text-2xl font-semibold text-[var(--text-primary)] mb-6">应用中心</h1>
 

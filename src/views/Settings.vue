@@ -1,8 +1,8 @@
 <template>
   <div class="flex h-full bg-[var(--bg-primary)]">
     <!-- 左侧导航栏 -->
-    <div class="w-60 bg-[var(--bg-primary)] border-r border-[var(--border-color)] p-4">
-      <h2 class="text-2xl font-semibold text-[var(--text-primary)] mb-4">设置</h2>
+    <div class="w-60 bg-[var(--bg-primary)] border-r border-[var(--border-color)] p-5">
+      <h2 class="text-2xl font-semibold text-[var(--text-primary)] mb-6">设置</h2>
       <nav class="space-y-2">
         <button v-for="item in menuItems" :key="item.key" @click="activeTab = item.key" :class="[
           'w-full flex items-center bg-[var(--bg-secondary)] px-3 py-3 rounded-xl border border-[var(--border-color)] text-left transition-all duration-200',

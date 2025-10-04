@@ -1,8 +1,8 @@
 <template>
   <div class="flex h-full bg-[var(--bg-secondary)]">
     <!-- 左侧导航区域 -->
-    <div class="w-60 bg-[var(--bg-primary)] border-r border-[var(--border-color)] p-4">
-      <h2 class="text-2xl font-semibold text-[var(--text-primary)] mb-4">提示词</h2>
+    <div class="w-60 bg-[var(--bg-primary)] border-r border-[var(--border-color)] p-5">
+      <h2 class="text-2xl font-semibold text-[var(--text-primary)] mb-6">提示词</h2>
       <nav class="space-y-2">
         <button v-for="category in promptCategories" :key="category.key" @click="selectCategory(category.key)" :class="[
           'w-full flex items-center bg-[var(--bg-secondary)] px-3 py-3 rounded-xl border border-[var(--border-color)] text-left transition-all duration-200',
@@ -19,7 +19,7 @@
     <!-- 右侧内容区域 -->
     <div class="flex-1 flex flex-col overflow-hidden">
       <!-- 顶部操作栏 -->
-      <div class="bg-[var(--bg-primary)] border-b border-[var(--border-color)] p-4">
+      <div class="bg-[var(--bg-primary)] border-b border-[var(--border-color)] p-5">
         <div class="flex items-center justify-between">
           <div>
             <div class="flex items-center gap-2">
@@ -40,7 +40,7 @@
       </div>
 
       <!-- 提示词列表区域 -->
-      <div class="flex-1 p-6 overflow-y-auto">
+      <div class="flex-1 p-5 overflow-y-auto">
         <div v-if="!selectedCategory" class="text-[var(--text-secondary)] text-center">
           <div class="text-lg mb-2">请选择一个提示词类型</div>
           <div class="text-sm">点击左侧导航中的类型来查看对应的提示词</div>

@@ -1,7 +1,7 @@
 <template>
   <div class="h-full flex flex-col">
     <!-- 顶部栏 -->
-    <div class="flex items-center justify-between p-4 border-b border-[var(--border-color)]">
+    <div class="flex items-center justify-between p-5 border-b border-[var(--border-color)]">
       <h1 class="text-2xl font-semibold text-[var(--text-primary)]">作品管理</h1>
       <div class="flex items-center gap-2">
         <button @click="handleImport"
@@ -17,7 +17,7 @@
     </div>
 
     <!-- 主要内容区 -->
-    <div class="flex-1 overflow-auto p-6 bg-[var(--bg-secondary)]">
+    <div class="flex-1 overflow-auto p-5 bg-[var(--bg-secondary)]">
       <!-- 加载状态 -->
       <div v-if="booksStore.loading" class="flex items-center justify-center h-64">
         <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
