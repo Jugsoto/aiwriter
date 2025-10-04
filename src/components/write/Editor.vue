@@ -41,6 +41,7 @@ import { useChaptersStore } from '@/stores/chapters'
 import { useBooksStore } from '@/stores/books'
 import { streamingManager } from '@/utils'
 import { generateChapterSummary } from '@/services/chapterSummary'
+import { useToast } from '@/composables'
 import HeaderToolbar from './editor/HeaderToolbar.vue'
 import StatusBar from './editor/StatusBar.vue'
 import ContentEditor from './editor/ContentEditor.vue'
@@ -72,6 +73,7 @@ function cleanEmptyParagraphs(text: string): string {
 
 const chaptersStore = useChaptersStore()
 const booksStore = useBooksStore()
+const { toastVisible, toastMessage, toastType, showToast } = useToast()
 
 // 计算属性
 const currentChapter = computed(() => chaptersStore.currentChapter)
@@ -90,11 +92,6 @@ const isUpdatingSettings = ref(false)
 const isReviewingChapter = ref(false)
 const chapterReviewModalVisible = ref(false)
 const globalSettings = ref('')
-
-// Toast 提示状态
-const toastVisible = ref(false)
-const toastMessage = ref('')
-const toastType = ref<'success' | 'error' | 'info'>('success')
 
 // 错误模态窗状态
 const errorModalVisible = ref(false)
@@ -183,12 +180,6 @@ const handleStopStreaming = () => {
   streamingManager.stopStreaming()
 }
 
-// 显示 Toast 提示
-const showToast = (message: string, type: 'success' | 'error' | 'info' = 'success') => {
-  toastMessage.value = message
-  toastType.value = type
-  toastVisible.value = true
-}
 
 // 显示错误模态窗
 const showErrorModal = (message: string, details?: string) => {
@@ -228,11 +219,17 @@ const startGenerateSummary = async () => {
     }
 
     // 使用 toast 提示成功
-    showToast('梗概生成成功', 'success')
+    showToast({
+      message: '梗概生成成功',
+      type: 'success'
+    })
 
   } catch (error) {
     console.error('生成章节梗概失败:', error)
-    showToast('生成章节梗概失败，请重试', 'error')
+    showToast({
+      message: '生成章节梗概失败，请重试',
+      type: 'error'
+    })
   } finally {
     isGeneratingSummary.value = false
   }
@@ -248,7 +245,10 @@ const handleUpdateMemoryEnd = (success: boolean) => {
   isUpdatingMemory.value = false
   // 可以根据成功状态显示不同的提示
   if (success) {
-    showToast('记忆更新成功', 'success')
+    showToast({
+      message: '记忆更新成功',
+      type: 'success'
+    })
   } else {
     // 错误时使用错误模态窗而不是Toast
     showErrorModal('记忆更新失败', '更新章节记忆时发生错误，请检查配置后重试')
@@ -264,7 +264,10 @@ const handleUpdateSettingsStart = () => {
 const handleUpdateSettingsEnd = (success: boolean) => {
   isUpdatingSettings.value = false
   if (success) {
-    showToast('设定更新成功', 'success')
+    showToast({
+      message: '设定更新成功',
+      type: 'success'
+    })
   } else {
     showErrorModal('设定更新失败', '更新设定时发生错误，请检查配置后重试')
   }
@@ -286,7 +289,10 @@ const startChapterReview = async () => {
 
   } catch (error) {
     console.error('开始章节评估失败:', error)
-    showToast('开始章节评估失败，请重试', 'error')
+    showToast({
+      message: '开始章节评估失败，请重试',
+      type: 'error'
+    })
   } finally {
     isReviewingChapter.value = false
   }

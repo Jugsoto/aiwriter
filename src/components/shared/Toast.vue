@@ -2,16 +2,16 @@
   <transition name="fade">
     <div v-if="visible" class="fixed top-10 left-1/2 transform -translate-x-1/2 z-50">
       <div :class="[
-        'border rounded-lg px-4 py-3 shadow-lg min-w-[300px] max-w-[500px] transition-colors duration-200',
+        'border rounded-lg px-4 py-3 shadow-lg w-fit max-w-[80vw] transition-colors duration-200',
         type === 'success' ? 'toast-success' : '',
         type === 'error' ? 'toast-error' : '',
         type === 'info' ? 'toast-info' : ''
       ]">
-        <div class="flex items-center gap-3">
+        <div class="flex items-start gap-3">
           <CheckCircle class="w-5 h-5 flex-shrink-0" v-if="type === 'success'" />
           <AlertCircle class="w-5 h-5 flex-shrink-0" v-else-if="type === 'error'" />
           <Info class="w-5 h-5 flex-shrink-0" v-else />
-          <span class="text-sm font-medium">{{ message }}</span>
+          <span class="text-sm font-medium break-words max-w-[70vw]">{{ message }}</span>
         </div>
       </div>
     </div>
@@ -65,41 +65,41 @@ watch(() => props.visible, (newVal) => {
 }
 
 .toast-success {
-  background-color: var(--strength-bg);
-  border-color: var(--strength-border);
+  background-color: #10b981;
+  border-color: #059669;
 }
 
 .toast-error {
-  background-color: var(--pitfall-bg);
-  border-color: var(--pitfall-border);
+  background-color: #ef4444;
+  border-color: #dc2626;
 }
 
 .toast-info {
-  background-color: var(--suggestion-bg);
-  border-color: var(--suggestion-border);
+  background-color: #3b82f6;
+  border-color: #2563eb;
 }
 
 .toast-success svg {
-  color: var(--strength-border);
+  color: #ffffff;
 }
 
 .toast-error svg {
-  color: var(--pitfall-border);
+  color: #ffffff;
 }
 
 .toast-info svg {
-  color: var(--suggestion-border);
+  color: #ffffff;
 }
 
 .toast-success span {
-  color: var(--text-primary);
+  color: #ffffff;
 }
 
 .toast-error span {
-  color: var(--text-primary);
+  color: #ffffff;
 }
 
 .toast-info span {
-  color: var(--text-primary);
+  color: #ffffff;
 }
 </style>

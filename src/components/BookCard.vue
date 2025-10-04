@@ -1,6 +1,6 @@
 <template>
   <div @click="handleView"
-    class="group relative bg-[var(--bg-primary)] rounded-xl cursor-pointer border-1 border-[var(--border-color)] hover:border-[var(--theme-bg)] transition-colors">
+    class="group relative bg-[var(--bg-primary)] rounded-xl cursor-pointer border-1 border-[var(--border-color)] hover:border-[var(--theme-bg)] transition-all duration-300 transform hover:scale-105">
     <!-- 书籍封面 -->
     <div class="aspect-[3/4] bg-[var(--bg-tertiary)] rounded-xl flex items-center justify-center">
       <div class="text-center px-4">
@@ -33,7 +33,8 @@
     <!-- 悬停时显示的时间 - 胶囊样式 -->
     <div
       class="absolute bottom-2 left-1/2 transform -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-      <div class="px-3 py-1 bg-black bg-opacity-70 text-white text-xs rounded-full">
+      <div
+        class="px-3 py-1 bg-[var(--bg-secondary)] text-[var(--text-secondary)] text-xs rounded-full border border-[var(--border-color)] shadow-sm">
         {{ formatDate(book.created_at) }}
       </div>
     </div>

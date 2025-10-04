@@ -1,6 +1,6 @@
 <template>
   <div
-    class="bg-[var(--bg-primary)] border border-[var(--border-color)] rounded-xl p-4 cursor-pointer transition-all duration-200 hover:shadow-lg relative"
+    class="bg-[var(--bg-primary)] border border-[var(--border-color)] rounded-xl p-4 cursor-pointer transition-all duration-300 hover:shadow-lg relative transform hover:scale-105"
     :class="[
       isSelected ? 'border-[var(--theme-bg)]' : 'hover:border-[var(--hover-bg)]'
     ]" @click="$emit('click')" @mouseenter="$emit('mouseenter')" @mouseleave="$emit('mouseleave')">

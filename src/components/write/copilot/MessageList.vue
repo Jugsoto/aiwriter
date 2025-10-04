@@ -99,6 +99,7 @@ import { ref, watch, nextTick } from 'vue'
 import { marked } from 'marked'
 import { Edit, Copy, ChevronDown, PenTool } from 'lucide-vue-next'
 import type { Message, MessageListProps } from '../../../utils/types'
+import { useToast } from '@/composables'
 import MessageEditModal from '../../modal/MessageEditModal.vue'
 import Toast from '../../shared/Toast.vue'
 
@@ -108,6 +109,7 @@ const emit = defineEmits<{
   'start-writing': [message: Message]
 }>()
 const messagesContainer = ref<HTMLElement>()
+const { toastVisible, toastMessage, toastType, showToast } = useToast()
 
 // 标记是否为用户手动操作（如点击推理消息）
 const isUserAction = ref(false)
@@ -117,11 +119,6 @@ const lastMessageStatus = ref<Map<string, { isStreaming: boolean, contentLength:
 // 编辑 modal 状态
 const editModalVisible = ref(false)
 const editingMessage = ref<Message | null>(null)
-
-// Toast 提示状态
-const toastVisible = ref(false)
-const toastMessage = ref('')
-const toastType = ref<'success' | 'error' | 'info'>('success')
 
 // 配置marked选项
 marked.setOptions({
@@ -180,21 +177,21 @@ const handleEdit = (message: Message) => {
   editModalVisible.value = true
 }
 
-// 显示提示
-const showToast = (message: string, type: 'success' | 'error' | 'info' = 'success') => {
-  toastMessage.value = message
-  toastType.value = type
-  toastVisible.value = true
-}
 
 // 处理复制按钮点击
 const handleCopy = async (message: Message) => {
   try {
     await navigator.clipboard.writeText(message.content)
-    showToast('消息已复制到剪贴板', 'success')
+    showToast({
+      message: '消息已复制到剪贴板',
+      type: 'success'
+    })
   } catch (error) {
     console.error('复制失败:', error)
-    showToast('复制失败，请重试', 'error')
+    showToast({
+      message: '复制失败，请重试',
+      type: 'error'
+    })
   }
 }
 

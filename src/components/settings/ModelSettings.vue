@@ -185,6 +185,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
 import { useProvidersStore } from '@/stores/providers'
+import { useToast } from '@/composables'
 import ProviderModelModal from '@/components/modal/ProviderModelModal.vue'
 import ModelSelectionModal from '@/components/modal/ModelSelectionModal.vue'
 import FetchModelsModal from '@/components/modal/FetchModelsModal.vue'
@@ -199,6 +200,7 @@ import type { Provider } from '@/electron.d'
 import type { Model } from '@/electron.d'
 
 const providersStore = useProvidersStore()
+const { toastVisible, toastMessage, toastType, showToast, hideToast } = useToast()
 
 // 模态框状态
 const showProviderModal = ref(false)
@@ -207,10 +209,7 @@ const showTestModelModal = ref(false)
 const showFetchModelsModal = ref(false)
 const showInfoModal = ref(false)
 
-// Toast和错误模态框状态
-const toastVisible = ref(false)
-const toastMessage = ref('')
-const toastType = ref<'success' | 'error' | 'info'>('success')
+// 错误模态框状态
 const errorModalVisible = ref(false)
 const errorModalMessage = ref('')
 const errorModalDetails = ref('')
@@ -451,18 +450,6 @@ async function deleteModel(id: number) {
   }
 }
 
-// 显示Toast提示
-const showToast = (message: string, type: 'success' | 'error' | 'info' = 'success', duration: number = 2000) => {
-  toastMessage.value = message
-  toastType.value = type
-  toastVisible.value = true
-
-  if (duration > 0) {
-    setTimeout(() => {
-      toastVisible.value = false
-    }, duration)
-  }
-}
 
 // 显示错误模态框
 const showErrorModal = (message: string, details?: string) => {
@@ -490,23 +477,28 @@ const handleTestConnection = async (modelName: string) => {
   }
 
   // 显示持续Toast提示
-  showToast('正在测试连接...', 'info', 0) // duration为0表示不自动隐藏
+  showToast({
+    message: '正在测试连接...',
+    type: 'info',
+    duration: 0 // duration为0表示不自动隐藏
+  })
 
   try {
     const result = await testConnection(provider as Provider, modelName)
 
-    // 隐藏之前的Toast
-    toastVisible.value = false
 
     if (result.success) {
-      showToast('连接成功', 'success')
+      hideToast() // 关闭持续显示的Toast
+      showToast({
+        message: '连接成功',
+        type: 'success'
+      })
     } else {
+      hideToast() // 关闭持续显示的Toast
       showErrorModal(result.message, result.error)
     }
   } catch (error) {
-    // 隐藏之前的Toast
-    toastVisible.value = false
-
+    hideToast() // 关闭持续显示的Toast
     const errorMessage = error instanceof Error ? error.message : '未知错误'
     showErrorModal('测试连接失败', errorMessage)
   }
@@ -526,24 +518,25 @@ const fetchModelsFromService = async () => {
   }
 
   // 显示持续Toast提示
-  showToast('正在获取模型列表...', 'info', 0)
+  showToast({
+    message: '正在获取模型列表...',
+    type: 'info',
+    duration: 0
+  })
 
   try {
     const result = await fetchModelsService(currentProvider.value.url, currentProvider.value.key)
 
-    // 隐藏之前的Toast
-    toastVisible.value = false
-
     if (result.success) {
+      hideToast() // 关闭持续显示的Toast
       fetchedModels.value = result.models
       showFetchModelsModal.value = true
     } else {
+      hideToast() // 关闭持续显示的Toast
       throw new Error(result.error || '获取模型列表失败')
     }
   } catch (error) {
-    // 隐藏之前的Toast
-    toastVisible.value = false
-
+    hideToast() // 关闭持续显示的Toast
     const errorMessage = error instanceof Error ? error.message : '未知错误'
     showErrorModal('获取模型列表失败', errorMessage)
   }
