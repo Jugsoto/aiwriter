@@ -415,34 +415,48 @@ ipcMain.handle('reset-data', async () => {
   }
 })
 
-// 数据备份功能
+// 数据备份功能 - 创建ZIP压缩包
 ipcMain.handle('backup-data', async () => {
   try {
     // 获取数据库文件路径
     const dbPath = path.join(app.getPath('userData'), 'aiwriter.db')
-    
+
     // 检查数据库文件是否存在
     if (!fs.existsSync(dbPath)) {
       return { success: false, error: '数据库文件不存在' }
     }
-    
+
     // 显示保存对话框，让用户选择备份位置
     const result = await dialog.showSaveDialog({
       title: '备份数据',
-      defaultPath: `aiwriter_backup_${new Date().toISOString().slice(0, 10)}.db`,
+      defaultPath: `aiwriter_backup_${new Date().toISOString().slice(0, 10)}.zip`,
       filters: [
-        { name: 'Database Files', extensions: ['db'] },
+        { name: 'ZIP Files', extensions: ['zip'] },
         { name: 'All Files', extensions: ['*'] }
       ]
     })
-    
+
     if (result.canceled) {
       return { success: false, error: '用户取消了备份操作' }
     }
-    
-    // 复制数据库文件到备份位置
-    fs.copyFileSync(dbPath, result.filePath!)
-    
+
+    // 创建 ZIP 文件
+    const zip = new JSZip()
+
+    // 添加数据库文件到 ZIP
+    const dbData = fs.readFileSync(dbPath)
+    zip.file('aiwriter.db', dbData)
+
+    // 生成 ZIP 内容
+    const zipContent = await zip.generateAsync({
+      type: 'nodebuffer',
+      compression: 'DEFLATE',
+      compressionOptions: { level: 6 }
+    })
+
+    // 保存 ZIP 文件
+    fs.writeFileSync(result.filePath!, zipContent)
+
     console.log('数据备份成功:', result.filePath)
     return { success: true, backupPath: result.filePath }
   } catch (error) {
@@ -451,55 +465,73 @@ ipcMain.handle('backup-data', async () => {
   }
 })
 
-// 数据恢复功能
+// 数据恢复功能 - 从ZIP包恢复
 ipcMain.handle('restore-data', async () => {
   try {
     // 显示打开对话框，让用户选择备份文件
     const result = await dialog.showOpenDialog({
       title: '恢复数据',
       filters: [
-        { name: 'Database Files', extensions: ['db'] },
+        { name: 'ZIP Files', extensions: ['zip'] },
         { name: 'All Files', extensions: ['*'] }
       ],
       properties: ['openFile']
     })
-    
+
     if (result.canceled) {
       return { success: false, error: '用户取消了恢复操作' }
     }
-    
+
     const backupPath = result.filePaths[0]
-    
+
     // 验证备份文件是否存在
     if (!fs.existsSync(backupPath)) {
       return { success: false, error: '备份文件不存在' }
     }
-    
+
+    // 读取并验证 ZIP 文件
+    let zip: JSZip
+    try {
+      const zipData = fs.readFileSync(backupPath)
+      zip = await JSZip.loadAsync(zipData)
+    } catch {
+      return { success: false, error: '无效的备份文件格式，请选择有效的ZIP备份包' }
+    }
+
+    // 检查ZIP文件中是否包含数据库文件
+    const dbFile = zip.file('aiwriter.db')
+
+    if (!dbFile) {
+      return { success: false, error: '备份文件中缺少数据库文件' }
+    }
+
     // 关闭数据库连接
     closeDatabase()
-    
+
     // 获取当前数据库文件路径
     const dbPath = path.join(app.getPath('userData'), 'aiwriter.db')
-    
+
     // 创建当前数据库的备份（以防恢复失败）
     const tempBackupPath = `${dbPath}.backup_${Date.now()}`
     if (fs.existsSync(dbPath)) {
       fs.copyFileSync(dbPath, tempBackupPath)
     }
-    
+
     try {
-      // 复制备份文件到数据库位置
-      fs.copyFileSync(backupPath, dbPath)
-      
+      // 从ZIP中提取数据库文件
+      const dbContent = await dbFile.async('nodebuffer')
+      fs.writeFileSync(dbPath, dbContent)
+
       // 重新初始化数据库连接
       initDatabase()
-      
+
       console.log('数据恢复成功')
       return { success: true }
     } catch (error) {
       // 如果恢复失败，尝试恢复原数据库
       if (fs.existsSync(tempBackupPath)) {
         fs.copyFileSync(tempBackupPath, dbPath)
+        initDatabase()
       }
       throw error
     } finally {
@@ -513,6 +545,7 @@ ipcMain.handle('restore-data', async () => {
     return { success: false, error: error instanceof Error ? error.message : '恢复数据时发生未知错误' }
   }
 })
+
 
 // 功能配置相关IPC处理
 ipcMain.handle('get-feature-configs', () => {
