@@ -132,10 +132,12 @@
                 <div class="flex-1 flex items-center">
                   <div class="font-medium text-[var(--text-primary)]">{{ model.model }}</div>
                   <div v-if="model.tags" class="flex items-center ml-2 space-x-1">
-                    <span v-for="tag in parseTags(model.tags)" :key="tag"
-                      class="px-2 py-1 text-xs bg-[var(--theme-bg)] text-[var(--theme-text)] rounded-full">
-                      {{ tag }}
-                    </span>
+                    <div v-for="tag in parseTags(model.tags)" :key="tag"
+                      class="flex items-center px-2 py-1 text-xs border rounded-full"
+                      :class="getTagConfig(tag).color">
+                      <component :is="getTagConfig(tag).icon" class="w-3 h-3 mr-1" />
+                      {{ getTagConfig(tag).label }}
+                    </div>
                   </div>
                 </div>
                 <div class="flex items-center space-x-2 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -192,7 +194,7 @@ import FetchModelsModal from '@/components/modal/FetchModelsModal.vue'
 import Toast from '@/components/shared/Toast.vue'
 import ErrorModal from '@/components/shared/ErrorModal.vue'
 import InfoModal from '@/components/shared/InfoModal.vue'
-import { Plus, X, HelpCircle } from 'lucide-vue-next'
+import { Plus, X, HelpCircle, Brain, Eye, Zap, Database, Layers, Gift } from 'lucide-vue-next'
 import { showConfirm } from '@/composables/useConfirm'
 import { testConnection } from '@/services/testConnection'
 import { fetchModelsFromService as fetchModelsService } from '@/services/fetchModels'
@@ -339,10 +341,53 @@ const getProviderIcon = (providerName: string | undefined): string => {
   return new URL(`../../assets/providers/${matchedIcon}.png`, import.meta.url).href
 }
 
+// 标签配置映射
+const tagConfig = {
+  tool: {
+    icon: Zap,
+    color: 'bg-blue-100 text-blue-700 border-blue-200',
+    label: '工具'
+  },
+  think: {
+    icon: Brain,
+    color: 'bg-purple-100 text-purple-700 border-purple-200',
+    label: '思考'
+  },
+  embedding: {
+    icon: Database,
+    color: 'bg-green-100 text-green-700 border-green-200',
+    label: '嵌入'
+  },
+  eye: {
+    icon: Eye,
+    color: 'bg-orange-100 text-orange-700 border-orange-200',
+    label: '视觉'
+  },
+  free: {
+    icon: Gift,
+    color: 'bg-pink-100 text-pink-700 border-pink-200',
+    label: '免费'
+  },
+  reranker: {
+    icon: Layers,
+    color: 'bg-indigo-100 text-indigo-700 border-indigo-200',
+    label: '重排'
+  }
+}
+
 // 解析标签字符串为数组
 const parseTags = (tags: string): string[] => {
   if (!tags) return []
   return tags.split(',').map(tag => tag.trim()).filter(tag => tag.length > 0)
+}
+
+// 获取标签配置
+const getTagConfig = (tag: string) => {
+  return tagConfig[tag as keyof typeof tagConfig] || {
+    icon: Zap,
+    color: 'bg-gray-100 text-gray-700 border-gray-200',
+    label: tag
+  }
 }
 
 // 选择供应商
