@@ -16,12 +16,11 @@ const DEFAULT_PROVIDERS_DATA = {
       key: "",
       models: [
         { model: "shenbi-base", tags: "think" },
-        { model: "shenbi-chapter", tags: "tool" },
-        { model: "shenbi-setting", tags: "tool" },
-        { model: "shenbi-review", tags: "tool" },
-        { model: "shenbi-writing", tags: "tool" },
         { model: "shenbi-embedding", tags: "embedding" },
-        { model: "shenbi-reranker", tags: "reranker" }
+        { model: "gemini-2.5-flash", tags: "tool" },
+        { model: "gemini-2.5-pro", tags: "tool" },
+        { model: "deepseek-v3.1-terminus", tags: "tool" },
+        { model: "gpt-5-mini", tags: "tool" }
       ]
     },
     {
@@ -162,21 +161,21 @@ const DEFAULT_FEATURE_CONFIGS_DATA = {
       temperature: 0.8,
       top_p: 0.95,
       provider_name: '神笔AI',
-      model_name: 'shenbi-chapter'
+      model_name: 'gemini-2.5-flash'
     },
     {
       feature_name: 'content_writing',
       temperature: 0.8,
       top_p: 0.95,
       provider_name: '神笔AI',
-      model_name: 'shenbi-writing'
+      model_name: 'gemini-2.5-pro'
     },
     {
       feature_name: 'chapter_review',
       temperature: 0.7,
       top_p: 0.9,
       provider_name: '神笔AI',
-      model_name: 'shenbi-review'
+      model_name: 'deepseek-v3.1-terminus'
     },
     {
       feature_name: 'embedding_model',
@@ -190,7 +189,7 @@ const DEFAULT_FEATURE_CONFIGS_DATA = {
       temperature: 0.6,
       top_p: 0.8,
       provider_name: '神笔AI',
-      model_name: 'shenbi-setting'
+      model_name: 'shenbi-base'
     }
   ]
 }
