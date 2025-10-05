@@ -15,10 +15,10 @@ const DEFAULT_PROVIDERS_DATA = {
       url: "https://ai.qgming.com/v1",
       key: "",
       models: [
-        { model: "shenbi-base", tags: "think" },
+        { model: "shenbi-base", tags: "tool" },
         { model: "shenbi-embedding", tags: "embedding" },
-        { model: "gemini-2.5-flash", tags: "tool" },
-        { model: "gemini-2.5-pro", tags: "tool" },
+        { model: "gemini-2.5-flash", tags: "tool,eye,think" },
+        { model: "gemini-2.5-pro", tags: "tool,eye,think" },
         { model: "deepseek-v3.1-terminus", tags: "tool" },
         { model: "gpt-5-mini", tags: "tool" }
       ]
@@ -37,8 +37,8 @@ const DEFAULT_PROVIDERS_DATA = {
       url: "https://generativelanguage.googleapis.com/v1",
       key: "",
       models: [
-        { model: "gemini-2.5-pro", tags: "eye,tool" },
-        { model: "gemini-2.5-flash", tags: "eye,tool" },
+        { model: "gemini-2.5-pro", tags: "eye,tool,think" },
+        { model: "gemini-2.5-flash", tags: "eye,tool,think" },
         { model: "gemini-2.5-flash-lite", tags: "eye,tool" }
       ]
     },
@@ -57,10 +57,10 @@ const DEFAULT_PROVIDERS_DATA = {
       url: "https://api.siliconflow.cn",
       key: "",
       models: [
-        { model: "deepseek-ai/DeepSeek-V3.1", tags: "tool,think" },
+        { model: "deepseek-ai/DeepSeek-V3.1", tags: "tool" },
         { model: "deepseek-ai/DeepSeek-V3", tags: "tool" },
         { model: "deepseek-ai/DeepSeek-R1", tags: "tool,think" },
-        { model: "moonshotai/Kimi-K2-Instruct-0905", tags: "tool" },
+        { model: "moonshotai/Kimi-K2-Instruct-0905", tags: "tool,think" },
         { model: "zai-org/GLM-4.5", tags: "tool,think" },
         { model: "zai-org/GLM-4.5V", tags: "eye,tool,think" },
         { model: "Qwen/Qwen3-235B-A22B-Thinking-2507", tags: "tool,think" },
@@ -76,12 +76,12 @@ const DEFAULT_PROVIDERS_DATA = {
       url: "https://aihubmix.com/v1",
       key: "",
       models: [
-        { model: "gpt-5", tags: "eye,tool,think" },
-        { model: "gpt-5-mini", tags: "eye,tool,think" },
-        { model: "gpt-5-nano", tags: "eye,tool,think" },
+        { model: "gpt-5", tags: "tool,think" },
+        { model: "gpt-5-mini", tags: "tool,think" },
+        { model: "gpt-5-nano", tags: "tool,think" },
         { model: "gemini-2.5-pro", tags: "eye,tool,think" },
         { model: "gemini-2.5-flash", tags: "eye,tool,think" },
-        { model: "claude-sonnet-4-20250514", tags: "eye,tool,think" },
+        { model: "claude-sonnet-4-20250514", tags: "tool,think" },
       ]
     },
     {
@@ -89,9 +89,9 @@ const DEFAULT_PROVIDERS_DATA = {
       url: "https://api.openai.com/v1",
       key: "",
       models: [
-        { model: "gpt-5", tags: "eye,tool,think" },
-        { model: "gpt-5-mini", tags: "eye,tool,think" },
-        { model: "gpt-5-nano", tags: "eye,tool,think" },
+        { model: "gpt-5", tags: "tool,think" },
+        { model: "gpt-5-mini", tags: "tool,think" },
+        { model: "gpt-5-nano", tags: "tool,think" },
       ]
     },
     {
@@ -99,8 +99,8 @@ const DEFAULT_PROVIDERS_DATA = {
       url: "https://api.anthropic.com/v1",
       key: "",
       models: [
-        { model: "claude-sonnet-4-20250514", tags: "eye,tool,think" },
-        { model: "claude-opus-4-20250514", tags: "eye,tool,think" },
+        { model: "claude-sonnet-4-20250514", tags: "tool,think" },
+        { model: "claude-opus-4-20250514", tags: "tool,think" },
       ]
     },
 
@@ -123,7 +123,7 @@ const DEFAULT_PROVIDERS_DATA = {
       models: [
         { model: "qwen-plus", tags: "tool,think" },
         { model: "qwen-flash", tags: "tool,think" },
-        { model: "qwen-max", tags: "tool" }
+        { model: "qwen-max", tags: "tool,think" }
       ]
     },
     {
@@ -131,16 +131,15 @@ const DEFAULT_PROVIDERS_DATA = {
       url: "https://openrouter.ai/api/v1",
       key: "",
       models: [
-        { model: "deepseek/deepseek-chat-v3.1:free", tags: "tool,think,free" },
-        { model: "deepseek/deepseek-chat:free", tags: "tool,free" },
+        { model: "deepseek/deepseek-chat-v3.1:free", tags: "tool,free" },
+        { model: "deepseek/deepseek-chat:free", tags: "tool,think,free" },
         { model: "deepseek/deepseek-r1:free", tags: "tool,think,free" },
-        { model: "moonshotai/kimi-k2:free", tags: "tool,free" },
+        { model: "moonshotai/kimi-k2:free", tags: "tool,think,free" },
         { model: "openai/gpt-oss-120b:free", tags: "tool,think,free" },
-        { model: "qwen/qwen2.5-vl-72b-instruct:free", tags: "eye,free" },
+        { model: "qwen/qwen2.5-vl-72b-instruct:free", tags: "eye,tool,free" },
         { model: "qwen/qwen3-235b-a22b:free", tags: "tool,think,free" },
         { model: "qwen/qwen3-coder:free", tags: "tool,think,free" },
         { model: "z-ai/glm-4.5-air:free", tags: "tool,think,free" },
-
       ]
     },
   ]
