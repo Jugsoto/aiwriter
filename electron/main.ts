@@ -271,7 +271,7 @@ ipcMain.handle('create-chapter', (_event: any, data: { book_id: number; title: s
   return createChapter(data)
 })
 
-ipcMain.handle('update-chapter', (_event: any, id: number, data: { title?: string; content?: string; summary?: string; order_index?: number }) => {
+ipcMain.handle('update-chapter', (_event: any, id: number, data: { title?: string; content?: string; summary?: string; review_data?: string; order_index?: number }) => {
   return updateChapter(id, data)
 })
 

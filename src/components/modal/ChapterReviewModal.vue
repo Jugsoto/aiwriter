@@ -33,7 +33,7 @@
           </p>
 
           <div class="text-sm text-[var(--text-secondary)] opacity-80">
-            评估维度：情节推进、人物表现、情绪价值、阅读节奏
+            评估维度：情节推进、人物表现、情绪价值、阅读节奏、创意新颖、商业价值
           </div>
         </div>
       </div>
@@ -51,7 +51,7 @@
       </div>
 
       <!-- 评估结果 -->
-      <div v-else-if="reviewResult" class="flex-1 overflow-y-auto">
+      <div v-else-if="reviewResult" class="flex-1 overflow-y-auto mb-4">
         <!-- 总分显示 -->
         <div class="mb-6">
           <div class="bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg p-6 text-center text-white">
@@ -61,23 +61,90 @@
           </div>
         </div>
 
-        <!-- 四个维度评分卡片 -->
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-          <div class="bg-[var(--bg-secondary)] rounded-lg p-4 text-center">
-            <div class="text-2xl font-bold text-blue-600">{{ reviewResult.plot_progression_score }}/10</div>
-            <div class="text-sm text-[var(--text-secondary)] mt-1">情节推进</div>
-          </div>
-          <div class="bg-[var(--bg-secondary)] rounded-lg p-4 text-center">
-            <div class="text-2xl font-bold text-green-600">{{ reviewResult.character_performance_score }}/10</div>
-            <div class="text-sm text-[var(--text-secondary)] mt-1">人物表现</div>
-          </div>
-          <div class="bg-[var(--bg-secondary)] rounded-lg p-4 text-center">
-            <div class="text-2xl font-bold text-purple-600">{{ reviewResult.emotional_value_score }}/10</div>
-            <div class="text-sm text-[var(--text-secondary)] mt-1">情绪价值</div>
-          </div>
-          <div class="bg-[var(--bg-secondary)] rounded-lg p-4 text-center">
-            <div class="text-2xl font-bold text-orange-600">{{ reviewResult.reading_pace_score }}/10</div>
-            <div class="text-sm text-[var(--text-secondary)] mt-1">阅读节奏</div>
+        <!-- ECharts雷达图展示六大维度评分 -->
+        <div class="mb-6">
+          <div class="bg-[var(--bg-secondary)] rounded-lg p-6">
+            <div class="flex flex-col lg:flex-row items-center justify-center gap-6">
+              <!-- 左侧维度卡片 -->
+              <div class="grid grid-cols-1 gap-3 w-full lg:w-auto">
+                <div
+                  class="bg-gradient-to-r from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 rounded-lg p-3 border border-blue-200 dark:border-blue-700 transition-all hover:shadow-md">
+                  <div class="flex items-center justify-between mb-1">
+                    <span class="text-xs font-medium text-blue-700 dark:text-blue-300">情节推进</span>
+                    <span class="text-lg font-bold text-blue-600">{{ reviewResult.plot_progression_score }}/10</span>
+                  </div>
+                  <div class="w-full bg-blue-200 dark:bg-blue-800 rounded-full h-1.5">
+                    <div class="bg-blue-600 h-1.5 rounded-full transition-all duration-500"
+                      :style="{ width: `${reviewResult.plot_progression_score * 10}%` }"></div>
+                  </div>
+                </div>
+                <div
+                  class="bg-gradient-to-r from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20 rounded-lg p-3 border border-green-200 dark:border-green-700 transition-all hover:shadow-md">
+                  <div class="flex items-center justify-between mb-1">
+                    <span class="text-xs font-medium text-green-700 dark:text-green-300">人物表现</span>
+                    <span class="text-lg font-bold text-green-600">{{ reviewResult.character_performance_score
+                    }}/10</span>
+                  </div>
+                  <div class="w-full bg-green-200 dark:bg-green-800 rounded-full h-1.5">
+                    <div class="bg-green-600 h-1.5 rounded-full transition-all duration-500"
+                      :style="{ width: `${reviewResult.character_performance_score * 10}%` }"></div>
+                  </div>
+                </div>
+                <div
+                  class="bg-gradient-to-r from-purple-50 to-purple-100 dark:from-purple-900/20 dark:to-purple-800/20 rounded-lg p-3 border border-purple-200 dark:border-purple-700 transition-all hover:shadow-md">
+                  <div class="flex items-center justify-between mb-1">
+                    <span class="text-xs font-medium text-purple-700 dark:text-purple-300">情绪价值</span>
+                    <span class="text-lg font-bold text-purple-600">{{ reviewResult.emotional_value_score }}/10</span>
+                  </div>
+                  <div class="w-full bg-purple-200 dark:bg-purple-800 rounded-full h-1.5">
+                    <div class="bg-purple-600 h-1.5 rounded-full transition-all duration-500"
+                      :style="{ width: `${reviewResult.emotional_value_score * 10}%` }"></div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- ECharts雷达图 -->
+              <div class="flex justify-center">
+                <div ref="radarChartRef" style="width: 350px; height: 350px;" class="w-full max-w-[350px] h-auto"></div>
+              </div>
+
+              <!-- 右侧维度卡片 -->
+              <div class="grid grid-cols-1 gap-3 w-full lg:w-auto">
+                <div
+                  class="bg-gradient-to-r from-orange-50 to-orange-100 dark:from-orange-900/20 dark:to-orange-800/20 rounded-lg p-3 border border-orange-200 dark:border-orange-700 transition-all hover:shadow-md">
+                  <div class="flex items-center justify-between mb-1">
+                    <span class="text-xs font-medium text-orange-700 dark:text-orange-300">阅读节奏</span>
+                    <span class="text-lg font-bold text-orange-600">{{ reviewResult.reading_pace_score }}/10</span>
+                  </div>
+                  <div class="w-full bg-orange-200 dark:bg-orange-800 rounded-full h-1.5">
+                    <div class="bg-orange-600 h-1.5 rounded-full transition-all duration-500"
+                      :style="{ width: `${reviewResult.reading_pace_score * 10}%` }"></div>
+                  </div>
+                </div>
+                <div
+                  class="bg-gradient-to-r from-pink-50 to-pink-100 dark:from-pink-900/20 dark:to-pink-800/20 rounded-lg p-3 border border-pink-200 dark:border-pink-700 transition-all hover:shadow-md">
+                  <div class="flex items-center justify-between mb-1">
+                    <span class="text-xs font-medium text-pink-700 dark:text-pink-300">创意新颖</span>
+                    <span class="text-lg font-bold text-pink-600">{{ reviewResult.creativity_score }}/10</span>
+                  </div>
+                  <div class="w-full bg-pink-200 dark:bg-pink-800 rounded-full h-1.5">
+                    <div class="bg-pink-600 h-1.5 rounded-full transition-all duration-500"
+                      :style="{ width: `${reviewResult.creativity_score * 10}%` }"></div>
+                  </div>
+                </div>
+                <div
+                  class="bg-gradient-to-r from-red-50 to-red-100 dark:from-red-900/20 dark:to-red-800/20 rounded-lg p-3 border border-red-200 dark:border-red-700 transition-all hover:shadow-md">
+                  <div class="flex items-center justify-between mb-1">
+                    <span class="text-xs font-medium text-red-700 dark:text-red-300">商业价值</span>
+                    <span class="text-lg font-bold text-red-600">{{ reviewResult.commercial_value_score }}/10</span>
+                  </div>
+                  <div class="w-full bg-red-200 dark:bg-red-800 rounded-full h-1.5">
+                    <div class="bg-red-600 h-1.5 rounded-full transition-all duration-500"
+                      :style="{ width: `${reviewResult.commercial_value_score * 10}%` }"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -107,10 +174,19 @@
         <div class="mb-6">
           <h4 class="text-lg font-semibold text-[var(--text-primary)] mb-3">问题与不足</h4>
           <div class="bg-[var(--pitfall-bg)] border border-[var(--pitfall-border)] rounded-lg p-4">
-            <ul class="space-y-2">
-              <li v-for="(pitfall, index) in reviewResult.pitfalls" :key="index" class="flex items-start">
-                <AlertCircle class="w-4 h-4 text-yellow-500 mt-1 mr-2 flex-shrink-0" />
-                <span class="text-[var(--text-primary)]">{{ pitfall }}</span>
+            <ul class="space-y-3">
+              <li v-for="(pitfall, index) in reviewResult.pitfalls" :key="index" class="flex flex-col gap-1">
+                <div class="flex items-start">
+                  <AlertCircle class="w-4 h-4 text-yellow-500 mt-1 mr-2 flex-shrink-0" />
+                  <span class="text-[var(--text-primary)] font-medium">{{ pitfall.content }}</span>
+                </div>
+                <div v-if="pitfall.position" class="ml-6 text-sm text-[var(--text-secondary)]">
+                  <span class="font-medium">位置：</span>{{ pitfall.position }}
+                </div>
+                <div v-if="pitfall.suggestion"
+                  class="ml-6 text-sm text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 p-2 rounded border-l-2 border-blue-400">
+                  <span class="font-medium">修改建议：</span>{{ pitfall.suggestion }}
+                </div>
               </li>
             </ul>
           </div>
@@ -132,12 +208,8 @@
       </div>
 
       <!-- 底部按钮 -->
-      <div class="flex justify-end gap-3 pt-4 border-t border-[var(--border-color)]">
-        <button @click="handleCancel"
-          class="px-4 py-2 text-[var(--text-secondary)] border border-[var(--border-color)] rounded-lg hover:bg-[var(--hover-bg)] transition-colors">
-          关闭
-        </button>
-        <button v-if="reviewResult" @click="handleRetry"
+      <div v-if="reviewResult" class="flex justify-end gap-3 pt-4 border-t border-[var(--border-color)] mt-auto">
+        <button @click="handleRetry"
           class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
           重新评估
         </button>
@@ -147,9 +219,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { ref, watch, nextTick } from 'vue'
 import { X, TriangleAlert, CheckCircle, AlertCircle, Lightbulb } from 'lucide-vue-next'
 import type { ChapterReviewResult } from '@/services/chapterReview'
+import * as echarts from 'echarts'
 
 interface Props {
   visible: boolean
@@ -179,6 +252,8 @@ const emit = defineEmits<Emits>()
 const loading = ref(false)
 const error = ref('')
 const reviewResult = ref<ChapterReviewResult | null>(null)
+const radarChartRef = ref<HTMLElement>()
+let radarChart: echarts.ECharts | null = null
 
 // 监听visible变化，初始化数据
 watch(() => props.visible, async (newVal) => {
@@ -189,6 +264,135 @@ watch(() => props.visible, async (newVal) => {
     resetState()
   }
 })
+
+// 监听reviewResult变化，更新雷达图
+watch(() => reviewResult.value, (newResult) => {
+  if (newResult) {
+    nextTick(() => {
+      initRadarChart()
+    })
+  }
+})
+
+// 初始化雷达图
+const initRadarChart = () => {
+  if (!radarChartRef.value || !reviewResult.value) return
+
+  // 如果图表已存在，先销毁
+  if (radarChart) {
+    radarChart.dispose()
+  }
+
+  // 创建新图表
+  radarChart = echarts.init(radarChartRef.value)
+
+  // 配置项
+  const option = {
+    title: {
+      text: '章节能力雷达图',
+      left: 'center',
+      top: 10,
+      textStyle: {
+        fontSize: 18,
+        fontWeight: 'bold',
+        color: 'var(--text-primary)'
+      }
+    },
+    tooltip: {
+      trigger: 'item',
+      formatter: (params: any) => {
+        const dimensionNames = ['情节推进', '人物表现', '情绪价值', '阅读节奏', '创意新颖', '商业价值']
+        const dataIndex = params.dataIndex
+        return `${dimensionNames[dataIndex]}: ${params.value}/10`
+      }
+    },
+    radar: {
+      indicator: [
+        { name: '情节推进', max: 10 },
+        { name: '人物表现', max: 10 },
+        { name: '情绪价值', max: 10 },
+        { name: '阅读节奏', max: 10 },
+        { name: '创意新颖', max: 10 },
+        { name: '商业价值', max: 10 }
+      ],
+      shape: 'polygon',
+      radius: 140,
+      splitNumber: 5,
+      name: {
+        textStyle: {
+          color: 'var(--text-primary)',
+          fontSize: 14,
+          fontWeight: 'bold',
+          shadowColor: 'rgba(0, 0, 0, 0.3)',
+          shadowBlur: 2,
+          shadowOffsetX: 1,
+          shadowOffsetY: 1
+        },
+        formatter: (value: string) => {
+          return value
+        }
+      },
+      splitLine: {
+        lineStyle: {
+          color: 'var(--border-color)'
+        }
+      },
+      splitArea: {
+        show: true,
+        areaStyle: {
+          color: ['rgba(59, 130, 246, 0.1)', 'rgba(59, 130, 246, 0.05)']
+        }
+      },
+      axisLine: {
+        lineStyle: {
+          color: 'var(--border-color)'
+        }
+      }
+    },
+    series: [{
+      name: '章节评分',
+      type: 'radar',
+      data: [{
+        value: [
+          reviewResult.value.plot_progression_score,
+          reviewResult.value.character_performance_score,
+          reviewResult.value.emotional_value_score,
+          reviewResult.value.reading_pace_score,
+          reviewResult.value.creativity_score,
+          reviewResult.value.commercial_value_score
+        ],
+        name: '当前章节',
+        itemStyle: {
+          color: '#3b82f6'
+        },
+        areaStyle: {
+          color: 'rgba(59, 130, 246, 0.3)'
+        },
+        lineStyle: {
+          color: '#3b82f6',
+          width: 2
+        },
+        emphasis: {
+          lineStyle: {
+            width: 4
+          },
+          itemStyle: {
+            color: '#1d4ed8'
+          }
+        }
+      }]
+    }],
+    backgroundColor: 'transparent'
+  }
+
+  // 设置配置项
+  radarChart.setOption(option)
+
+  // 响应式处理
+  window.addEventListener('resize', () => {
+    radarChart?.resize()
+  })
+}
 
 // 加载章节评估
 const loadChapterReview = async () => {
@@ -223,7 +427,6 @@ const loadChapterReview = async () => {
 
     reviewResult.value = await generateChapterReview(context, undefined, props.chapterId)
   } catch (err) {
-    console.error('章节评估失败:', err)
     error.value = err instanceof Error ? err.message : '评估失败，请检查网络连接和配置'
   } finally {
     loading.value = false
@@ -235,6 +438,12 @@ const resetState = () => {
   loading.value = false
   error.value = ''
   reviewResult.value = null
+
+  // 清理ECharts实例
+  if (radarChart) {
+    radarChart.dispose()
+    radarChart = null
+  }
 }
 
 // 处理关闭
@@ -260,20 +469,21 @@ const handleRetry = async () => {
 
     reviewResult.value = await generateChapterReview(context, undefined, props.chapterId)
   } catch (err) {
-    console.error('重新评估失败:', err)
     error.value = err instanceof Error ? err.message : '重新评估失败，请检查网络连接和配置'
   } finally {
     loading.value = false
   }
 }
 
-// 计算总分（四个维度的平均值）
+// 计算总分（六个维度的平均值）
 const calculateOverallScore = (result: ChapterReviewResult): number => {
   const scores = [
     result.plot_progression_score,
     result.character_performance_score,
     result.emotional_value_score,
-    result.reading_pace_score
+    result.reading_pace_score,
+    result.creativity_score,
+    result.commercial_value_score
   ]
   const sum = scores.reduce((total, score) => total + score, 0)
   return Math.round((sum / scores.length) * 10) / 10 // 保留一位小数
@@ -281,14 +491,19 @@ const calculateOverallScore = (result: ChapterReviewResult): number => {
 
 // 根据分数获取点评描述
 const getScoreComment = (score: number): string => {
-  if (score >= 8) {
-    return '😊 优秀！章节内容质量很高，继续保持！'
-  } else if (score >= 6) {
-    return '😐 良好！章节内容有不错的基础，还有提升空间'
+  if (score >= 8.5) {
+    return '🔥 爆款潜质！优秀章节，有望成为热门作品！'
+  } else if (score >= 7.5) {
+    return '😊 优秀！章节质量很高，继续保持！'
+  } else if (score >= 6.5) {
+    return '😐 良好！有不错的基础，优化后潜力更大'
+  } else if (score >= 5.5) {
+    return '📚 合格！基础内容达标，建议重点优化'
   } else {
-    return '😔 需要改进！章节内容需要进一步优化和完善'
+    return '🔧 需要改进！建议重新打磨后再发布'
   }
 }
+
 </script>
 
 <style scoped>
