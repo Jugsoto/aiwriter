@@ -63,8 +63,8 @@
 
         <!-- ECharts雷达图展示六大维度评分 -->
         <div class="mb-6">
-          <div class="bg-[var(--bg-secondary)] rounded-lg p-6">
-            <div class="flex flex-col lg:flex-row items-center justify-center gap-6">
+          <div class="bg-[var(--bg-secondary)] rounded-lg p-4">
+            <div class="flex flex-col lg:flex-row items-center justify-center gap-8">
               <!-- 左侧维度卡片 -->
               <div class="grid grid-cols-1 gap-3 w-full lg:w-auto">
                 <div
@@ -105,7 +105,7 @@
 
               <!-- ECharts雷达图 -->
               <div class="flex justify-center">
-                <div ref="radarChartRef" style="width: 350px; height: 350px;" class="w-full max-w-[350px] h-auto"></div>
+                <div ref="radarChartRef" style="width: 400px; height: 400px;" class="w-full max-w-[400px] h-auto"></div>
               </div>
 
               <!-- 右侧维度卡片 -->
@@ -295,7 +295,7 @@ const initRadarChart = () => {
       textStyle: {
         fontSize: 18,
         fontWeight: 'bold',
-        color: 'var(--text-primary)'
+        color: 'rgba(0, 0, 0, 0.85)'
       }
     },
     tooltip: {
@@ -316,11 +316,11 @@ const initRadarChart = () => {
         { name: '商业价值', max: 10 }
       ],
       shape: 'polygon',
-      radius: 140,
+      radius: 120,
       splitNumber: 5,
       name: {
         textStyle: {
-          color: 'var(--text-primary)',
+          color: 'rgba(0, 0, 0, 0.85)',
           fontSize: 14,
           fontWeight: 'bold',
           shadowColor: 'rgba(0, 0, 0, 0.3)',
@@ -334,7 +334,7 @@ const initRadarChart = () => {
       },
       splitLine: {
         lineStyle: {
-          color: 'var(--border-color)'
+          color: 'rgba(0, 0, 0, 0.2)'
         }
       },
       splitArea: {
@@ -345,7 +345,7 @@ const initRadarChart = () => {
       },
       axisLine: {
         lineStyle: {
-          color: 'var(--border-color)'
+          color: 'rgba(0, 0, 0, 0.2)'
         }
       }
     },

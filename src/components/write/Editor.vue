@@ -32,6 +32,10 @@
     <ChapterReviewModal v-model:visible="chapterReviewModalVisible" :chapter-content="content"
       :global-settings="globalSettings" :chapter-title="currentChapter?.title" :chapter-id="currentChapter?.id"
       @close="handleChapterReviewClose" />
+
+    <!-- 设定更新完成信息模态窗 -->
+    <InfoModal v-model:visible="settingUpdateInfoVisible" :title="settingUpdateInfoTitle"
+      :message="settingUpdateInfoMessage" @close="settingUpdateInfoVisible = false" />
   </div>
 </template>
 
@@ -48,6 +52,7 @@ import ContentEditor from './editor/ContentEditor.vue'
 import Toast from '@/components/shared/Toast.vue'
 import ErrorModal from '@/components/shared/ErrorModal.vue'
 import ChapterReviewModal from '@/components/modal/ChapterReviewModal.vue'
+import InfoModal from '@/components/shared/InfoModal.vue'
 
 // 简单的防抖函数实现
 function debounce<T extends (...args: any[]) => any>(func: T, wait: number): T {
@@ -92,6 +97,11 @@ const isUpdatingSettings = ref(false)
 const isReviewingChapter = ref(false)
 const chapterReviewModalVisible = ref(false)
 const globalSettings = ref('')
+
+// 设定更新信息模态窗状态
+const settingUpdateInfoVisible = ref(false)
+const settingUpdateInfoTitle = ref('')
+const settingUpdateInfoMessage = ref('')
 
 // 错误模态窗状态
 const errorModalVisible = ref(false)
@@ -261,15 +271,45 @@ const handleUpdateSettingsStart = () => {
 }
 
 // 处理设定更新结束
-const handleUpdateSettingsEnd = (success: boolean) => {
+const handleUpdateSettingsEnd = (success: boolean, result?: any) => {
   isUpdatingSettings.value = false
-  if (success) {
-    showToast({
-      message: '设定更新成功',
-      type: 'success'
-    })
+
+  if (success && result) {
+    // 成功时显示详细信息模态窗
+    settingUpdateInfoTitle.value = '设定维护完成'
+
+    // 构建详细信息消息
+    let message = result.message || '设定更新完成'
+
+    // 添加详细统计信息
+    if (result.updatedSettings && result.updatedSettings.length > 0) {
+      message += `\n\n更新的设定数量：${result.updatedSettings.length} 个`
+    }
+
+    if (result.addedSettings && result.addedSettings.length > 0) {
+      message += `\n新增的设定数量：${result.addedSettings.length} 个`
+    }
+
+    // 添加AI分析总结（如果有）
+    if (result.details && result.details.trim()) {
+      message += `\n\nAI分析总结：\n${result.details}`
+    }
+
+    settingUpdateInfoMessage.value = message
+    settingUpdateInfoVisible.value = true
+  } else if (!success && result) {
+    // 失败时使用错误模态窗显示详细错误信息
+    showErrorModal('设定更新失败', result.details || result.message || '更新设定时发生错误，请检查配置后重试')
   } else {
-    showErrorModal('设定更新失败', '更新设定时发生错误，请检查配置后重试')
+    // 默认处理
+    if (success) {
+      showToast({
+        message: '设定更新成功',
+        type: 'success'
+      })
+    } else {
+      showErrorModal('设定更新失败', '更新设定时发生错误，请检查配置后重试')
+    }
   }
 }
 

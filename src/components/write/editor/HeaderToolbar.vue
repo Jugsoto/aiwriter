@@ -88,7 +88,7 @@ const emit = defineEmits<{
   updateMemoryStart: []
   updateMemoryEnd: [success: boolean]
   updateSettingsStart: []
-  updateSettingsEnd: [success: boolean]
+  updateSettingsEnd: [success: boolean, result?: any]
   reviewChapter: []
 }>()
 
@@ -178,17 +178,25 @@ const updateSettings = async () => {
     const result = await analyzeAndUpdateSettings(context, config)
 
     if (result.success) {
-      // 成功时通过事件通知父组件
-      emit('updateSettingsEnd', true)
+      // 成功时通过事件通知父组件，传递详细结果
+      emit('updateSettingsEnd', true, result)
     } else {
-      // 错误时通过事件通知父组件
+      // 错误时通过事件通知父组件，传递详细结果
       console.error('设定更新失败:', result.message)
-      emit('updateSettingsEnd', false)
+      emit('updateSettingsEnd', false, result)
     }
 
   } catch (error) {
     console.error('更新设定失败:', error)
-    emit('updateSettingsEnd', false) // 发出设定更新失败事件
+    // 创建错误结果对象
+    const errorResult = {
+      success: false,
+      message: error instanceof Error ? error.message : '未知错误',
+      updatedSettings: [],
+      addedSettings: [],
+      details: `错误详情: ${error instanceof Error ? error.message : '未知错误'}`
+    }
+    emit('updateSettingsEnd', false, errorResult) // 发出设定更新失败事件
   } finally {
     isUpdatingSettings.value = false
   }
