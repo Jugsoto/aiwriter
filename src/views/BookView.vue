@@ -41,6 +41,10 @@
 
     <!-- 设定管理模态框 -->
     <SettingsModal v-model:visible="showSettingsModal" :book-id="bookId" :setting-type="currentSettingType" />
+
+    <!-- 错误模态框 -->
+    <ErrorModal :visible="errorModalVisible" :title="errorModalTitle" :message="errorModalMessage"
+      :error-details="errorModalDetails" @update:visible="errorModalVisible = $event" @close="hideErrorModal" />
   </div>
 </template>
 
@@ -48,6 +52,7 @@
 import { ref, computed, onMounted, watch, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useBooksStore } from '@/stores/books'
+import { useErrorModal } from '@/composables'
 import type { Book } from '@/electron.d'
 import ChapterManager from '@/components/write/ChapterManager.vue'
 import Editor from '@/components/write/Editor.vue'
@@ -55,10 +60,12 @@ import WriteCopilot from '@/components/write/WriteCopilot.vue'
 import BookHeader from '@/components/write/BookHeader.vue'
 import GlobalSettingsModal from '@/components/modal/GlobalSettingsModal.vue'
 import SettingsModal from '@/components/modal/SettingsModal.vue'
+import ErrorModal from '@/components/shared/ErrorModal.vue'
 
 const route = useRoute()
 const router = useRouter()
 const booksStore = useBooksStore()
+const { visible: errorModalVisible, title: errorModalTitle, message: errorModalMessage, errorDetails: errorModalDetails, showErrorModal, hideErrorModal } = useErrorModal()
 
 const book = ref<Book | null>(null)
 const loading = ref(false)
@@ -174,7 +181,11 @@ async function handleGlobalSettingsSave(data: { global_settings: string }) {
     console.log('Global settings saved successfully')
   } catch (err) {
     console.error('Failed to save global settings:', err)
-    alert('保存全局设定失败，请重试')
+    showErrorModal({
+      title: '保存失败',
+      message: '保存全局设定失败，请重试',
+      errorDetails: err instanceof Error ? err.message : String(err)
+    })
   }
 }
 

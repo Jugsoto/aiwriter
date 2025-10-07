@@ -11,7 +11,7 @@
 
         <!-- 右侧软件信息 -->
         <div class="flex-1 ml-6">
-          <h1 class="text-2xl font-bold text-[var(--text-primary)] mb-2">神笔AI写作</h1>
+          <h1 class="text-2xl font-bold text-[var(--text-primary)] mb-2">神笔写作</h1>
           <p class="text-[var(--text-secondary)]">让创作更智能，让写作更高效</p>
         </div>
       </div>

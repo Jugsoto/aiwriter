@@ -87,11 +87,19 @@ export const useBooksStore = defineStore('books', () => {
       error.value = null
       const result = await window.electronAPI.exportBook(id)
       if (!result.success) {
+        // 检查是否是用户取消操作
+        if (result.error === '用户取消了导出操作') {
+          throw new Error(result.error)
+        }
         throw new Error(result.error || '导出书籍失败')
       }
       return result
     } catch (err) {
-      error.value = err instanceof Error ? err.message : '导出书籍失败'
+      const errorMessage = err instanceof Error ? err.message : '导出书籍失败'
+      // 只有在不是用户取消操作时才设置错误信息
+      if (errorMessage !== '用户取消了导出操作') {
+        error.value = errorMessage
+      }
       throw err
     }
   }

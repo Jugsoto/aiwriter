@@ -2,8 +2,8 @@
   <div
     class="window-controls flex justify-between items-center h-8 bg-[var(--window-bg)] border-b border-[var(--border-color)]">
     <div class="flex items-center gap-2 px-3 no-drag">
-      <img src="/logo.png" alt="神笔AI写作" class="w-5 h-5" @error="handleImageError" />
-      <span class="text-sm font-medium text-[var(--text-primary)]">神笔AI写作</span>
+      <img src="/logo.png" alt="神笔写作" class="w-5 h-5" @error="handleImageError" />
+      <span class="text-sm font-medium text-[var(--text-primary)]">神笔写作</span>
     </div>
     <div class="flex-1 drag-area"></div>
     <div class="flex no-drag">

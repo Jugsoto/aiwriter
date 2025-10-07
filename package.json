@@ -1,9 +1,9 @@
 {
   "name": "aiwriter",
   "private": true,
-  "version": "0.9.0",
+  "version": "0.9.1",
   "type": "module",
-  "description": "神笔AI写作",
+  "description": "神笔写作",
   "scripts": {
     "dev": "vite",
     "build": "vue-tsc -b && vite build",
@@ -49,7 +49,7 @@
   },
   "build": {
     "appId": "com.qgming.aiwriter",
-    "productName": "神笔AI写作",
+    "productName": "神笔写作",
     "directories": {
       "output": "dist-app"
     },
@@ -74,7 +74,7 @@
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
-      "shortcutName": "神笔AI写作",
+      "shortcutName": "神笔写作",
       "installerIcon": "public/logo.ico",
       "uninstallerIcon": "public/logo.ico",
       "installerHeaderIcon": "public/logo.ico"

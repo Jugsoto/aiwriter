@@ -39,6 +39,10 @@
       </div>
     </div>
   </div>
+
+  <!-- 错误模态框 -->
+  <ErrorModal :visible="errorModalVisible" :title="errorModalTitle" :message="errorModalMessage"
+    :error-details="errorModalDetails" @update:visible="errorModalVisible = $event" @close="hideErrorModal" />
 </template>
 
 <script setup lang="ts">
@@ -46,6 +50,8 @@ import { useRouter } from 'vue-router'
 import type { Book } from '@/electron.d'
 import { Edit, Trash2, Upload } from 'lucide-vue-next'
 import { useBooksStore } from '@/stores/books'
+import { useErrorModal } from '@/composables'
+import ErrorModal from './shared/ErrorModal.vue'
 
 interface Props {
   book: Book
@@ -59,6 +65,7 @@ const emit = defineEmits<{
 
 const router = useRouter()
 const booksStore = useBooksStore()
+const { visible: errorModalVisible, title: errorModalTitle, message: errorModalMessage, errorDetails: errorModalDetails, showErrorModal, hideErrorModal } = useErrorModal()
 
 function handleView() {
   router.push(`/book/${props.book.id}`)
@@ -79,8 +86,20 @@ async function handleExport() {
     console.log('书籍导出成功')
   } catch (error) {
     console.error('书籍导出失败:', error)
-    // 可以添加错误提示
-    alert('导出书籍失败，请重试')
+    const errorMessage = error instanceof Error ? error.message : String(error)
+
+    // 检查是否是用户取消操作
+    if (errorMessage === '用户取消了导出操作') {
+      // 用户取消操作，不显示错误提示
+      return
+    }
+
+    // 使用 ErrorModal 显示其他错误
+    showErrorModal({
+      title: '导出失败',
+      message: '导出书籍失败，请重试',
+      errorDetails: errorMessage
+    })
   }
 }
 
