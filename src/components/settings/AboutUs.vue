@@ -85,9 +85,6 @@
   <!-- 更新模态窗 -->
   <UpdateModal v-model:visible="showUpdateModal" :localVersion="appVersion" :updateInfo="updateInfo"
     :isForcedUpdate="isForcedUpdate" @update="handleUpdate" />
-
-  <!-- 公告模态窗 -->
-  <AnnouncementModal v-model:visible="showAnnouncementModal" :announcements="validAnnouncements" />
 </template>
 
 <script setup lang="ts">
@@ -101,10 +98,8 @@ import UpdateModal from '@/components/modal/UpdateModal.vue'
 const appVersion = ref('0.9.0')
 const isCheckingUpdates = ref(false)
 const showUpdateModal = ref(false)
-const showAnnouncementModal = ref(false)
 const updateInfo = ref<any>(null)
 const isForcedUpdate = ref(false)
-const validAnnouncements = ref<any[]>([])
 
 // Toast功能
 const { showToast } = useToast()
@@ -116,7 +111,7 @@ const getAppVersion = async () => {
     appVersion.value = version
   } catch (error) {
     console.error('获取应用版本失败:', error)
-    appVersion.value = '0.9.0'
+    appVersion.value = '0.9.1'
   }
 }
 
