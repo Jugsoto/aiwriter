@@ -133,26 +133,12 @@ const checkForUpdates = async () => {
       isForcedUpdate.value = result.remoteVersion.isForced
       showUpdateModal.value = true
 
-      // 获取有效公告
-      validAnnouncements.value = UpdateChecker.getValidAnnouncements(result.announcements)
-      if (validAnnouncements.value.length > 0) {
-        // 延迟显示公告，避免与更新弹窗冲突
-        setTimeout(() => {
-          showAnnouncementModal.value = true
-        }, 500)
-      }
     } else {
       // 无更新
       showToast({
         message: '当前已是最新版本！',
         type: 'info'
       })
-
-      // 获取有效公告
-      validAnnouncements.value = UpdateChecker.getValidAnnouncements(result.announcements)
-      if (validAnnouncements.value.length > 0) {
-        showAnnouncementModal.value = true
-      }
     }
   } catch (error) {
     console.error('检查更新失败:', error)
