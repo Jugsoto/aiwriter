@@ -14,7 +14,6 @@ export interface ChatMessage {
 
 export interface ChatOptions {
   temperature?: number
-  top_p?: number
   max_tokens?: number
   stream?: boolean
 }
@@ -72,7 +71,6 @@ export async function chatCompletion(
       model: model.model,
       messages: messages as OpenAI.ChatCompletionMessageParam[],
       temperature: options.temperature ?? featureConfig.temperature,
-      top_p: options.top_p ?? featureConfig.top_p,
       max_tokens: options.max_tokens,
       stream: false
     })
@@ -145,7 +143,6 @@ export async function* streamChatCompletion(
       featureConfig: {
         feature_name: featureConfig.feature_name,
         temperature: options.temperature ?? featureConfig.temperature,
-        top_p: options.top_p ?? featureConfig.top_p,
         max_tokens: options.max_tokens
       },
       messages: messages.map(msg => ({
@@ -167,7 +164,6 @@ export async function* streamChatCompletion(
       model: model.model,
       messages: messages as OpenAI.ChatCompletionMessageParam[],
       temperature: options.temperature ?? featureConfig.temperature,
-      top_p: options.top_p ?? featureConfig.top_p,
       max_tokens: options.max_tokens,
       stream: true
     }, {

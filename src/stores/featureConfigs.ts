@@ -22,32 +22,26 @@ export const useFeatureConfigsStore = defineStore('featureConfigs', () => {
   const featureDefaults = {
     'basic_model': {
       temperature: 0.7,
-      top_p: 0.9,
       description: '用于基础操作，如章节梗概，方向建议，工具页面等'
     },
     'chapter_planning': {
       temperature: 0.8,
-      top_p: 0.95,
       description: '用于书籍章节的结构规划和内容设计'
     },
     'content_writing': {
       temperature: 0.8,
-      top_p: 0.95,
       description: '用于创作书籍的正文内容'
     },
     'editing_review': {
       temperature: 0.7,
-      top_p: 0.9,
       description: '用于内容的评价、校对和审核工作'
     },
     'setting_maintenance': {
       temperature: 0.7,
-      top_p: 0.9,
       description: '用于维护和管理设定卡片的信息，包括更新、整理和优化设定内容'
     },
     'embedding_model': {
       temperature: 0.1,
-      top_p: 0.5,
       description: '用于文本嵌入和语义搜索任务'
     },
 
@@ -69,7 +63,7 @@ export const useFeatureConfigsStore = defineStore('featureConfigs', () => {
   }
 
   // 更新功能配置
-  async function updateFeatureConfig(featureName: string, data: { provider_id?: number; model_id?: number; temperature?: number; top_p?: number }) {
+  async function updateFeatureConfig(featureName: string, data: { provider_id?: number; model_id?: number; temperature?: number }) {
     try {
       error.value = null
       const updatedConfig = await window.electronAPI.updateFeatureConfig(featureName, data)
@@ -103,7 +97,6 @@ export const useFeatureConfigsStore = defineStore('featureConfigs', () => {
   function getFeatureDefaults(featureName: string) {
     return featureDefaults[featureName as keyof typeof featureDefaults] || {
       temperature: 0.7,
-      top_p: 1.0,
       description: ''
     }
   }

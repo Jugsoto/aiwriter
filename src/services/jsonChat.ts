@@ -10,7 +10,6 @@ import type { ChatMessage } from './chat'
 
 export interface JsonChatOptions {
   temperature?: number
-  top_p?: number
   response_format?: {
     type: 'json_object'
   }
@@ -59,7 +58,6 @@ export async function jsonChatCompletion(
       model: model.model,
       messages: messages as OpenAI.ChatCompletionMessageParam[],
       temperature: options.temperature ?? featureConfig.temperature,
-      top_p: options.top_p ?? featureConfig.top_p,
       response_format: { type: 'json_object' }, // 强制JSON输出
       stream: false
     })

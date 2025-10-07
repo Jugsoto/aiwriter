@@ -45,15 +45,11 @@
             {{ getCurrentModelName() }}
           </div>
 
-          <!-- 第三行：温度和topp参数 -->
+          <!-- 第三行：温度参数 -->
           <div class="flex space-x-6 text-sm">
             <div class="flex items-center space-x-2">
               <span class="text-[var(--text-secondary)]">温度:</span>
               <span class="font-medium">{{ currentConfig.temperature }}</span>
-            </div>
-            <div class="flex items-center space-x-2">
-              <span class="text-[var(--text-secondary)]">Top P:</span>
-              <span class="font-medium">{{ currentConfig.top_p }}</span>
             </div>
           </div>
         </div>
@@ -119,19 +115,6 @@
               </div>
             </div>
 
-            <!-- top_p参数 -->
-            <div class="mb-4">
-              <label class="block text-sm font-medium text-[var(--text-secondary)] mb-2">
-                Top P: {{ currentConfig.top_p }}
-              </label>
-              <input v-model.number="currentConfig.top_p" type="range" min="0" max="1" step="0.1"
-                class="w-full h-2 bg-[var(--bg-secondary)] rounded-lg appearance-none cursor-pointer">
-              <div class="flex justify-between text-xs text-[var(--text-secondary)] mt-1">
-                <span>0.0</span>
-                <span>更集中</span>
-                <span>1.0</span>
-              </div>
-            </div>
 
             <div class="flex justify-end mt-6">
               <button @click="saveCurrentConfig" :disabled="!hasConfigChanges || loading"
@@ -161,16 +144,14 @@ const selectedFeatureName = ref<string>('')
 const currentConfig = ref({
   provider_id: 1,
   model_id: 1,
-  temperature: 0.7,
-  top_p: 0.1
+  temperature: 0.7
 })
 
 // 原始配置（用于比较更改）
 const originalConfig = ref({
   provider_id: 1,
   model_id: 1,
-  temperature: 0.7,
-  top_p: 0.1
+  temperature: 0.7
 })
 
 // 配置是否已保存的标志
@@ -185,8 +166,7 @@ const hasConfigChanges = computed(() => {
   return (
     currentConfig.value.provider_id !== originalConfig.value.provider_id ||
     currentConfig.value.model_id !== originalConfig.value.model_id ||
-    currentConfig.value.temperature !== originalConfig.value.temperature ||
-    currentConfig.value.top_p !== originalConfig.value.top_p
+    currentConfig.value.temperature !== originalConfig.value.temperature
   )
 })
 
@@ -253,8 +233,7 @@ function loadCurrentConfig() {
       currentConfig.value = {
         provider_id: config.provider_id,
         model_id: config.model_id,
-        temperature: config.temperature,
-        top_p: config.top_p
+        temperature: config.temperature
       }
       // 设置已保存标志（数据库初始化时已配置默认供应商和模型）
       isConfigSaved.value = true
@@ -265,8 +244,7 @@ function loadCurrentConfig() {
       currentConfig.value = {
         provider_id: 1,
         model_id: 1,
-        temperature: 0.7,
-        top_p: 0.1
+        temperature: 0.7
       }
       isConfigSaved.value = true
     }
@@ -276,8 +254,7 @@ function loadCurrentConfig() {
     currentConfig.value = {
       provider_id: 1,
       model_id: 1,
-      temperature: 0.7,
-      top_p: 0.1
+      temperature: 0.7
     }
     isConfigSaved.value = true
   }
@@ -301,8 +278,7 @@ async function saveCurrentConfig() {
     const configData = {
       provider_id: currentConfig.value.provider_id,
       model_id: currentConfig.value.model_id,
-      temperature: currentConfig.value.temperature,
-      top_p: currentConfig.value.top_p
+      temperature: currentConfig.value.temperature
     }
     await featureConfigsStore.updateFeatureConfig(selectedFeatureName.value, configData)
     // 更新原始配置

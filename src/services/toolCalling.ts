@@ -53,7 +53,6 @@ export async function chatCompletionWithTools(
   featureConfig: FeatureConfig,
   options: {
     temperature?: number
-    top_p?: number
     max_tokens?: number
     tool_choice?: 'auto' | 'none' | { type: 'function'; function: { name: string } }
   } = {}
@@ -89,7 +88,6 @@ export async function chatCompletionWithTools(
       model: model.model,
       messages: messages as OpenAI.ChatCompletionMessageParam[],
       temperature: options.temperature ?? featureConfig.temperature,
-      top_p: options.top_p ?? featureConfig.top_p,
       max_tokens: options.max_tokens,
       tools: openaiTools,
       tool_choice: options.tool_choice || 'auto',

@@ -146,7 +146,6 @@ function initDatabase() {
         provider_id INTEGER NOT NULL,
         model_id INTEGER NOT NULL,
         temperature REAL DEFAULT 0.7,
-        top_p REAL DEFAULT 1.0,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (provider_id) REFERENCES providers (id) ON DELETE CASCADE,
@@ -400,7 +399,6 @@ interface FeatureConfig {
   provider_id: number
   model_id: number
   temperature: number
-  top_p: number
   created_at: string
   updated_at: string
 }
@@ -410,14 +408,12 @@ interface CreateFeatureConfigData {
   provider_id: number
   model_id: number
   temperature?: number
-  top_p?: number
 }
 
 interface UpdateFeatureConfigData {
   provider_id?: number
   model_id?: number
   temperature?: number
-  top_p?: number
 }
 
 // 用量统计相关操作
@@ -1016,7 +1012,7 @@ function getFeatureConfigByName(featureName: string): FeatureConfig | undefined 
 function createFeatureConfig(data: CreateFeatureConfigData): FeatureConfig {
   const db = getDatabase()
   const stmt = db.prepare(`
-    INSERT INTO feature_configs (feature_name, provider_id, model_id, temperature, top_p)
+    INSERT INTO feature_configs (feature_name, provider_id, model_id, temperature)
     VALUES (?, ?, ?, ?, ?)
   `)
   const result = stmt.run(
@@ -1024,7 +1020,6 @@ function createFeatureConfig(data: CreateFeatureConfigData): FeatureConfig {
     data.provider_id,
     data.model_id,
     data.temperature ?? 0.7,
-    data.top_p ?? 1.0
   )
   
   return getFeatureConfigById(result.lastInsertRowid as number)!
@@ -1060,10 +1055,6 @@ function updateFeatureConfig(featureName: string, data: UpdateFeatureConfigData)
   if (data.temperature !== undefined) {
     fields.push('temperature = ?')
     values.push(data.temperature)
-  }
-  if (data.top_p !== undefined) {
-    fields.push('top_p = ?')
-    values.push(data.top_p)
   }
 
   if (fields.length > 0) {

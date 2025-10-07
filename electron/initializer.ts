@@ -151,42 +151,36 @@ const DEFAULT_FEATURE_CONFIGS_DATA = {
     {
       feature_name: 'basic_model',
       temperature: 0.7,
-      top_p: 0.9,
       provider_name: '神笔AI',
       model_name: 'shenbi-base'
     },
     {
       feature_name: 'chapter_planning',
       temperature: 0.8,
-      top_p: 0.95,
       provider_name: '神笔AI',
       model_name: 'gemini-2.5-flash'
     },
     {
       feature_name: 'content_writing',
       temperature: 0.8,
-      top_p: 0.95,
       provider_name: '神笔AI',
       model_name: 'gemini-2.5-pro'
     },
     {
       feature_name: 'chapter_review',
       temperature: 0.7,
-      top_p: 0.9,
       provider_name: '神笔AI',
       model_name: 'deepseek-v3.1-terminus'
     },
     {
       feature_name: 'embedding_model',
       temperature: 0.7,
-      top_p: 0.9,
       provider_name: '神笔AI',
       model_name: 'shenbi-embedding'
     },
     {
       feature_name: 'setting_maintenance',
       temperature: 0.6,
-      top_p: 0.8,
       provider_name: '神笔AI',
       model_name: 'shenbi-base'
     }
@@ -304,8 +298,7 @@ function initializeFeatureConfigsWithDefaults(): void {
               feature_name: defaultConfig.feature_name,
               provider_id: targetProvider.id,
               model_id: firstModel.id,
-              temperature: defaultConfig.temperature,
-              top_p: defaultConfig.top_p
+              temperature: defaultConfig.temperature
             })
             console.log(`为功能 ${defaultConfig.feature_name} 创建默认配置: 供应商=${targetProvider.name}, 模型=${firstModel.model}`)
           } else {
@@ -314,8 +307,7 @@ function initializeFeatureConfigsWithDefaults(): void {
               feature_name: defaultConfig.feature_name,
               provider_id: targetProvider.id,
               model_id: selectedModel.id,
-              temperature: defaultConfig.temperature,
-              top_p: defaultConfig.top_p
+              temperature: defaultConfig.temperature
             })
             console.log(`为功能 ${defaultConfig.feature_name} 创建默认配置: 供应商=${targetProvider.name}, 模型=${selectedModel.model}`)
           }

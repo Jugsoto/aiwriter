@@ -58,7 +58,7 @@ declare global {
       
       // 功能配置相关API
       getFeatureConfigs: () => Promise<FeatureConfig[]>
-      updateFeatureConfig: (featureName: string, data: { provider_id?: number; model_id?: number; temperature?: number; top_p?: number }) => Promise<FeatureConfig>
+      updateFeatureConfig: (featureName: string, data: { provider_id?: number; model_id?: number; temperature?: number }) => Promise<FeatureConfig>
       
       // 用量统计相关API
       createUsageStatistic: (data: { provider_id: number; model_id: number; feature_name: string; mode: string; input_tokens?: number; output_tokens?: number; total_tokens?: number }) => Promise<UsageStatistic>
@@ -239,7 +239,6 @@ export interface FeatureConfig {
   provider_id: number
   model_id: number
   temperature: number
-  top_p: number
   provider_name?: string
   model_name?: string
   created_at: string

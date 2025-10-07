@@ -552,7 +552,7 @@ ipcMain.handle('get-feature-configs', () => {
   return getAllFeatureConfigs()
 })
 
-ipcMain.handle('update-feature-config', (_event: any, featureName: string, data: { provider_id?: number; model_id?: number; temperature?: number; top_p?: number }) => {
+ipcMain.handle('update-feature-config', (_event: any, featureName: string, data: { provider_id?: number; model_id?: number; temperature?: number }) => {
   return updateFeatureConfig(featureName, data)
 })
 

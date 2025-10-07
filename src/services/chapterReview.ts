@@ -322,7 +322,7 @@ export async function generateChapterReview(
   ]
 
   try {
-    // 使用JSON聊天完成接口，使用数据库配置的温度和top_p参数
+    // 使用JSON聊天完成接口，使用数据库配置的温度参数
     const response: JsonChatResponse = await jsonChatCompletion(messages, featureConfig)
     
     if (!response.json_content) {

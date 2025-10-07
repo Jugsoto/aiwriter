@@ -58,7 +58,7 @@ const api = {
   
   // 功能配置相关API
   getFeatureConfigs: () => ipcRenderer.invoke('get-feature-configs'),
-  updateFeatureConfig: (featureName: string, data: { provider_id?: number; model_id?: number; temperature?: number; top_p?: number }) =>
+  updateFeatureConfig: (featureName: string, data: { provider_id?: number; model_id?: number; temperature?: number }) =>
     ipcRenderer.invoke('update-feature-config', featureName, data),
   
   // 用量统计相关API
