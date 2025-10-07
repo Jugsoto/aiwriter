@@ -230,6 +230,7 @@ interface Props {
   globalSettings?: string
   chapterTitle?: string
   chapterId?: number
+  bookId?: number
 }
 
 interface Emits {
@@ -243,7 +244,8 @@ const props = withDefaults(defineProps<Props>(), {
   chapterContent: '',
   globalSettings: '',
   chapterTitle: '',
-  chapterId: undefined
+  chapterId: undefined,
+  bookId: undefined
 })
 
 const emit = defineEmits<Emits>()
@@ -422,7 +424,8 @@ const loadChapterReview = async () => {
     const context = {
       content: props.chapterContent,
       globalSettings: props.globalSettings,
-      chapterTitle: props.chapterTitle
+      chapterTitle: props.chapterTitle,
+      bookId: props.bookId
     }
 
     reviewResult.value = await generateChapterReview(context, undefined, props.chapterId)
@@ -464,7 +467,8 @@ const handleRetry = async () => {
     const context = {
       content: props.chapterContent,
       globalSettings: props.globalSettings,
-      chapterTitle: props.chapterTitle
+      chapterTitle: props.chapterTitle,
+      bookId: props.bookId
     }
 
     reviewResult.value = await generateChapterReview(context, undefined, props.chapterId)

@@ -31,7 +31,7 @@
     <!-- 章节评估模态窗 -->
     <ChapterReviewModal v-model:visible="chapterReviewModalVisible" :chapter-content="content"
       :global-settings="globalSettings" :chapter-title="currentChapter?.title" :chapter-id="currentChapter?.id"
-      @close="handleChapterReviewClose" />
+      :book-id="currentChapter?.book_id" @close="handleChapterReviewClose" />
 
     <!-- 设定更新完成信息模态窗 -->
     <InfoModal v-model:visible="settingUpdateInfoVisible" :title="settingUpdateInfoTitle"
@@ -202,29 +202,34 @@ const showErrorModal = (message: string, details?: string) => {
 const startGenerateSummary = async () => {
   if (!currentChapter.value || !currentChapter.value.content) return
 
+  // 锁定操作的章节ID，防止操作过程中切换章节导致数据保存错误
+  const targetChapterId = currentChapter.value.id
+  const targetBookId = currentChapter.value.book_id
+  const targetContent = currentChapter.value.content
+
   isGeneratingSummary.value = true
 
   try {
     // 获取当前书籍信息
     const booksStore = useBooksStore()
-    const currentBook = booksStore.books.find((book: any) => book.id === currentChapter.value?.book_id)
+    const currentBook = booksStore.books.find((book: any) => book.id === targetBookId)
 
     // 构建上下文 - 只传递必要参数：章节内容和全局设定
     const context = {
-      content: currentChapter.value.content,
+      content: targetContent,
       globalSettings: currentBook?.global_settings
     }
 
     // 生成梗概
     const summary = await generateChapterSummary(context)
 
-    // 更新章节梗概到数据库
-    await chaptersStore.updateChapter(currentChapter.value.id, {
+    // 更新章节梗概到数据库 - 使用锁定的章节ID
+    await chaptersStore.updateChapter(targetChapterId, {
       summary: summary
     })
 
-    // 更新本地状态
-    if (currentChapter.value) {
+    // 只有当当前显示的章节仍然是操作的目标章节时，才更新本地状态
+    if (currentChapter.value && currentChapter.value.id === targetChapterId) {
       currentChapter.value.summary = summary
     }
 
@@ -317,14 +322,20 @@ const handleUpdateSettingsEnd = (success: boolean, result?: any) => {
 const startChapterReview = async () => {
   if (!currentChapter.value || !currentChapter.value.content) return
 
+  // 锁定操作的章节信息，防止操作过程中切换章节导致数据保存错误
+  // const targetChapterId = currentChapter.value.id
+  const targetBookId = currentChapter.value.book_id
+  // const targetContent = currentChapter.value.content
+  // const targetTitle = currentChapter.value.title
+
   isReviewingChapter.value = true
 
   try {
     // 获取当前书籍的全局设定
-    const currentBook = booksStore.books.find((book: any) => book.id === currentChapter.value?.book_id)
+    const currentBook = booksStore.books.find((book: any) => book.id === targetBookId)
     globalSettings.value = currentBook?.global_settings || ''
 
-    // 显示章节评估模态窗口
+    // 显示章节评估模态窗口，传递锁定的章节信息
     chapterReviewModalVisible.value = true
 
   } catch (error) {

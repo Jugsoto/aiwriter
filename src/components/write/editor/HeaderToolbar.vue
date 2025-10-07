@@ -102,6 +102,9 @@ const isUpdatingSettings = ref(false)
 const updateMemory = async () => {
   if (!props.currentChapter || !props.currentChapter.content) return
 
+  // 锁定操作的章节信息，防止操作过程中切换章节导致数据保存错误
+  const targetChapter = { ...props.currentChapter }
+
   try {
     isUpdatingMemory.value = true
     emit('updateMemoryStart') // 发出记忆更新开始事件
@@ -123,8 +126,8 @@ const updateMemory = async () => {
       type: 'info' as 'info' | 'success' | 'error'
     }
 
-    // 更新章节记忆
-    const result = await memoryService.updateChapterMemory(props.currentChapter, {
+    // 更新章节记忆 - 使用锁定的章节信息
+    const result = await memoryService.updateChapterMemory(targetChapter, {
       onProgress: (progress: number, total: number) => {
         console.log(`更新记忆进度: ${progress}/${total}`)
       },
@@ -156,6 +159,11 @@ const updateMemory = async () => {
 const updateSettings = async () => {
   if (!props.currentChapter || !props.currentChapter.content) return
 
+  // 锁定操作的章节信息，防止操作过程中切换章节导致数据保存错误
+  // const targetChapterId = props.currentChapter.id
+  const targetBookId = props.currentChapter.book_id
+  const targetContent = props.currentChapter.content
+
   try {
     isUpdatingSettings.value = true
     emit('updateSettingsStart') // 发出设定更新开始事件
@@ -164,13 +172,13 @@ const updateSettings = async () => {
     const config = await getSettingUpdateConfig()
 
     // 获取当前书籍的所有设定
-    await settingsStore.loadSettings(props.currentChapter.book_id)
+    await settingsStore.loadSettings(targetBookId)
     const allSettings = settingsStore.settings
 
-    // 构建上下文
+    // 构建上下文 - 使用锁定的章节信息
     const context = {
-      chapterContent: props.currentChapter.content,
-      bookId: props.currentChapter.book_id,
+      chapterContent: targetContent,
+      bookId: targetBookId,
       settings: allSettings
     }
 
