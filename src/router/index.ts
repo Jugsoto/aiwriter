@@ -6,6 +6,7 @@ const Settings = () => import('@/views/Settings.vue')
 const BookView = () => import('@/views/BookView.vue')
 const Prompts = () => import('@/views/Prompts.vue')
 const Announcements = () => import('@/views/Announcements.vue')
+const Generator = () => import('@/views/Generator.vue')
 
 const router = createRouter({
   history: createWebHashHistory(),
@@ -35,6 +36,12 @@ const router = createRouter({
       path: '/announcements',
       name: 'Announcements',
       component: Announcements
+    },
+    {
+      path: '/generator',
+      name: 'Generator',
+      component: Generator,
+      props: route => ({ type: route.query.type })
     },
     {
       path: '/settings',

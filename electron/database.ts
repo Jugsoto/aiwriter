@@ -1013,13 +1013,13 @@ function createFeatureConfig(data: CreateFeatureConfigData): FeatureConfig {
   const db = getDatabase()
   const stmt = db.prepare(`
     INSERT INTO feature_configs (feature_name, provider_id, model_id, temperature)
-    VALUES (?, ?, ?, ?, ?)
+    VALUES (?, ?, ?, ?)
   `)
   const result = stmt.run(
     data.feature_name,
     data.provider_id,
     data.model_id,
-    data.temperature ?? 0.7,
+    data.temperature ?? 0.7
   )
   
   return getFeatureConfigById(result.lastInsertRowid as number)!

@@ -78,7 +78,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { FileText, PenTool, FastForward, Award, HelpCircle } from 'lucide-vue-next'
+import { FileText, PenTool, FastForward, Award, HelpCircle, Lightbulb, BookOpen } from 'lucide-vue-next'
 import PromptCard from '../components/PromptCard.vue'
 import PromptEditModal from '../components/modal/PromptEditModal.vue'
 import InfoModal from '../components/shared/InfoModal.vue'
@@ -110,7 +110,10 @@ const promptCategories = PROMPT_CATEGORIES.map(cat => ({
   icon: cat.key === 'chapter_outline' ? FileText :
     cat.key === 'content_writing' ? PenTool :
       cat.key === 'chapter_continuation' ? FastForward :
-        Award
+        cat.key === 'chapter_review' ? Award :
+          cat.key === 'idea_generator' ? Lightbulb :
+            cat.key === 'book_title_generator' ? BookOpen :
+              FileText
 }))
 
 // 获取当前分类名称

@@ -183,6 +183,12 @@ const DEFAULT_FEATURE_CONFIGS_DATA = {
       temperature: 0.6,
       provider_name: '神笔AI',
       model_name: 'shenbi-base'
+    },
+    {
+      feature_name: 'generator',
+      temperature: 0.8,
+      provider_name: '神笔AI',
+      model_name: 'gemini-2.5-pro'
     }
   ]
 }

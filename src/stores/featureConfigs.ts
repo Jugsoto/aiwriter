@@ -15,6 +15,7 @@ export const useFeatureConfigsStore = defineStore('featureConfigs', () => {
     'chapter_review': '章节评估',
     'setting_maintenance': '设定维护',
     'embedding_model': '嵌入模型',
+    'generator': '生成器',
     
   }
 
@@ -32,7 +33,7 @@ export const useFeatureConfigsStore = defineStore('featureConfigs', () => {
       temperature: 0.8,
       description: '用于创作书籍的正文内容'
     },
-    'editing_review': {
+    'chapter_review': {
       temperature: 0.7,
       description: '用于内容的评价、校对和审核工作'
     },
@@ -43,6 +44,10 @@ export const useFeatureConfigsStore = defineStore('featureConfigs', () => {
     'embedding_model': {
       temperature: 0.1,
       description: '用于文本嵌入和语义搜索任务'
+    },
+    'generator': {
+      temperature: 0.8,
+      description: '用于生成创意脑洞、书名和简介等内容'
     },
 
   }

@@ -52,6 +52,33 @@ const pageTools = ref<Tool[]>([
     type: 'page'
   },
   {
+    id: 'idea-generator',
+    name: '脑洞生成器',
+    icon: 'Lightbulb',
+    description: '生成创意脑洞和灵感',
+    target: '/generator?type=idea',
+    color: 'bg-yellow-100 dark:bg-yellow-900',
+    type: 'page'
+  },
+  {
+    id: 'book-title-generator',
+    name: '书名生成器',
+    icon: 'BookOpen',
+    description: '生成吸引人的书名',
+    target: '/generator?type=book-title',
+    color: 'bg-green-100 dark:bg-green-900',
+    type: 'page'
+  },
+  {
+    id: 'summary-generator',
+    name: '简介生成器',
+    icon: 'FileText',
+    description: '生成作品简介和摘要',
+    target: '/generator?type=summary',
+    color: 'bg-purple-100 dark:bg-purple-900',
+    type: 'page'
+  },
+  {
     id: 'settings',
     name: '设置',
     icon: 'Settings',

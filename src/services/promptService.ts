@@ -191,6 +191,24 @@ export const PROMPT_CATEGORIES = [
     name: '章节评估',
     description: '用于评估章节质量的提示词',
     icon: 'Award'
+  },
+  {
+    key: 'idea_generator',
+    name: '脑洞生成器',
+    description: '用于生成创意脑洞和灵感的提示词',
+    icon: 'Lightbulb'
+  },
+  {
+    key: 'book_title_generator',
+    name: '书名生成器',
+    description: '用于生成书籍名称的提示词',
+    icon: 'BookOpen'
+  },
+  {
+    key: 'summary_generator',
+    name: '简介生成器',
+    description: '用于生成作品简介的提示词',
+    icon: 'FileText'
   }
 ] as const
 
