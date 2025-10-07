@@ -33,7 +33,7 @@
             </div>
           </div>
           <button @click="showAddModal = true"
-            class="bg-[var(--theme-bg)] text-[var(--theme-text)] px-4 py-2 rounded-lg hover:opacity-90 transition-opacity flex items-center">
+            class="bg-[var(--theme-bg)] text-[var(--theme-text)] px-4 py-2 rounded-xl hover:opacity-90 transition-opacity flex items-center">
             新增提示词
           </button>
         </div>

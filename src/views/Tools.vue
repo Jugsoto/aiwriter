@@ -1,5 +1,5 @@
 <template>
-  <div class="p-5 h-full overflow-y-auto">
+  <div class="p-5 h-full overflow-y-auto bg-[var(--bg-secondary)]">
     <!-- 页面标题 -->
     <h1 class="text-2xl font-semibold text-[var(--text-primary)] mb-6">应用中心</h1>
 
@@ -33,6 +33,15 @@ const router = useRouter()
 
 // 内部页面工具
 const pageTools = ref<Tool[]>([
+  {
+    id: 'announcements',
+    name: '公告中心',
+    icon: 'Megaphone',
+    description: '查看最新公告和通知',
+    target: '/announcements',
+    color: 'bg-red-100 dark:bg-red-900',
+    type: 'page'
+  },
   {
     id: 'prompts',
     name: '提示词库',

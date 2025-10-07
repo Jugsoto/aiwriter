@@ -5,12 +5,12 @@
       <h1 class="text-2xl font-semibold text-[var(--text-primary)]">作品管理</h1>
       <div class="flex items-center gap-2">
         <button @click="handleImport"
-          class="flex items-center gap-2 px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors">
+          class="flex items-center gap-2 px-4 py-2 bg-gray-600 text-white rounded-xl hover:bg-gray-700 transition-colors">
           <Download class="w-4 h-4" />
           导入书籍
         </button>
         <button @click="showAddModal = true"
-          class="flex items-center gap-2 px-4 py-2 bg-[var(--theme-bg)] text-white rounded-lg hover:bg-blue-700 transition-colors">
+          class="flex items-center gap-2 px-4 py-2 bg-[var(--theme-bg)] text-white rounded-xl hover:bg-blue-700 transition-colors">
           新增书籍
         </button>
       </div>

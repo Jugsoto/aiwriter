@@ -81,15 +81,33 @@
     </div>
 
   </div>
+
+  <!-- 更新模态窗 -->
+  <UpdateModal v-model:visible="showUpdateModal" :localVersion="appVersion" :updateInfo="updateInfo"
+    :isForcedUpdate="isForcedUpdate" @update="handleUpdate" />
+
+  <!-- 公告模态窗 -->
+  <AnnouncementModal v-model:visible="showAnnouncementModal" :announcements="validAnnouncements" />
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { Globe, BookOpen, PenTool, Download, RefreshCw, Tag } from 'lucide-vue-next'
+import { UpdateChecker } from '@/services/updateChecker'
+import { useToast } from '@/composables/useToast'
+import UpdateModal from '@/components/modal/UpdateModal.vue'
 
 // 响应式数据
-const appVersion = ref('1.0.0')
+const appVersion = ref('0.9.0')
 const isCheckingUpdates = ref(false)
+const showUpdateModal = ref(false)
+const showAnnouncementModal = ref(false)
+const updateInfo = ref<any>(null)
+const isForcedUpdate = ref(false)
+const validAnnouncements = ref<any[]>([])
+
+// Toast功能
+const { showToast } = useToast()
 
 // 获取应用版本信息
 const getAppVersion = async () => {
@@ -98,7 +116,7 @@ const getAppVersion = async () => {
     appVersion.value = version
   } catch (error) {
     console.error('获取应用版本失败:', error)
-    appVersion.value = '1.0.0'
+    appVersion.value = '0.9.0'
   }
 }
 
@@ -107,18 +125,51 @@ const getAppVersion = async () => {
 const checkForUpdates = async () => {
   isCheckingUpdates.value = true
   try {
-    // 这里可以添加实际的更新检查逻辑
-    console.log('检查更新中...')
-    // 模拟检查过程
-    await new Promise(resolve => setTimeout(resolve, 2000))
-    console.log('当前已是最新版本')
-    // 这里可以添加提示用户的逻辑
+    const result = await UpdateChecker.checkForUpdates()
+
+    if (result.hasUpdate && result.remoteVersion) {
+      // 有更新
+      updateInfo.value = result.remoteVersion
+      isForcedUpdate.value = result.remoteVersion.isForced
+      showUpdateModal.value = true
+
+      // 获取有效公告
+      validAnnouncements.value = UpdateChecker.getValidAnnouncements(result.announcements)
+      if (validAnnouncements.value.length > 0) {
+        // 延迟显示公告，避免与更新弹窗冲突
+        setTimeout(() => {
+          showAnnouncementModal.value = true
+        }, 500)
+      }
+    } else {
+      // 无更新
+      showToast({
+        message: '当前已是最新版本！',
+        type: 'info'
+      })
+
+      // 获取有效公告
+      validAnnouncements.value = UpdateChecker.getValidAnnouncements(result.announcements)
+      if (validAnnouncements.value.length > 0) {
+        showAnnouncementModal.value = true
+      }
+    }
   } catch (error) {
     console.error('检查更新失败:', error)
+    showToast({
+      message: '检查更新失败，请稍后重试',
+      type: 'error'
+    })
   } finally {
     isCheckingUpdates.value = false
   }
 }
+
+// 处理更新
+const handleUpdate = () => {
+  showUpdateModal.value = false
+}
+
 
 // 打开官方网站
 const openOfficialWebsite = async () => {

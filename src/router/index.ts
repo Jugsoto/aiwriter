@@ -5,6 +5,7 @@ const Tools = () => import('@/views/Tools.vue')
 const Settings = () => import('@/views/Settings.vue')
 const BookView = () => import('@/views/BookView.vue')
 const Prompts = () => import('@/views/Prompts.vue')
+const Announcements = () => import('@/views/Announcements.vue')
 
 const router = createRouter({
   history: createWebHashHistory(),
@@ -29,6 +30,11 @@ const router = createRouter({
       path: '/prompts',
       name: 'Prompts',
       component: Prompts
+    },
+    {
+      path: '/announcements',
+      name: 'Announcements',
+      component: Announcements
     },
     {
       path: '/settings',
