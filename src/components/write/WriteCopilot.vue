@@ -6,7 +6,7 @@
       @settings-saved="handleSettingsSaved" />
 
     <MessageList :messages="messages" :is-loading="isLoading" @update:message="handleMessageUpdate"
-      @start-writing="handleStartWriting" ref="messageListRef" />
+      @start-writing="handleStartWriting" @regenerate-message="handleRegenerateMessage" ref="messageListRef" />
 
     <InputArea :disabled="isLoading" :starred-settings="starredSettings" :settings-loading="settingsLoading"
       :book-id="bookId" :selected-settings="selectedSettings" :messages="messages" @send-message="handleSendMessage"
@@ -544,6 +544,56 @@ const handleMessageUpdate = (updatedMessage: Message) => {
     saveConversation()
   }
 
+}
+
+// 处理重新生成消息
+const handleRegenerateMessage = async (message: Message) => {
+  // 找到要重新生成的消息的索引
+  const messageIndex = messages.value.findIndex(msg => msg.id === message.id)
+  if (messageIndex === -1) return
+
+  // 找到该消息之前的用户消息
+  let userMessage: Message | null = null
+  for (let i = messageIndex - 1; i >= 0; i--) {
+    if (messages.value[i].role === 'user') {
+      userMessage = messages.value[i]
+      break
+    }
+  }
+
+  if (!userMessage) {
+    console.error('找不到对应的用户消息')
+    return
+  }
+
+  // 移除当前AI消息及其相关的推理消息
+  const messagesToRemove: Message[] = []
+
+  // 检查是否有推理消息
+  if (messageIndex > 0 && messages.value[messageIndex - 1].role === 'assistant' &&
+    messages.value[messageIndex - 1].isReasoning) {
+    messagesToRemove.push(messages.value[messageIndex - 1])
+  }
+
+  // 添加当前AI消息
+  messagesToRemove.push(message)
+
+  // 从消息列表中移除这些消息
+  messages.value = messages.value.filter(msg => !messagesToRemove.includes(msg))
+
+  // 构建增强的消息上下文
+  const enhancedContext: EnhancedMessageContext = {
+    userInput: userMessage.content,
+    selectedSettings: selectedSettings.value.map(setting => ({
+      name: setting.name,
+      content: setting.content,
+      status: setting.status,
+      type: setting.type
+    }))
+  }
+
+  // 重新生成回复
+  await generateResponse(userMessage.content, enhancedContext)
 }
 
 // 处理开始写作事件

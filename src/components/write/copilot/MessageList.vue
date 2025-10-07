@@ -47,6 +47,11 @@
           class="flex justify-start mb-3">
           <div class="max-w-[80%] bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-2xl p-2">
             <div class="flex items-center gap-2">
+              <button @click="handleRegenerate(message)"
+                class="flex items-center p-1 text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)] rounded transition-colors"
+                title="重新生成">
+                <RefreshCw class="w-4 h-4" />
+              </button>
               <button @click="handleEdit(message)"
                 class="flex items-center p-1 text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)] rounded transition-colors"
                 title="编辑消息">
@@ -97,7 +102,7 @@
 <script setup lang="ts">
 import { ref, watch, nextTick } from 'vue'
 import { marked } from 'marked'
-import { Edit, Copy, ChevronDown, PenTool } from 'lucide-vue-next'
+import { Edit, Copy, ChevronDown, PenTool, RefreshCw } from 'lucide-vue-next'
 import type { Message, MessageListProps } from '../../../utils/types'
 import { useToast } from '@/composables'
 import MessageEditModal from '../../modal/MessageEditModal.vue'
@@ -107,6 +112,7 @@ const props = defineProps<MessageListProps>()
 const emit = defineEmits<{
   'update:message': [message: Message]
   'start-writing': [message: Message]
+  'regenerate-message': [message: Message]
 }>()
 const messagesContainer = ref<HTMLElement>()
 const { toastVisible, toastMessage, toastType, showToast } = useToast()
@@ -169,6 +175,11 @@ const toggleReasoning = (message: Message) => {
       isUserAction.value = false
     }, 100)
   }
+}
+
+// 处理重新生成按钮点击
+const handleRegenerate = (message: Message) => {
+  emit('regenerate-message', message)
 }
 
 // 处理编辑按钮点击
