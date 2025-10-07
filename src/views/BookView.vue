@@ -7,7 +7,7 @@
     <div class="flex-1 flex overflow-hidden">
       <!-- 左侧章节管理 -->
       <div ref="leftPanel" class="bg-[var(--bg-secondary)] relative" :style="{ width: leftWidth + 'px' }">
-        <ChapterManager :book-id="bookId" />
+        <ChapterManager :book-id="bookId" :is-chapter-locked="isChapterLocked" :locked-chapter-id="lockedChapterId" />
       </div>
 
       <!-- 左侧分隔条 -->
@@ -67,6 +67,10 @@ const showGlobalSettingsModal = ref(false)
 const showSettingsModal = ref(false)
 const currentSettingType = ref<'character' | 'worldview' | 'entry'>('character')
 const editorRef = ref<InstanceType<typeof Editor>>()
+
+// 检查是否有章节被锁定
+const isChapterLocked = ref(false)
+const lockedChapterId = ref<number | null>(null)
 
 // 计算属性
 const bookId = computed(() => {
@@ -309,8 +313,6 @@ onUnmounted(() => {
 
 // 处理开始写作事件
 const handleStartWriting = async (message: any) => {
-  console.log('BookView: 处理开始写作事件', message)
-
   // 调用编辑器的流式写作功能
   if (editorRef.value) {
     try {
@@ -324,6 +326,29 @@ const handleStartWriting = async (message: any) => {
     }
   }
 }
+
+// 监听流式写作状态变化
+let streamingStatusHandler: EventListener | null = null
+
+onMounted(() => {
+  // 监听流式写作状态变化
+  streamingStatusHandler = ((event: Event) => {
+    const customEvent = event as CustomEvent
+    const { isLocked, chapterId } = customEvent.detail
+
+    isChapterLocked.value = isLocked
+    lockedChapterId.value = chapterId
+  }) as EventListener
+
+  window.addEventListener('streaming-status-changed', streamingStatusHandler)
+})
+
+onUnmounted(() => {
+  if (streamingStatusHandler) {
+    window.removeEventListener('streaming-status-changed', streamingStatusHandler)
+    streamingStatusHandler = null
+  }
+})
 </script>
 
 <style scoped>

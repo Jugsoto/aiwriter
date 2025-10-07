@@ -98,6 +98,9 @@ const isReviewingChapter = ref(false)
 const chapterReviewModalVisible = ref(false)
 const globalSettings = ref('')
 
+// 流式写作章节锁定
+const lockedChapterId = ref<number | null>(null)
+
 // 设定更新信息模态窗状态
 const settingUpdateInfoVisible = ref(false)
 const settingUpdateInfoTitle = ref('')
@@ -148,6 +151,11 @@ const handleContentChange = () => {
 
 // 保存内容
 const saveContent = async () => {
+  // 如果有章节被锁定且正在流式写作，则不允许手动保存
+  if (lockedChapterId.value && isStreaming.value) {
+    return
+  }
+
   if (!currentChapter.value || !hasChanges.value || saving.value) return
 
   saving.value = true
@@ -367,6 +375,20 @@ const startStreamingWriting = (streamGenerator: AsyncGenerator<string, void, unk
     return
   }
 
+  // 锁定当前章节，防止在流式写作过程中切换章节
+  if (currentChapter.value) {
+    lockedChapterId.value = currentChapter.value.id
+
+    // 通知外部组件流式写作状态变化
+    const event = new CustomEvent('streaming-status-changed', {
+      detail: {
+        isLocked: true,
+        chapterId: lockedChapterId.value
+      }
+    })
+    window.dispatchEvent(event)
+  }
+
   // 监听流式状态变化 - 必须在开始流式输出之前注册
   const updateStreamingStatus = (streaming: boolean, type: string | null) => {
     isStreaming.value = streaming && type === 'writing'
@@ -388,6 +410,18 @@ const startStreamingWriting = (streamGenerator: AsyncGenerator<string, void, unk
       if (streamingManager.isStreaming() && streamingManager.getCurrentType() === 'writing') {
         streamingManager.stopStreaming()
       }
+      // 解锁章节
+      const unlockedChapterId = lockedChapterId.value
+      lockedChapterId.value = null
+
+      // 通知外部组件流式写作状态变化
+      const event = new CustomEvent('streaming-status-changed', {
+        detail: {
+          isLocked: false,
+          chapterId: unlockedChapterId
+        }
+      })
+      window.dispatchEvent(event)
     })
   } catch (error) {
     console.error('启动流式写作失败:', error)
@@ -396,6 +430,18 @@ const startStreamingWriting = (streamGenerator: AsyncGenerator<string, void, unk
     if (controller) {
       controller.abort()
     }
+    // 解锁章节
+    const unlockedChapterId = lockedChapterId.value
+    lockedChapterId.value = null
+
+    // 通知外部组件流式写作状态变化
+    const event = new CustomEvent('streaming-status-changed', {
+      detail: {
+        isLocked: false,
+        chapterId: unlockedChapterId
+      }
+    })
+    window.dispatchEvent(event)
   }
 }
 
@@ -410,14 +456,27 @@ const processStreamContent = async (
   signal: AbortSignal
 ) => {
   try {
-    // 获取当前内容
-    let currentContent = content.value
+    // 获取锁定的章节ID
+    const targetChapterId = lockedChapterId.value
+    if (!targetChapterId) {
+      throw new Error('没有锁定的章节，无法进行流式写作')
+    }
+
+    // 获取锁定的章节内容
+    let currentContent = ''
+    if (targetChapterId === currentChapter.value?.id) {
+      // 如果锁定的章节就是当前显示的章节，使用当前内容
+      currentContent = content.value
+    } else {
+      // 如果当前显示的章节不是锁定的章节，从数据库获取锁定章节的内容
+      const lockedChapter = await chaptersStore.getChapter(targetChapterId)
+      currentContent = lockedChapter?.content || ''
+    }
 
     // 在内容末尾添加换行，确保新内容从新段落开始（避免双换行导致的空白段）
     if (currentContent && !currentContent.endsWith('\n')) {
       currentContent += '\n'
     }
-
 
     // 流式接收内容
     for await (const contentChunk of streamGenerator) {
@@ -430,7 +489,10 @@ const processStreamContent = async (
       currentContent += contentChunk
 
       // 更新内容（触发响应式更新）
-      content.value = currentContent
+      // 只有当锁定的章节是当前显示的章节时，才更新界面显示
+      if (targetChapterId === currentChapter.value?.id) {
+        content.value = currentContent
+      }
 
       // 每个chunk处理后都检查终止信号
       if (signal.aborted) {
@@ -439,7 +501,21 @@ const processStreamContent = async (
     }
 
     // 流式输出完成后，清理空白段落
-    content.value = cleanEmptyParagraphs(content.value)
+    currentContent = cleanEmptyParagraphs(currentContent)
+
+    // 保存内容到锁定的章节
+    await chaptersStore.updateChapter(targetChapterId, {
+      content: currentContent
+    })
+
+    // 如果锁定的章节是当前显示的章节，更新界面显示
+    if (targetChapterId === currentChapter.value?.id) {
+      content.value = currentContent
+      originalContent.value = currentContent
+      hasChanges.value = false
+    }
+
+    // 流式写作完成，内容已保存到章节
 
   } catch (error) {
     console.error('流式写作处理失败:', error)
@@ -455,7 +531,9 @@ const processStreamContent = async (
 defineExpose({
   startStreamingWriting,
   handleStopStreaming,
-  handleMemorySearchStatus
+  handleMemorySearchStatus,
+  isChapterLocked: () => lockedChapterId.value !== null,
+  getLockedChapterId: () => lockedChapterId.value
 })
 
 // 监听流式写作事件

@@ -77,6 +77,9 @@
     <!-- 梗概编辑模态窗口 -->
     <SummaryModal v-model:visible="showSummaryModalFlag" :initial-data="{ summary: editingChapter?.summary || '' }"
       @confirm="handleUpdateSummary" @cancel="showSummaryModalFlag = false" />
+
+    <!-- Toast 提示 -->
+    <Toast v-model:visible="toastVisible" :message="toastMessage" :type="toastType" />
   </div>
 </template>
 
@@ -84,18 +87,25 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { Plus, Edit, Trash2, FileText, ArrowUpDown } from 'lucide-vue-next'
 import { useChaptersStore } from '@/stores/chapters'
-import { showConfirm } from '@/composables'
+import { showConfirm, useToast } from '@/composables'
 import type { Chapter } from '@/electron.d'
 import ChapterModal from '@/components/modal/ChapterModal.vue'
 import SummaryModal from '@/components/modal/SummaryModal.vue'
+import Toast from '@/components/shared/Toast.vue'
 
 interface Props {
   bookId: number
+  isChapterLocked?: boolean
+  lockedChapterId?: number | null
 }
 
-const props = defineProps<Props>()
+const props = withDefaults(defineProps<Props>(), {
+  isChapterLocked: false,
+  lockedChapterId: null
+})
 
 const chaptersStore = useChaptersStore()
+const { toastVisible, toastMessage, toastType, showToast } = useToast()
 
 // 计算属性
 const chapters = computed(() => chaptersStore.chapters)
@@ -155,6 +165,17 @@ const getChapterDisplayNumber = (index: number) => {
 
 // 选择章节
 const selectChapter = (chapter: Chapter) => {
+  // 检查是否有正在进行的流式写作
+  if (props.isChapterLocked && props.lockedChapterId !== null) {
+    // 如果有章节被锁定，显示提示并阻止切换
+    showToast({
+      message: '写作中，请等待完成后再切换章节',
+      type: 'info'
+    })
+    return
+  }
+
+  // 如果没有锁定，正常切换章节
   chaptersStore.setCurrentChapter(chapter)
 }
 
