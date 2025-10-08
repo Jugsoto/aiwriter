@@ -43,15 +43,6 @@ const pageTools = ref<Tool[]>([
     type: 'page'
   },
   {
-    id: 'prompts',
-    name: '提示词库',
-    icon: 'MessageSquareText',
-    description: '管理和使用AI提示词',
-    target: '/prompts',
-    color: 'bg-blue-100 dark:bg-blue-900',
-    type: 'page'
-  },
-  {
     id: 'idea-generator',
     name: '脑洞生成器',
     icon: 'Lightbulb',
@@ -76,15 +67,6 @@ const pageTools = ref<Tool[]>([
     description: '生成作品简介和摘要',
     target: '/generator?type=summary',
     color: 'bg-purple-100 dark:bg-purple-900',
-    type: 'page'
-  },
-  {
-    id: 'settings',
-    name: '设置',
-    icon: 'Settings',
-    description: '应用设置和配置',
-    target: '/settings',
-    color: 'bg-gray-100 dark:bg-gray-900',
     type: 'page'
   },
 ])
