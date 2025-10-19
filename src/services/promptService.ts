@@ -181,9 +181,9 @@ export const PROMPT_CATEGORIES = [
     icon: 'PenTool'
   },
   {
-    key: 'chapter_continuation',
-    name: '章节续写',
-    description: '用于续写章节内容的提示词',
+    key: 'chapter_expansion',
+    name: '章节扩写',
+    description: '用于将简略内容扩写成完整章节的提示词',
     icon: 'FastForward'
   },
   {

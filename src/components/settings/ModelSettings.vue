@@ -91,8 +91,16 @@
                 <label class="block text-sm font-medium text-[var(--text-secondary)] mb-2">
                   Key
                 </label>
-                <input v-model="currentProvider.key" type="password"
-                  class="w-full px-3 py-2 bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-lg text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--theme-bg)] transition-colors" />
+                <div class="relative">
+                  <input v-model="currentProvider.key" :type="showKey ? 'text' : 'password'"
+                    class="w-full px-3 py-2 pr-10 bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-lg text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--theme-bg)] transition-colors" />
+                  <button type="button" @click="showKey = !showKey"
+                    class="absolute right-2 top-1/2 transform -translate-y-1/2 p-1 text-[var(--text-secondary)] hover:text-[var(--theme-bg)] transition-colors"
+                    title="显示/隐藏密钥">
+                    <Eye v-if="!showKey" class="w-4 h-4" />
+                    <EyeOff v-else class="w-4 h-4" />
+                  </button>
+                </div>
               </div>
             </div>
             <div class="flex justify-end mt-4 space-x-3">
@@ -194,7 +202,7 @@ import FetchModelsModal from '@/components/modal/FetchModelsModal.vue'
 import Toast from '@/components/shared/Toast.vue'
 import ErrorModal from '@/components/shared/ErrorModal.vue'
 import InfoModal from '@/components/shared/InfoModal.vue'
-import { Plus, X, HelpCircle, Brain, Eye, Zap, Database, Layers, Gift } from 'lucide-vue-next'
+import { Plus, X, HelpCircle, Brain, Eye, EyeOff, Zap, Database, Layers, Gift } from 'lucide-vue-next'
 import { showConfirm } from '@/composables/useConfirm'
 import { testConnection } from '@/services/testConnection'
 import { fetchModelsFromService as fetchModelsService } from '@/services/fetchModels'
@@ -218,6 +226,9 @@ const errorModalDetails = ref('')
 
 // 获取的模型列表
 const fetchedModels = ref<string[]>([])
+
+// 密钥显示状态
+const showKey = ref(false)
 
 // 当前编辑的供应商数据
 const currentProvider = ref<Partial<Provider>>({

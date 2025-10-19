@@ -109,7 +109,7 @@ const promptCategories = PROMPT_CATEGORIES.map(cat => ({
   ...cat,
   icon: cat.key === 'chapter_outline' ? FileText :
     cat.key === 'content_writing' ? PenTool :
-      cat.key === 'chapter_continuation' ? FastForward :
+      cat.key === 'chapter_expansion' ? FastForward :
         cat.key === 'chapter_review' ? Award :
           cat.key === 'idea_generator' ? Lightbulb :
             cat.key === 'book_title_generator' ? BookOpen :
