@@ -89,14 +89,14 @@
       <div class="flex-1 flex flex-col h-full relative transition-all duration-300 ease-in-out"
         :class="{ 'ml-0': isSidebarCollapsed, 'ml-64': !isSidebarCollapsed }" style="min-width: 0;">
 
-        <!-- 消息列表容器（用于居中） -->
-        <div class="flex-1 flex items-center justify-center relative" style="min-width: 0;">
-          <!-- 消息列表（居中的主体区域） -->
-          <div class="absolute inset-0 overflow-y-auto pb-32" ref="messageContainer" style="right: 0;">
-            <div class="flex flex-col items-center justify-center min-h-full p-4">
+        <!-- 消息列表容器 -->
+        <div class="flex-1 flex items-start justify-center relative" style="min-width: 0;">
+          <!-- 消息列表（主体区域） -->
+          <div class="absolute inset-0 overflow-y-auto pb-40" ref="messageContainer" style="right: 0;">
+            <div class="flex flex-col items-center justify-start min-h-full p-4 pt-8">
               <div class="w-full max-w-4xl message-content" style="max-width: 900px;">
                 <div v-if="currentConversation?.messages.length === 0"
-                  class="flex flex-col items-center justify-center h-full text-[var(--text-secondary)] py-12">
+                  class="flex flex-col items-center justify-center min-h-[60vh] text-[var(--text-secondary)] py-12">
                   <div class="mb-6">
                     <Lightbulb v-if="generatorType === 'idea'"
                       class="w-16 h-16 mx-auto text-[var(--text-secondary)] opacity-60" />
@@ -196,15 +196,15 @@
         </div>
       </div>
       <!-- 悬浮输入区域（绝对定位在底部） -->
-      <div class="absolute bottom-0 left-0 right-0 flex justify-center p-4 z-10 transition-all duration-300 ease-in-out"
+      <div class="absolute bottom-0 left-0 right-0 flex justify-center p-3 z-10 transition-all duration-300 ease-in-out"
         :class="{ 'pl-4': isSidebarCollapsed, 'pl-68': !isSidebarCollapsed }" style="right: 0;">
         <!-- 输入区域（圆角矩形，悬浮效果） -->
         <div
-          class="w-full max-w-4xl bg-[var(--bg-primary)] rounded-2xl border border-[var(--border-color)] p-4 message-content"
+          class="w-full max-w-4xl bg-[var(--bg-primary)] rounded-2xl border border-[var(--border-color)] p-3 message-content"
           style="max-width: 900px;">
           <div class="flex gap-2">
             <textarea v-model="inputText" @keydown.enter.prevent="handleEnterKey" placeholder="输入消息..."
-              :disabled="isLoading" rows="3"
+              :disabled="isLoading" rows="2"
               class="flex-1 px-4 py-2 bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--theme-bg)] text-[var(--text-primary)] placeholder-[var(--text-secondary)] resize-none transition-all duration-300 focus:border-[var(--theme-bg)]"></textarea>
             <div class="flex flex-col gap-2">
               <button @click="handleSendMessage" :disabled="isLoading || !inputText.trim()"
