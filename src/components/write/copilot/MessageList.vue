@@ -9,8 +9,9 @@
           <div class="max-w-[80%] bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-2xl">
             <!-- 推理消息头部（可点击展开/收起） -->
             <div
-              class="flex items-center justify-between px-4 py-2 cursor-pointer hover:bg-[var(--bg-hover)] rounded-t-2xl"
-              @click="toggleReasoning(message)">
+              class="flex items-center justify-between px-4 py-2 rounded-t-2xl"
+              :class="{ 'cursor-pointer hover:bg-[var(--bg-hover)]': !isMemorySearchMessage(message) }"
+              @click="!isMemorySearchMessage(message) && toggleReasoning(message)">
               <div class="flex items-center gap-2">
                 <div class="flex space-x-1" v-if="message.isReasoning">
                   <div class="w-2 h-2 bg-[var(--text-tertiary)] rounded-full animate-bounce"
@@ -23,7 +24,8 @@
                   {{ getReasoningTitle(message) }}
                 </span>
               </div>
-              <ChevronDown v-if="!message.isReasoning" class="w-4 h-4 text-[var(--text-tertiary)] transition-transform"
+              <ChevronDown v-if="!message.isReasoning && !isMemorySearchMessage(message)"
+                class="w-4 h-4 text-[var(--text-tertiary)] transition-transform"
                 :class="{ 'rotate-180': message.showReasoning }" />
             </div>
             <!-- 推理内容 -->
@@ -147,6 +149,14 @@ const renderMarkdown = (content: string): string => {
   }
 }
 
+// 判断是否是记忆搜索消息
+const isMemorySearchMessage = (message: Message): boolean => {
+  return !!(message.reasoningContent?.includes('搜索') ||
+           message.reasoningContent?.includes('记忆') ||
+           message.reasoningContent?.includes('搜索完成') ||
+           message.reasoningContent?.includes('找到'))
+}
+
 // 获取推理消息标题
 const getReasoningTitle = (message: Message): string => {
   if (message.isReasoning) {
@@ -156,9 +166,9 @@ const getReasoningTitle = (message: Message): string => {
     }
     return '深度思考中...'
   }
-  // 检查是否是搜索完成消息
+  // 检查是否是搜索完成消息 - 简化显示，不显示详细搜索结果
   if (message.reasoningContent?.includes('搜索完成') || message.reasoningContent?.includes('找到')) {
-    return '记忆搜索'
+    return '搜索完成'
   }
   return '思考过程'
 }
@@ -282,11 +292,28 @@ const checkStreamingEnd = (messages: Message[]): boolean => {
 watch(() => props.messages, (newMessages) => {
   newMessages.forEach(message => {
     if (message.role === 'assistant' && message.isReasoning && message.reasoningContent) {
-      // 正在推理时自动展开
-      message.showReasoning = true
+      // 检查是否是记忆搜索相关的消息
+      const isMemorySearch = message.reasoningContent?.includes('搜索') ||
+                            message.reasoningContent?.includes('记忆')
+
+      if (isMemorySearch) {
+        // 记忆搜索时不展开显示
+        message.showReasoning = false
+      } else {
+        // 其他推理过程正常展开
+        message.showReasoning = true
+      }
     } else if (message.role === 'assistant' && !message.isReasoning && message.content) {
       // 开始输出正式内容时自动收起推理消息
       message.showReasoning = false
+    } else if (message.role === 'assistant' && message.reasoningContent) {
+      // 检查是否是记忆搜索完成的消息
+      const isMemorySearchComplete = message.reasoningContent?.includes('搜索完成') ||
+                                     message.reasoningContent?.includes('找到')
+      if (isMemorySearchComplete) {
+        // 记忆搜索完成后不展开显示
+        message.showReasoning = false
+      }
     }
   })
 }, { deep: true })
