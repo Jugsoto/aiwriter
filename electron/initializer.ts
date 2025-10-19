@@ -19,7 +19,7 @@ const DEFAULT_PROVIDERS_DATA = {
         { model: "shenbi-embedding", tags: "embedding" },
         { model: "gemini-2.5-flash", tags: "tool,eye,think" },
         { model: "gemini-2.5-pro", tags: "tool,eye,think" },
-        { model: "deepseek-v3.1-terminus", tags: "tool" },
+        { model: "deepseek-v3.2", tags: "tool" },
         { model: "gpt-5-mini", tags: "tool" }
       ]
     },
@@ -158,7 +158,7 @@ const DEFAULT_FEATURE_CONFIGS_DATA = {
       feature_name: 'chapter_planning',
       temperature: 0.8,
       provider_name: '神笔AI',
-      model_name: 'gemini-2.5-flash'
+      model_name: 'deepseek-v3.2'
     },
     {
       feature_name: 'content_writing',
@@ -170,7 +170,7 @@ const DEFAULT_FEATURE_CONFIGS_DATA = {
       feature_name: 'chapter_review',
       temperature: 0.7,
       provider_name: '神笔AI',
-      model_name: 'deepseek-v3.1-terminus'
+      model_name: 'deepseek-v3.2'
     },
     {
       feature_name: 'embedding_model',
@@ -188,7 +188,7 @@ const DEFAULT_FEATURE_CONFIGS_DATA = {
       feature_name: 'generator',
       temperature: 0.8,
       provider_name: '神笔AI',
-      model_name: 'gemini-2.5-pro'
+      model_name: 'gemini-2.5-flash'
     }
   ]
 }
