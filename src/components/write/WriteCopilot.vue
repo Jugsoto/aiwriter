@@ -259,6 +259,7 @@ const buildGenerationContext = async (enhancedContext?: EnhancedMessageContext) 
 
   return {
     content: '',
+    userInput: enhancedContext?.userInput || '', // 添加用户输入内容
     previousChapterContent,
     recentChapterSummaries,
     globalSettings,

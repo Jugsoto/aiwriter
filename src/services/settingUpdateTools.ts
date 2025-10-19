@@ -27,13 +27,13 @@ export const readSettingTool = {
   type: 'function' as const,
   function: {
     name: 'read_setting',
-    description: '读取指定ID的设定详细信息',
+    description: '深度读取指定ID的设定详细信息。在更新任何设定之前必须先使用此工具了解现有内容。重点关注：1）设定的当前发展状态和等级 2）与其他设定的关联关系 3）可能的变化方向和升级空间 4）需要补充或更新的信息点。支持批量读取多个关联设定以分析整体状况。',
     parameters: {
       type: 'object',
       properties: {
         setting_id: {
           type: 'number',
-          description: '要读取的设定ID'
+          description: '要读取的设定ID。请确保在调用update_setting之前先读取设定以了解现有内容结构。'
         }
       },
       required: ['setting_id']
@@ -48,25 +48,25 @@ export const updateSettingTool = {
   type: 'function' as const,
   function: {
     name: 'update_setting',
-    description: '更新现有设定的内容、状态等信息',
+    description: '智能更新现有设定的内容、状态等信息。重要：1）只能追加和补充信息，严禁删除或覆盖已有内容 2）绝对不能修改starred参数 3）人物设定按【核心基础】→【身份能力】→【关系网络】→【成长轨迹】→【当前状态】顺序更新 4）世界观设定按【核心基础】→【势力格局】→【地理探索】→【历史背景】→【当前局势】顺序更新 5）使用清晰分隔符和时间标记。content用于长期设定信息，status用于最新发展状态。',
     parameters: {
       type: 'object',
       properties: {
         setting_id: {
           type: 'number',
-          description: '要更新的设定ID'
+          description: '要更新的设定ID。请确保已通过read_setting了解现有内容后再进行更新。'
         },
         content: {
           type: 'string',
-          description: '设定的新内容,按照序号列出所有的内容，这些设定将长期保存并影响后续写作，如外貌，身份，势力，性格，能力，经历等'
+          description: '设定的长期内容信息。在原有内容基础上追加新信息，保持完整的发展轨迹。人物：外貌、身份、势力、性格、能力、经历等；世界观：地理规则、势力结构、历史背景等；物品：属性、来源、进化等。使用序号和分隔符组织内容。'
         },
         status: {
           type: 'string',
-          description: '设定的最新状态，表示此设定的最新情况，用来影响短期写作，如“某某获得某某，某某参与了某件事，主角得到了什么新身份”'
+          description: '设定的最新短期状态，影响当前写作。如"某某获得某某物品"、"某某参与某事件"、"主角实力突破至XX境界"、"某某身份被揭露"等。记录当前最活跃的状态信息。'
         },
         name: {
           type: 'string',
-          description: '设定的新名称'
+          description: '设定的新名称。仅在必要时使用（如身份揭晓、名称修正等），一般情况下不建议频繁修改设定名称。'
         }
       },
       required: ['setting_id']
@@ -81,33 +81,33 @@ export const addSettingTool = {
   type: 'function' as const,
   function: {
     name: 'add_setting',
-    description: '添加新的设定（人物、世界观、物品等）',
+    description: '创建全新的设定元素。重要：1）必须设置starred为false，绝对不能创建星标设定 2）智能选择设定类型：character用于人物角色，worldview用于世界观设定，entry用于其他物品技能等 3）命名要符合网文特色，避免过于抽象 4）确保与现有设定体系兼容 5）创建前检查是否已存在同名设定。使用正确的book_id确保添加到指定书籍。',
     parameters: {
       type: 'object',
       properties: {
         book_id: {
           type: 'number',
-          description: '所属书籍ID'
+          description: '所属书籍ID。请确保使用正确的书籍ID，新设定将添加到此书籍中。'
         },
         type: {
           type: 'string',
-          description: '设定类型（character: 人物, worldview: 世界观, entry: 其他）'
+          description: '设定类型。character: 人物角色（主角、配角、敌人等）；worldview: 世界观设定（势力、地点、历史、规则等）；entry: 其他设定（物品、技能、组织、概念等）。请根据设定性质准确选择。'
         },
         name: {
           type: 'string',
-          description: '设定名称'
+          description: '设定名称。使用符合网文特色的名称，要具有辨识度和吸引力。避免使用过于抽象或通用的名称。'
         },
         content: {
           type: 'string',
-          description: '设定内容，按照序号列出所有的内容，这些设定将长期保存并影响后续写作，如外貌，身份，势力，性格，能力，经历等'
+          description: '设定的完整内容信息。按照序号详细列出：人物包含外貌、身份、势力、性格、能力、经历等；世界观包含地理、规则、结构、历史等；物品包含属性、来源、用途、进化等。这些内容将长期保存并影响后续写作。'
         },
         status: {
           type: 'string',
-          description: '设定的最新状态，表示次设定的最新情况，用来影响短期写作，如“某某获得某某，某某参与了某件事，主角得到了什么新身份”'
+          description: '设定的当前状态。记录此设定在当前故事节点的最新情况，影响短期写作。如"刚刚获得"、"正在使用"、"状态未知"、"已激活"等。如不需要可留空。'
         },
         starred: {
           type: 'boolean',
-          description: '是否星标'
+          description: '是否星标。重要：必须设置为false，系统不允许创建星标设定。请勿修改此参数值。'
         }
       },
       required: ['book_id', 'type', 'name']

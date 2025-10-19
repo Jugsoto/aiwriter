@@ -60,47 +60,43 @@ export async function getContentWritingConfig(): Promise<FeatureConfig> {
 }
 
 /**
- * 构建内容写作的用户提示词
+ * 构建内容写作的上下文信息
+ * 优化版本：包含全局设定、前文章节、前文梗概、选择的设定、记忆搜索结果、章节细纲
+ * 注意：所有上下文信息将拼接到系统提示词后面，不作为用户消息发送
  */
 export function buildContentWritingPrompt(context: ContentWritingContext): string {
-  const {
-    selectedMessage,
-    previousChapterContent,
-    recentChapterSummaries,
-    selectedSettings,
-    globalSettings,
-    vectorSearchResults
-  } = context
+  const { globalSettings, previousChapterContent, recentChapterSummaries, selectedSettings, vectorSearchResults } = context
 
-  let prompt = ''
+  let prompt = '<背景资料>\n'
 
+  // 全局设定
   if (globalSettings) {
-    prompt += `# 全局设定：
-1. 全局设定是本书的基础信息，如小说类型、主线暗线信息。
-2. 全局设定会贯穿整本书，影响所有章节的内容和走向。
-3. 全局设定会影响章节正文的生成，请务必参考。
-# 以下是全局设定内容：
-${globalSettings}\n\n`
+    prompt += `【全局设定】
+全局设定是贯穿全书的基础信息，包括小说类型、核心主题、主线剧情、世界观规则等根本性设定，决定了故事的整体走向和风格基调。
+${globalSettings}
+
+`
   }
 
+  // 前文章节
   if (previousChapterContent) {
-    prompt += `# 前文章节内容（前文参考）：
-1. 前文章节内容是紧接当前章节的上一个章节内容。
-2. 在新章节创作时必须参考前文章节保持剧情流畅。
-3. 新章节写作时禁止照搬前文章节内容。
-# 以下是前文章节内容：
-${previousChapterContent}\n\n`
+    prompt += `【前文章节】
+紧接当前章节的上一章完整内容，确保剧情连贯性的关键参考。新章节必须与前文章节实现无缝衔接，保持时间线、人物状态、场景转换的连续性。
+${previousChapterContent}
+
+`
   }
 
+  // 前文梗概
   if (recentChapterSummaries && recentChapterSummaries.length > 0) {
-    prompt += `# 最近${recentChapterSummaries.length}章情节梗概（把握剧情发展）：
-1. 最近章节概括是对前几章内容的简要总结，帮助保持剧情连贯。
-2. 最近章节概括会影响当前章节的内容和走向，请务必参考。
-3. 最近章节概括会帮助你更好的理解故事背景和人物关系。
-# 以下是最近章节概括内容：
-${recentChapterSummaries.join('\n')}\n\n`
+    prompt += `【前文梗概】
+前几章核心内容的精炼总结，包含关键情节、人物变化、重要设定更新等信息。通过章节概括快速了解故事近期发展脉络，避免新章节与历史情节产生冲突。
+${recentChapterSummaries.join('\n\n')}
+
+`
   }
 
+  // 选择的设定
   if (selectedSettings && selectedSettings.length > 0) {
     // 设定类型中文映射
     const typeMap: Record<string, string> = {
@@ -108,59 +104,62 @@ ${recentChapterSummaries.join('\n')}\n\n`
       'worldview': '世界观设定',
       'entry': '其他设定'
     }
-    
-    prompt += `# 用户选中的设定信息：
-1. 选中的设定信息是用户特别指定需要参考的设定内容。
-2. 选中的设定信息会影响章节正文的生成，请务必参考。
-3. 选中的设定信息会帮助你更好的理解故事背景和人物关系。
-# 以下是用户选中的设定内容：`
+
+    prompt += `【选择的设定】
+用户明确要求在本章节中重点体现的内容，具有最高优先级。这些设定必须在章节正文中得到充分体现，成为推动情节发展的核心要素。
+`
     selectedSettings.forEach((setting, index) => {
       const chineseType = typeMap[setting.type] || setting.type
-      prompt += `\n${index + 1}. [${chineseType}] ${setting.name}
-      当前状态：${setting.status}
-      设定内容：${setting.content}`
+      prompt += `${index + 1}. [${chineseType}] ${setting.name}
+当前状态：${setting.status}
+${setting.content}
+
+`
     })
-    prompt += '\n\n'
   }
 
+  // 记忆搜索结果（优化：限制3个设定和5个文本片段）
   if (vectorSearchResults) {
-    if (vectorSearchResults.textChunks && vectorSearchResults.textChunks.length > 0) {
-      prompt += `# 相关文本片段（基于语义匹配，相似度降序排列）：
-1. 相关文本片段是基于当前章节内容进行语义匹配得到的。
-2. 注意相关文本片段为历史内容，可能与当前章节时间线不符，请谨慎参考。
-3. 使用相关文本片段时请注意与当前章节内容的衔接和一致性。
-# 以下是相关文本片段内容：`
-      vectorSearchResults.textChunks.forEach((chunk, index) => {
-        prompt += `\n${index + 1}. [${chunk.title}] (相似度: ${(chunk.similarity * 100).toFixed(1)}%)
-        ${chunk.content}`
-      })
-      prompt += '\n\n'
-    }
-
+    // 相关设定片段 - 限制为3个
     if (vectorSearchResults.settingChunks && vectorSearchResults.settingChunks.length > 0) {
-      prompt += `# 相关设定片段（基于语义匹配，相似度降序排列）：
-1. 相关设定片段是基于当前章节内容进行语义匹配得到的。
-2. 相关设定片段为设定库内容，通常为长期设定，请务必参考。
-3. 注意有些设定在当前章节时间线可能已经过时，请谨慎参考。
-# 以下是相关设定片段内容：`
-      vectorSearchResults.settingChunks.forEach((chunk, index) => {
+      const limitedSettings = vectorSearchResults.settingChunks.slice(0, 3)
+      prompt += `【记忆搜索 - 设定】
+通过语义搜索找到的相关设定信息，通常具有持续参考价值。星标设定表示重要内容，应优先考虑在章节中体现。
+`
+      limitedSettings.forEach((chunk, index) => {
         const typeInfo = chunk.settingType ? ` [${chunk.settingType}]` : ''
         const starInfo = chunk.starred ? ' ★' : ''
-        prompt += `\n${index + 1}. [${chunk.title}]${typeInfo}${starInfo} (相似度: ${(chunk.similarity * 100).toFixed(1)}%)
-        ${chunk.content}`
+        prompt += `${index + 1}. ${chunk.title}${typeInfo}${starInfo}
+${chunk.content}
+
+`
       })
-      prompt += '\n\n'
+    }
+
+    // 相关文本片段 - 限制为5个
+    if (vectorSearchResults.textChunks && vectorSearchResults.textChunks.length > 0) {
+      const limitedTexts = vectorSearchResults.textChunks.slice(0, 5)
+      prompt += `【记忆搜索 - 文本片段】
+通过语义搜索找到的历史章节内容，与当前章节主题高度相关。相似度越高参考价值越大，可借鉴表现手法但避免照搬具体情节。
+`
+      limitedTexts.forEach((chunk, index) => {
+        prompt += `${index + 1}. ${chunk.title}
+${chunk.content}
+
+`
+      })
     }
   }
 
-  prompt += `# 章节细纲：
-1. 章节细纲是当前章节的内容框架和结构。
-2. 章节细纲必须严格遵守，不能擅自更改或忽略。
-3. 章节细纲会直接影响章节正文的内容和走向。
-# 以下是章节细纲：
-${selectedMessage}
+  prompt += '</背景资料>\n\n'
 
-请根据以上信息，生成相应的小说正文内容。要求符合系统提示词要求。`
+  // 用户选中的章节细纲内容
+  if (context.selectedMessage) {
+    prompt += `<章节细纲>
+用户选中的章节细纲内容，是生成章节正文的直接资料。请根据章节细纲并结合背景资料，严格按照要求来创作正文内容。
+${context.selectedMessage}
+</章节细纲>`
+  }
 
   return prompt
 }
@@ -179,24 +178,32 @@ export async function* streamContentWriting(
     featureConfig = await getContentWritingConfig()
   }
 
-  const userPrompt = buildContentWritingPrompt(context)
+  // 构建上下文信息
+  const contextPrompt = buildContentWritingPrompt(context)
 
-  // 构建消息数组
+  // 构建完整的系统提示词（系统提示词 + 上下文信息）
+  const systemPrompt = (await getContentWritingPrompt()) + '\n\n' + contextPrompt
+
+  // 构建消息数组，包含系统消息（系统提示词+上下文）和章节细纲user消息
   const messages: ChatMessage[] = [
-    { role: 'system', content: await getContentWritingPrompt() }
+    { role: 'system', content: systemPrompt }
   ]
+
+  // 如果有章节细纲，添加为用户消息
+  if (context.selectedMessage) {
+    messages.push({
+      role: 'user',
+      content: `<章节细纲>
+${context.selectedMessage}
+</章节细纲>`
+    })
+  }
 
   // 如果有历史消息且设置了上下文长度，则添加历史消息
   if (options?.messages && options.contextLength && options.contextLength > 0) {
     const recentMessages = getRecentMessages(options.messages, options.contextLength)
     messages.push(...recentMessages)
   }
-
-  // 添加包含上下文信息的用户消息
-  messages.push({
-    role: 'user',
-    content: userPrompt
-  })
 
   // 流式生成内容
   try {
@@ -205,12 +212,12 @@ export async function* streamContentWriting(
       if (signal?.aborted) {
         break
       }
-      
+
       // 只返回正式内容，不返回推理内容
       if (chunk.content) {
         yield chunk.content
       }
-      
+
       // 每个chunk处理后都检查终止信号
       if (signal?.aborted) {
         break
