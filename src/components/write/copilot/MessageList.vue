@@ -8,8 +8,7 @@
           class="flex justify-start mb-2">
           <div class="max-w-[80%] bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-2xl">
             <!-- 推理消息头部（可点击展开/收起） -->
-            <div
-              class="flex items-center justify-between px-4 py-2 rounded-t-2xl"
+            <div class="flex items-center justify-between px-4 py-2 rounded-t-2xl"
               :class="{ 'cursor-pointer hover:bg-[var(--bg-hover)]': !isMemorySearchMessage(message) }"
               @click="!isMemorySearchMessage(message) && toggleReasoning(message)">
               <div class="flex items-center gap-2">
@@ -152,9 +151,9 @@ const renderMarkdown = (content: string): string => {
 // 判断是否是记忆搜索消息
 const isMemorySearchMessage = (message: Message): boolean => {
   return !!(message.reasoningContent?.includes('搜索') ||
-           message.reasoningContent?.includes('记忆') ||
-           message.reasoningContent?.includes('搜索完成') ||
-           message.reasoningContent?.includes('找到'))
+    message.reasoningContent?.includes('记忆') ||
+    message.reasoningContent?.includes('搜索完成') ||
+    message.reasoningContent?.includes('找到'))
 }
 
 // 获取推理消息标题
@@ -294,7 +293,7 @@ watch(() => props.messages, (newMessages) => {
     if (message.role === 'assistant' && message.isReasoning && message.reasoningContent) {
       // 检查是否是记忆搜索相关的消息
       const isMemorySearch = message.reasoningContent?.includes('搜索') ||
-                            message.reasoningContent?.includes('记忆')
+        message.reasoningContent?.includes('记忆')
 
       if (isMemorySearch) {
         // 记忆搜索时不展开显示
@@ -309,7 +308,7 @@ watch(() => props.messages, (newMessages) => {
     } else if (message.role === 'assistant' && message.reasoningContent) {
       // 检查是否是记忆搜索完成的消息
       const isMemorySearchComplete = message.reasoningContent?.includes('搜索完成') ||
-                                     message.reasoningContent?.includes('找到')
+        message.reasoningContent?.includes('找到')
       if (isMemorySearchComplete) {
         // 记忆搜索完成后不展开显示
         message.showReasoning = false
