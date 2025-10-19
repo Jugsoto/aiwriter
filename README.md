@@ -1,5 +1,249 @@
-# Vue 3 + TypeScript + Vite
+# 神笔 AI 写作
 
-This template should help get you started developing with Vue 3 and TypeScript in Vite. The template uses Vue 3 `<script setup>` SFCs, check out the [script setup docs](https://v3.vuejs.org/api/sfc-script-setup.html#sfc-script-setup) to learn more.
+一款基于 AI 技术的智能网文辅助写作应用，为创作者提供全方位的写作支持工具。
 
-Learn more about the recommended Project Setup and IDE Support in the [Vue Docs TypeScript Guide](https://vuejs.org/guide/typescript/overview.html#project-setup).
+## 📖 应用简介
+
+神笔 AI 写作是一个功能强大的桌面写作应用，集成了多种 AI 辅助功能，帮助作者提升创作效率和质量。无论是小说创作、内容生成还是写作工具，都能为创作者提供智能化的写作体验。
+
+## ✨ 主要功能
+
+### 📚 作品管理
+
+- **书籍创建与管理** - 支持多书籍项目管理
+- **章节管理** - 灵活的章节创建、编辑和删除
+- **数据导入** - 支持外部数据导入功能
+- **书籍信息维护** - 全局设定和基本属性管理
+
+### ✍️ 智能写作编辑器
+
+- **三栏布局设计** - 章节管理、内容编辑、AI 助手三栏协作
+- **可调节面板** - 支持拖拽调整各栏宽度
+- **撤销/重做** - 完整的编辑历史记录
+- **自动保存** - 实时保存创作内容
+- **流式写作** - AI 辅助内容生成，支持实时停止
+
+### 🤖 AI 写作助手
+
+- **正文创作** - 基于上下文的 AI 内容生成
+- **章节扩写** - 对现有内容进行智能扩写
+- **章节梗概** - 自动生成章节摘要
+- **内容评估** - AI 分析内容质量和连贯性
+- **记忆更新** - 智能更新章节记忆，保持内容一致性
+- **设定更新** - 根据内容自动更新角色和世界观设定
+
+### ⚙️ 智能设定管理
+
+- **角色设定** - 详细的角色信息管理
+- **世界观设定** - 完整的世界观和背景设定
+- **词条设定** - 术语和概念的统一管理
+- **自动提取** - AI 从内容中自动提取和更新设定
+
+### 🛠️ 创作工具集
+
+- **脑洞生成器** - 创意灵感和想法生成
+- **书名生成器** - 智能生成吸引人的书名
+- **简介生成器** - 自动生成作品简介和摘要
+- **公告中心** - 获取最新功能和更新通知
+
+### 🔗 外部工具集成
+
+- **朱雀 AI 检测** - 腾讯 AI 内容检测工具
+- **大模型排行榜** - AI 模型性能参考
+- **番茄控制台** - 番茄小说作者平台
+- **阅文控制台** - 阅文集团作家助手
+
+### 🎨 界面特性
+
+- **现代化 UI 设计** - 基于 Tailwind CSS 的美观界面
+- **深色/浅色主题** - 支持主题切换
+- **自定义框架窗口** - 无边框设计，自定义窗口控制
+- **响应式布局** - 适配不同屏幕尺寸
+
+## 🏗️ 技术架构
+
+### 前端技术
+
+- **Vue 3** - 现代化前端框架
+- **TypeScript** - 类型安全的 JavaScript
+- **Tailwind CSS** - 实用优先的 CSS 框架
+- **Vite** - 快速的构建工具
+- **Pinia** - Vue 状态管理
+- **Vue Router** - 单页应用路由
+
+### 桌面应用
+
+- **Electron** - 跨平台桌面应用框架
+- **自定义窗口控制** - 最小化、最大化、关闭功能
+- **安全 IPC 通信** - 主进程与渲染进程安全通信
+
+### 数据存储
+
+- **SQLite** - 轻量级本地数据库
+- **better-sqlite3** - 高性能 SQLite Node.js 驱动
+
+### AI 集成
+
+- **兼容 OpenAI API** - 支持 OpenAI 标准接口
+- **向量搜索** - 基于嵌入的语义搜索
+- **流式响应** - 实时 AI 内容生成
+
+## 🚀 快速开始
+
+### 环境要求
+
+- Node.js 16+
+- npm 或 yarn
+- Windows/macOS/Linux
+
+### 安装依赖
+
+```bash
+npm install
+```
+
+### 开发模式
+
+```bash
+# 启动Web开发服务器
+npm run dev
+
+# 启动Electron开发模式
+npm run electron:dev
+```
+
+### 构建应用
+
+```bash
+# 构建Vue应用
+npm run build
+
+# 构建Electron应用
+npm run electron:build
+
+# 创建Windows安装包
+npm run dist
+```
+
+## 📁 项目结构
+
+```
+aiwriter/
+├── src/
+│   ├── components/          # Vue组件
+│   │   ├── write/          # 写作相关组件
+│   │   ├── settings/       # 设置相关组件
+│   │   └── shared/         # 共享组件
+│   ├── views/              # 页面视图
+│   ├── services/           # 业务逻辑服务
+│   ├── stores/             # Pinia状态管理
+│   ├── router/             # 路由配置
+│   └── main.ts             # 应用入口
+├── electron/               # Electron主进程
+│   ├── main.ts             # 主进程入口
+│   └── preload.ts          # 预加载脚本
+├── public/                 # 静态资源
+├── resources/              # 应用资源
+└── dist/                   # 构建输出
+```
+
+## 🔧 配置说明
+
+### 模型配置
+
+- 支持多种 AI 模型配置
+- 可设置 API 密钥和端点
+- 支持自定义模型参数
+
+### 功能配置
+
+- 嵌入模型配置
+- 功能开关设置
+- 性能参数调整
+
+### 数据设置
+
+- 数据库管理
+- 数据导入导出
+- 备份和恢复
+
+## 📊 核心服务
+
+### 写作相关服务
+
+- `contentWriting.ts` - 内容生成服务
+- `chapterOutline.ts` - 章节大纲生成
+- `chapterSummary.ts` - 章节摘要生成
+- `chapterExpansion.ts` - 章节扩写服务
+- `chapterReview.ts` - 内容评估服务
+
+### 记忆和设定服务
+
+- `chapterMemory.ts` - 章节记忆管理
+- `settingMemory.ts` - 设定记忆管理
+- `settingUpdate.ts` - 设定自动更新
+- `vectorSearch.ts` - 向量搜索服务
+
+### 工具服务
+
+- `embedding.ts` - 文本嵌入服务
+- `chat.ts` - 聊天服务
+- `generator.ts` - 生成器服务
+- `prompts.ts` - 提示词管理
+
+## 🎯 应用场景
+
+### 小说创作
+
+- 长篇小说章节管理
+- 角色和世界观设定
+- 情节发展辅助
+- 内容一致性维护
+
+### 内容创作
+
+- 文章撰写和编辑
+- 内容扩写和优化
+- 摘要和简介生成
+- 质量评估和改进
+
+### 创意写作
+
+- 灵感和创意生成
+- 写作工具集成
+- 多平台发布支持
+- 创作流程管理
+
+## 🔄 版本信息
+
+**当前版本**: 0.9.1
+
+**更新特性**:
+
+- 全新的三栏式写作界面
+- AI 辅助内容生成和扩写
+- 智能设定管理和自动更新
+- 集成多种创作工具
+- 现代化的用户界面设计
+
+## 👥 开发团队
+
+**作者**: MING
+**邮箱**: qgming@qq.com
+**应用 ID**: com.qgming.aiwriter
+
+## 📄 许可证
+
+本项目为私有项目，版权所有。
+
+## 🤝 贡献指南
+
+欢迎提交问题反馈和功能建议。
+
+## 📞 支持与反馈
+
+如有问题或建议，请联系开发团队或通过应用内反馈功能提交。
+
+---
+
+_让 AI 成为您的创作伙伴，让写作变得更加高效和有趣！_
