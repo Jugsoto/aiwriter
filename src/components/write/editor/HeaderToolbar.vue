@@ -2,6 +2,16 @@
   <div
     class="p-2 border-b border-[var(--border-color)] bg-[var(--bg-secondary)] flex items-center justify-center gap-2">
     <div class="flex items-center gap-2">
+      <!-- 撤销和恢复按钮 -->
+      <button @click="undo" :disabled="!canUndo"
+        class="flex items-center gap-1 px-2 py-1.5 text-sm border border-[var(--border-color)] bg-[var(--bg-primary)] rounded-full hover:bg-[var(--bg-secondary)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+        ↶
+      </button>
+      <button @click="redo" :disabled="!canRedo"
+        class="flex items-center gap-1 px-2 py-1.5 text-sm border border-[var(--border-color)] bg-[var(--bg-primary)] rounded-full hover:bg-[var(--bg-secondary)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+        ↷
+      </button>
+
       <button @click="saveContent" :disabled="!hasChanges || saving"
         class="flex items-center gap-1 px-2 py-1.5 text-sm border border-[var(--border-color)] bg-[var(--bg-primary)] rounded-full hover:bg-[var(--bg-secondary)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
         保存
@@ -28,7 +38,13 @@
         class="flex items-center gap-1 px-2 py-1.5 text-sm border border-[var(--border-color)] bg-[var(--bg-primary)] rounded-full hover:bg-[var(--bg-secondary)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
         <span v-if="isReviewingChapter"
           class="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin"></span>
-        {{ isReviewingChapter ? '评估中...' : '章节评估' }}
+        {{ isReviewingChapter ? '评估中...' : '评估' }}
+      </button>
+      <button @click="expandChapter" :disabled="!currentChapter || !currentChapter.content || isExpandingChapter"
+        class="flex items-center gap-1 px-2 py-1.5 text-sm border border-[var(--border-color)] bg-[var(--bg-primary)] rounded-full hover:bg-[var(--bg-secondary)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+        <span v-if="isExpandingChapter"
+          class="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin"></span>
+        {{ isExpandingChapter ? '扩写中...' : '扩写' }}
       </button>
       <!-- 停止流式输出按钮 - 仅在流式写作时显示 -->
       <button v-if="isStreaming" @click="stopStreaming"
@@ -77,6 +93,18 @@ const props = defineProps({
   isReviewingChapter: {
     type: Boolean,
     default: false
+  },
+  canUndo: {
+    type: Boolean,
+    default: false
+  },
+  canRedo: {
+    type: Boolean,
+    default: false
+  },
+  isExpandingChapter: {
+    type: Boolean,
+    default: false
   }
 })
 
@@ -90,6 +118,9 @@ const emit = defineEmits<{
   updateSettingsStart: []
   updateSettingsEnd: [success: boolean, result?: any]
   reviewChapter: []
+  expandChapter: []
+  undo: []
+  redo: []
 }>()
 
 // 状态管理
@@ -234,5 +265,23 @@ const reviewChapter = () => {
 
   // 触发自定义事件，通知父组件开始章节评估
   emit('reviewChapter')
+}
+
+// 章节扩写
+const expandChapter = () => {
+  if (!props.currentChapter || !props.currentChapter.content) return
+
+  // 触发自定义事件，通知父组件开始章节扩写
+  emit('expandChapter')
+}
+
+// 撤销
+const undo = () => {
+  emit('undo')
+}
+
+// 恢复
+const redo = () => {
+  emit('redo')
 }
 </script>

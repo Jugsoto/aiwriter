@@ -3,10 +3,12 @@
     <!-- 顶部操作栏 -->
     <HeaderToolbar :current-chapter="currentChapter" :saving="saving" :last-saved="lastSaved" :has-changes="hasChanges"
       :is-streaming="isStreaming" :is-generating-summary="isGeneratingSummary"
-      :is-reviewing-chapter="isReviewingChapter" @save-content="saveContent" @stop-streaming="handleStopStreaming"
+      :is-reviewing-chapter="isReviewingChapter" :can-undo="canUndo" :can-redo="canRedo" :is-expanding-chapter="isExpandingChapter"
+      @save-content="saveContent" @stop-streaming="handleStopStreaming"
       @generate-summary="startGenerateSummary" @update-memory-start="handleUpdateMemoryStart"
       @update-memory-end="handleUpdateMemoryEnd" @update-settings-start="handleUpdateSettingsStart"
-      @update-settings-end="handleUpdateSettingsEnd" @review-chapter="startChapterReview" />
+      @update-settings-end="handleUpdateSettingsEnd" @review-chapter="startChapterReview" @expand-chapter="startChapterExpansion"
+      @undo="handleUndo" @redo="handleRedo" />
 
     <!-- 编辑器区域 - 精确填充可用空间，无外部滚动 -->
     <div class="flex-1 min-h-0">
@@ -45,6 +47,8 @@ import { useChaptersStore } from '@/stores/chapters'
 import { useBooksStore } from '@/stores/books'
 import { streamingManager } from '@/utils'
 import { generateChapterSummary } from '@/services/chapterSummary'
+import { streamChapterExpansion, type ChapterExpansionContext } from '@/services/chapterExpansion'
+import { EditorHistoryManager } from '@/utils/editorHistory'
 import { useToast } from '@/composables'
 import HeaderToolbar from './editor/HeaderToolbar.vue'
 import StatusBar from './editor/StatusBar.vue'
@@ -97,6 +101,11 @@ const isUpdatingSettings = ref(false)
 const isReviewingChapter = ref(false)
 const chapterReviewModalVisible = ref(false)
 const globalSettings = ref('')
+const isExpandingChapter = ref(false)
+
+// 撤销/恢复功能状态
+const canUndo = ref(false)
+const canRedo = ref(false)
 
 // 流式写作章节锁定
 const lockedChapterId = ref<number | null>(null)
@@ -111,6 +120,44 @@ const errorModalVisible = ref(false)
 const errorModalMessage = ref('')
 const errorModalDetails = ref('')
 
+// 更新撤销/恢复按钮状态
+const updateUndoRedoState = () => {
+  if (!currentChapter.value) {
+    canUndo.value = false
+    canRedo.value = false
+    return
+  }
+
+  canUndo.value = EditorHistoryManager.canUndo(currentChapter.value.id)
+  canRedo.value = EditorHistoryManager.canRedo(currentChapter.value.id)
+}
+
+// 撤销
+const handleUndo = () => {
+  if (!currentChapter.value || !EditorHistoryManager.canUndo(currentChapter.value.id)) return
+
+  const previousContent = EditorHistoryManager.undo(currentChapter.value.id)
+  if (previousContent !== null) {
+    content.value = previousContent
+    originalContent.value = previousContent // 更新原始内容，防止保存时误判
+    hasChanges.value = false
+    updateUndoRedoState()
+  }
+}
+
+// 恢复
+const handleRedo = () => {
+  if (!currentChapter.value || !EditorHistoryManager.canRedo(currentChapter.value.id)) return
+
+  const nextContent = EditorHistoryManager.redo(currentChapter.value.id)
+  if (nextContent !== null) {
+    content.value = nextContent
+    originalContent.value = nextContent // 更新原始内容，防止保存时误判
+    hasChanges.value = false
+    updateUndoRedoState()
+  }
+}
+
 // 监听当前章节变化
 watch(currentChapter, (newChapter) => {
   if (newChapter) {
@@ -120,12 +167,20 @@ watch(currentChapter, (newChapter) => {
     lastSaved.value = false
     autoSaveStatus.value = ''
     lastSavedTime.value = newChapter.updated_at || null
+
+    // 初始化章节历史记录
+    EditorHistoryManager.initializeChapter(newChapter.id, content.value)
+    updateUndoRedoState()
   } else {
     content.value = ''
     originalContent.value = ''
     hasChanges.value = false
     autoSaveStatus.value = ''
     lastSavedTime.value = null
+
+    // 重置撤销/恢复状态
+    canUndo.value = false
+    canRedo.value = false
   }
 }, { immediate: true })
 
@@ -170,6 +225,10 @@ const saveContent = async () => {
     lastSaved.value = true
     lastSavedTime.value = new Date().toISOString()
     autoSaveStatus.value = '保存成功'
+
+    // 保存时添加到历史记录
+    EditorHistoryManager.addRecord(currentChapter.value.id, content.value, '保存')
+    updateUndoRedoState()
 
     // 3秒后隐藏保存提示
     setTimeout(() => {
@@ -362,6 +421,87 @@ const handleChapterReviewClose = () => {
   chapterReviewModalVisible.value = false
 }
 
+// 开始章节扩写
+const startChapterExpansion = async () => {
+  if (!currentChapter.value || !currentChapter.value.content) return
+
+  // 检查章节内容是否为空或只有空白字符
+  const chapterContent = currentChapter.value.content.trim()
+  if (!chapterContent) {
+    showToast({
+      message: '章节内容为空，无法进行扩写',
+      type: 'error'
+    })
+    return
+  }
+
+  // 锁定操作的章节信息，防止操作过程中切换章节导致数据保存错误
+  const targetChapterId = currentChapter.value.id
+  const targetBookId = currentChapter.value.book_id
+  const targetContent = currentChapter.value.content
+
+  isExpandingChapter.value = true
+
+  try {
+    // 获取当前书籍信息
+    const currentBook = booksStore.books.find((book: any) => book.id === targetBookId)
+
+    // 获取前文章节内容（如果有）
+    let previousChapterContent = ''
+    const chapters = chaptersStore.chapters.filter((c: any) => c.book_id === targetBookId)
+    const currentIndex = chapters.findIndex((c: any) => c.id === targetChapterId)
+    if (currentIndex > 0) {
+      previousChapterContent = chapters[currentIndex - 1].content || ''
+    }
+
+    // 获取前五章章节梗概
+    const recentChapterSummaries = chapters
+      .filter((c: any) => c.summary && c.id !== targetChapterId)
+      .slice(-5) // 最近5个章节
+      .map((c: any) => c.summary)
+
+    // 构建扩写上下文
+    const context: ChapterExpansionContext = {
+      chapterContent: targetContent,
+      previousChapterContent,
+      recentChapterSummaries,
+      globalSettings: currentBook?.global_settings
+    }
+
+    // 先将当前内容添加到历史记录
+    EditorHistoryManager.addRecord(targetChapterId, targetContent, '扩写前的内容')
+    updateUndoRedoState()
+
+    // 清空当前章节内容
+    content.value = ''
+
+    // 使用流式扩写
+    const streamGenerator = streamChapterExpansion(context)
+
+    // 启动流式写作
+    const event = new CustomEvent('start-streaming-writing', {
+      detail: { streamGenerator }
+    })
+    window.dispatchEvent(event)
+
+    showToast({
+      message: '开始扩写章节...',
+      type: 'info'
+    })
+
+  } catch (error) {
+    console.error('开始章节扩写失败:', error)
+    showToast({
+      message: '开始章节扩写失败，请重试',
+      type: 'error'
+    })
+    // 恢复原始内容
+    content.value = targetContent
+  } finally {
+    isExpandingChapter.value = false
+  }
+}
+
 // 开始流式写作（供父组件调用）
 const startStreamingWriting = (streamGenerator: AsyncGenerator<string, void, unknown>) => {
   // 检查是否已有写作流在进行中，但给予一定的容错时间
@@ -513,6 +653,10 @@ const processStreamContent = async (
       content.value = currentContent
       originalContent.value = currentContent
       hasChanges.value = false
+
+      // 添加最终内容到历史记录
+      EditorHistoryManager.addRecord(targetChapterId, currentContent, '扩写完成')
+      updateUndoRedoState()
     }
 
     // 流式写作完成，内容已保存到章节
