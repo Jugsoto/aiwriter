@@ -20,14 +20,34 @@ export async function fetchModelsFromService(url: string, key: string): Promise<
       }
     }
 
-    const response = await fetch(apiUrl, options)
-    const data = await response.json()
+    // 创建10秒超时的Promise
+    const timeoutPromise = new Promise<never>((_, reject) => {
+      setTimeout(() => {
+        reject(new Error('获取模型列表超时，请检查网络连接或稍后重试'))
+      }, 10000) // 10秒超时
+    })
+
+    // 使用Promise.race实现超时机制
+    const response = await Promise.race([
+      fetch(apiUrl, options),
+      timeoutPromise
+    ])
+
+    // 也为JSON解析添加超时机制
+    const jsonData = await Promise.race([
+      response.json(),
+      new Promise<never>((_, reject) => {
+        setTimeout(() => {
+          reject(new Error('解析响应数据超时'))
+        }, 5000) // 5秒超时用于JSON解析
+      })
+    ])
 
     if (!response.ok) {
       return {
         success: false,
         models: [],
-        error: data.error?.message || `HTTP ${response.status}: ${response.statusText}`
+        error: jsonData.error?.message || `HTTP ${response.status}: ${response.statusText}`
       }
     }
 
@@ -36,13 +56,13 @@ export async function fetchModelsFromService(url: string, key: string): Promise<
       id?: string
       name?: string
     }
-    
+
     let models: string[] = []
-    
-    if (Array.isArray(data)) {
-      models = data.map((item: ModelItem) => item.id || item.name).filter(Boolean) as string[]
-    } else if (data.data && Array.isArray(data.data)) {
-      models = data.data.map((item: ModelItem) => item.id || item.name).filter(Boolean) as string[]
+
+    if (Array.isArray(jsonData)) {
+      models = jsonData.map((item: ModelItem) => item.id || item.name).filter(Boolean) as string[]
+    } else if (jsonData.data && Array.isArray(jsonData.data)) {
+      models = jsonData.data.map((item: ModelItem) => item.id || item.name).filter(Boolean) as string[]
     } else {
       throw new Error('返回的数据格式不正确')
     }

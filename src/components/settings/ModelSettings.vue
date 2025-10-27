@@ -562,8 +562,8 @@ const handleTestConnection = async (modelName: string) => {
 
 // 获取模型服务
 const fetchModelsFromService = async () => {
-  if (!providersStore.selectedProviderId || !currentProvider.value.url || !currentProvider.value.key) {
-    showErrorModal('请先配置供应商的URL和Key')
+  if (!providersStore.selectedProviderId || !currentProvider.value.url) {
+    showErrorModal('请先配置供应商的URL')
     return
   }
 
@@ -581,7 +581,7 @@ const fetchModelsFromService = async () => {
   })
 
   try {
-    const result = await fetchModelsService(currentProvider.value.url, currentProvider.value.key)
+    const result = await fetchModelsService(currentProvider.value.url, currentProvider.value.key || '')
 
     if (result.success) {
       hideToast() // 关闭持续显示的Toast
