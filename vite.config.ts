@@ -54,28 +54,6 @@ export default defineConfig({
           }
         }
       },
-      {
-        entry: 'electron/database.ts',
-        onstart(options) {
-          options.reload()
-        },
-        vite: {
-          build: {
-            outDir: 'dist-electron',
-            rollupOptions: {
-              external: ['better-sqlite3', 'electron', 'path', 'fs', 'util'],
-              output: {
-                format: 'cjs'
-              }
-            },
-            target: 'node18',
-            lib: {
-              entry: 'electron/database.ts',
-              formats: ['cjs']
-            }
-          }
-        }
-      }
     ]),
     renderer()
   ],

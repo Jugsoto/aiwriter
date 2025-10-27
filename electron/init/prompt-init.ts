@@ -2,7 +2,7 @@ import {
   getAllPrompts,
   createPrompt,
   setPromptSelection
-} from './database'
+} from '../database'
 
 // 默认提示词数据
 const DEFAULT_PROMPTS_DATA = {
@@ -181,7 +181,7 @@ const DEFAULT_PROMPTS_DATA = {
       version: '1.0.5',
       url: 'https://shenbi.qgming.com'
     },
-    
+
     // 正文写作提示词
     {
       name: '正文写作助手',
@@ -226,7 +226,7 @@ const DEFAULT_PROMPTS_DATA = {
       version: '1.0.6',
       url: 'https://shenbi.qgming.com'
     },
-    
+
     // 章节扩写提示词
     {
       name: '章节扩写助手',
@@ -311,7 +311,7 @@ const DEFAULT_PROMPTS_DATA = {
       version: '1.0.0',
       url: 'https://shenbi.qgming.com'
     },
-    
+
     // 章节评估提示词
     {
       name: '资深编辑评估',
@@ -426,8 +426,8 @@ const DEFAULT_PROMPTS_DATA = {
       version: '1.0.1',
       url: 'https://shenbi.qgming.com'
     },
-    
-    // 脑洞生成器提示词
+
+    // 爆款脑洞生成器提示词
     {
       name: '爆款脑洞生成器',
       content: `你是一位深谙网文爆款逻辑的专业脑洞生成师，专精起点、番茄等平台的热门套路。你精通各类网文流派的核心爽点，能够为用户提供具备爆款潜质的创意脑洞。
@@ -529,8 +529,8 @@ const DEFAULT_PROMPTS_DATA = {
       version: '1.0.0',
       url: 'https://shenbi.qgming.com'
     },
-    
-    // 书名生成器提示词
+
+    // 爆款书名生成器提示词
     {
       name: '爆款书名生成器',
       content: `你是一位深谙网文爆款书名规律的专业命名师，精通起点、番茄等平台的热门书名套路。你能够为各种类型的网文创作出具备爆款潜质的书名，让读者一眼就被吸引。
@@ -645,7 +645,7 @@ const DEFAULT_PROMPTS_DATA = {
       version: '1.0.0',
       url: 'https://shenbi.qgming.com'
     },
-    
+
     // 简介生成器提示词
     {
       name: '网文简介生成器',
@@ -815,9 +815,9 @@ export async function initializeDefaultPrompts(): Promise<boolean> {
       // 已存在提示词，跳过初始化
       return true
     }
-    
+
     console.log('开始初始化默认提示词...')
-    
+
     // 创建默认提示词
     for (const promptData of DEFAULT_PROMPTS_DATA.prompts) {
       try {
@@ -831,9 +831,9 @@ export async function initializeDefaultPrompts(): Promise<boolean> {
           version: promptData.version,
           url: promptData.url
         })
-        
+
         console.log(`创建默认提示词: ${prompt.name} (${prompt.category})`)
-        
+
         // 如果是默认提示词，设置为该分类的选择
         if (promptData.is_default === 1) {
           await setPromptSelection({
@@ -847,10 +847,10 @@ export async function initializeDefaultPrompts(): Promise<boolean> {
         // 继续处理其他提示词，不中断整个初始化过程
       }
     }
-    
+
     console.log('默认提示词初始化完成')
     return true
-    
+
   } catch (error) {
     console.error('默认提示词初始化失败:', error)
     return false
@@ -865,7 +865,7 @@ export function getPromptInitializationStatus(): {
 } {
   try {
     const prompts = getAllPrompts()
-    
+
     return {
       hasPrompts: prompts.length > 0,
       promptCount: prompts.length,
