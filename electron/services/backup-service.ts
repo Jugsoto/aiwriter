@@ -153,19 +153,6 @@ export class BackupService {
   // 重置数据 - 删除数据库文件和本地存储数据，保留软件本身数据
   static async resetData(): Promise<{ success: boolean; error?: string }> {
     try {
-      // 显示确认对话框
-      const result = await dialog.showMessageBox({
-        type: 'warning',
-        title: '确认重置数据',
-        message: '确定要重置所有数据吗？此操作将删除所有书籍、章节、设定等数据，但保留软件本身配置。',
-        buttons: ['取消', '确认重置'],
-        defaultId: 0,
-        cancelId: 0
-      })
-
-      if (result.response !== 1) {
-        return { success: false, error: '用户取消了重置操作' }
-      }
 
       // 关闭数据库连接
       closeDatabase()
@@ -182,13 +169,17 @@ export class BackupService {
         console.log('Database file not found:', dbPath)
       }
 
-      // 重新初始化数据库（这会重新创建空的数据库文件）
-      resetDatabaseConnection()
+      console.log('Data reset completed successfully. Application will quit.')
 
-      console.log('Data reset completed successfully - user data cleared')
+      // 退出应用程序
+      app.quit()
+
+      // 应用程序即将退出，此返回值可能不会被前端接收
       return { success: true }
     } catch (error) {
       console.error('Failed to reset data:', error)
+      // 如果重置失败，尝试重新连接数据库以保持应用可用
+      resetDatabaseConnection()
       return { success: false, error: error instanceof Error ? error.message : '重置数据时发生未知错误' }
     }
   }

@@ -68,10 +68,6 @@
       </div>
     </div>
   </div>
-  <!-- 重置数据确认对话框 -->
-  <ConfirmModal v-model:visible="resetConfirmVisible" title="确认重置数据" message="此操作将删除所有用户数据（包括所有书籍、章节、对话历史和Copilot设置）。"
-    description="重置后应用将自动重启，所有创作内容、对话记录和个性化设置将被清空且无法恢复。" confirm-text="确认重置" cancel-text="取消" :dangerous="true"
-    :loading="isResetting" confirm-loading-text="正在重置数据..." @confirm="handleResetData" @cancel="handleResetCancel" />
 
   <!-- 错误提示模态窗 -->
   <ErrorModal v-model:visible="errorModalVisible" title="重置数据失败" message="重置数据时发生错误，请查看错误详情或重试。"
@@ -88,14 +84,13 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import ConfirmModal from '../shared/ConfirmModal.vue'
+import { confirm } from '@/composables/useConfirm'
 import ErrorModal from '../shared/ErrorModal.vue'
 import { Trash2, Download, Upload, Loader2 } from 'lucide-vue-next'
 
 // 响应式数据
 const appDataPath = ref('')
 const databaseSize = ref('0 MB')
-const resetConfirmVisible = ref(false)
 const isResetting = ref(false)
 const resetError = ref('')
 const errorModalVisible = ref(false)
@@ -132,15 +127,21 @@ const openDataFolder = async () => {
 }
 
 // 显示重置数据确认对话框
-const showResetConfirm = () => {
-  resetConfirmVisible.value = true
+const showResetConfirm = async () => {
   resetError.value = ''
-}
+  const isConfirmed = await confirm({
+    title: '确认重置数据',
+    message: '此操作将删除所有用户数据（包括所有书籍、章节、对话历史和Copilot设置）。',
+    description: '重置后应用将自动重启，所有创作内容、对话记录和个性化设置将被清空且无法恢复。',
+    confirmText: '确认重置',
+    cancelText: '取消',
+    dangerous: true,
+    confirmLoadingText: '正在重置数据...'
+  })
 
-// 处理重置数据取消
-const handleResetCancel = () => {
-  resetConfirmVisible.value = false
-  resetError.value = ''
+  if (isConfirmed) {
+    await handleResetData()
+  }
 }
 
 // 处理错误模态窗关闭
