@@ -86,6 +86,9 @@
                 </label>
                 <input v-model="currentProvider.url" type="text"
                   class="w-full px-3 py-2 bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-lg text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--theme-bg)] transition-colors" />
+                <div v-if="currentProvider.url" class="mt-1 text-xs text-[var(--text-secondary)]">
+                  {{ currentProvider.url }}/chat/completions
+                </div>
               </div>
               <div class="md:col-span-2">
                 <label class="block text-sm font-medium text-[var(--text-secondary)] mb-2">
@@ -141,8 +144,7 @@
                   <div class="font-medium text-[var(--text-primary)]">{{ model.model }}</div>
                   <div v-if="model.tags" class="flex items-center ml-2 space-x-1">
                     <div v-for="tag in parseTags(model.tags)" :key="tag"
-                      class="flex items-center px-2 py-1 text-xs border rounded-full"
-                      :class="getTagConfig(tag).color">
+                      class="flex items-center px-2 py-1 text-xs border rounded-full" :class="getTagConfig(tag).color">
                       <component :is="getTagConfig(tag).icon" class="w-3 h-3 mr-1" />
                       {{ getTagConfig(tag).label }}
                     </div>
