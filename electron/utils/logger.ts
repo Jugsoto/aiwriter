@@ -54,8 +54,8 @@ export class Logger {
         this.initializeLogFile()
       } catch (error) {
         // 如果app还未准备好，使用临时路径
+        console.warn('无法获取 userData 路径，将使用临时日志文件:', error)
         this.logFile = path.join(process.cwd(), 'app.log')
-        console.warn('App not ready, using temporary log file:', this.logFile)
       }
     }
   }
@@ -66,8 +66,9 @@ export class Logger {
   private initializeLogFile(): void {
     try {
       // 检查日志文件大小，如果超过限制则轮转
-      if (fs.existsSync(this.logFile)) {
-        const stats = fs.statSync(this.logFile)
+      const logFile = this.logFile
+      if (logFile && fs.existsSync(logFile)) {
+        const stats = fs.statSync(logFile)
         if (stats.size > this.maxFileSize) {
           this.rotateLogFile()
         }
@@ -81,17 +82,21 @@ export class Logger {
    * 轮转日志文件
    */
   private rotateLogFile(): void {
+    const logFile = this.logFile
+    if (!logFile) {
+      return
+    }
     try {
       // 删除最旧的日志文件
-      const oldestLogFile = `${this.logFile}.${this.maxLogFiles}`
+      const oldestLogFile = `${logFile}.${this.maxLogFiles}`
       if (fs.existsSync(oldestLogFile)) {
         fs.unlinkSync(oldestLogFile)
       }
 
       // 轮移现有日志文件
       for (let i = this.maxLogFiles - 1; i >= 1; i--) {
-        const currentLogFile = i === 1 ? this.logFile : `${this.logFile}.${i}`
-        const nextLogFile = `${this.logFile}.${i + 1}`
+        const currentLogFile = i === 1 ? logFile : `${logFile}.${i}`
+        const nextLogFile = `${logFile}.${i + 1}`
 
         if (fs.existsSync(currentLogFile)) {
           fs.renameSync(currentLogFile, nextLogFile)
