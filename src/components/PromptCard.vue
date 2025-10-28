@@ -3,29 +3,20 @@
     class="bg-[var(--bg-primary)] border border-[var(--border-color)] rounded-xl p-4 cursor-pointer transition-all duration-300 hover:shadow-lg relative transform hover:scale-105"
     :class="[
       isSelected ? 'border-[var(--theme-bg)]' : 'hover:border-[var(--hover-bg)]'
-    ]" @click="$emit('click')" @mouseenter="$emit('mouseenter')" @mouseleave="$emit('mouseleave')">
+    ]" @click="handleCardClick" @mouseenter="$emit('mouseenter')" @mouseleave="$emit('mouseleave')">
     <!-- 右上角操作按钮（胶囊样式，一直显示） -->
     <div
+      v-if="!prompt.is_default"
       class="absolute top-2 right-2 flex items-center gap-1 bg-[var(--bg-secondary)] px-2 rounded-full border border-[var(--border-color)] shadow-sm min-h-[28px]">
-      <button v-if="!prompt.is_default" @click.stop="handleEdit"
-        class="px-1 py-1 text-[var(--text-secondary)] hover:text-green-600 hover:bg-green-100 rounded-full transition-all min-h-[20px] flex items-center"
-        title="编辑">
-        <Edit :size="14" />
-      </button>
-      <button v-if="!prompt.is_default" @click.stop="handleDelete"
+      <button @click.stop="handleDelete"
         class="px-1 py-1 text-[var(--text-secondary)] hover:text-red-600 hover:bg-red-100 rounded-full transition-all min-h-[20px] flex items-center"
         title="删除">
         <Trash2 :size="14" />
       </button>
-      <button v-if="prompt.is_default" @click.stop="handleView"
-        class="px-1 py-1 text-[var(--text-secondary)] hover:text-blue-600 hover:bg-blue-100 rounded-full transition-all min-h-[20px] flex items-center"
-        title="查看提示词">
-        <Eye :size="14" />
-      </button>
     </div>
 
     <!-- 提示词名称 -->
-    <h3 class="text-lg font-semibold text-[var(--text-primary)] mb-2 pr-16">
+    <h3 class="text-lg font-semibold text-[var(--text-primary)] mb-2" :class="prompt.is_default ? '' : 'pr-16'">
       {{ prompt.name }}
     </h3>
 
@@ -63,7 +54,7 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import { Edit, Trash2, User, Tag, Eye } from 'lucide-vue-next'
+import { Trash2, User, Tag } from 'lucide-vue-next'
 import ConfirmModal from './shared/ConfirmModal.vue'
 import type { Prompt } from '../electron'
 
@@ -85,11 +76,6 @@ const emit = defineEmits<{
 
 // 删除确认状态
 const showDeleteConfirm = ref(false)
-
-// 处理编辑
-const handleEdit = () => {
-  emit('edit', props.prompt, false)
-}
 
 // 处理删除
 const handleDelete = () => {
@@ -114,9 +100,17 @@ const handleContactAuthor = () => {
   }
 }
 
-// 处理查看提示词
-const handleView = () => {
-  emit('edit', props.prompt, true)
+// 处理卡片点击
+const handleCardClick = () => {
+  emit('click')
+  // 根据提示词类型决定是查看还是编辑
+  if (props.prompt.is_default) {
+    // 默认提示词以查看模式打开
+    emit('edit', props.prompt, true)
+  } else {
+    // 自定义提示词以编辑模式打开
+    emit('edit', props.prompt, false)
+  }
 }
 
 </script>

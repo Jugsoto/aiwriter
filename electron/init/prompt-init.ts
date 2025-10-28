@@ -1,6 +1,7 @@
 import {
   getAllPrompts,
   createPrompt,
+  updatePrompt,
   setPromptSelection
 } from '../database'
 
@@ -788,71 +789,141 @@ const DEFAULT_PROMPTS_DATA = {
 </示例>`,
       category: 'summary_generator',
       is_default: 1,
-      description: '作品简介生成器，为各种作品撰写简洁吸引人的简介',
+      description: '小说简介生成器，为各种作品撰写简洁吸引人的简介',
       author: '神笔AI',
-      version: '1.0.0',
+      version: '1.0.1',
       url: 'https://shenbi.qgming.com'
     }
   ]
 }
 
-// 检查是否需要初始化默认提示词
-function shouldInitializePromptDefaults(): boolean {
+// 比较版本号
+function compareVersions(version1: string, version2: string): number {
+  const v1Parts = version1.split('.').map(Number)
+  const v2Parts = version2.split('.').map(Number)
+
+  const maxLength = Math.max(v1Parts.length, v2Parts.length)
+
+  for (let i = 0; i < maxLength; i++) {
+    const v1Part = v1Parts[i] || 0
+    const v2Part = v2Parts[i] || 0
+
+    if (v1Part > v2Part) return 1
+    if (v1Part < v2Part) return -1
+  }
+
+  return 0
+}
+
+// 检查是否需要更新默认提示词
+function shouldUpdateDefaultPrompts(): { shouldUpdate: boolean; promptsToUpdate: any[] } {
   try {
     const existingPrompts = getAllPrompts()
-    return existingPrompts.length === 0
+    const promptsToUpdate: any[] = []
+
+    // 如果没有任何提示词，需要初始化所有
+    if (existingPrompts.length === 0) {
+      return { shouldUpdate: true, promptsToUpdate: DEFAULT_PROMPTS_DATA.prompts }
+    }
+
+    // 检查每个默认提示词是否需要更新
+    for (const defaultPrompt of DEFAULT_PROMPTS_DATA.prompts) {
+      const existingPrompt = existingPrompts.find(p =>
+        p.name === defaultPrompt.name &&
+        p.category === defaultPrompt.category &&
+        p.is_default === 1
+      )
+
+      if (!existingPrompt) {
+        // 不存在此默认提示词，需要创建
+        promptsToUpdate.push(defaultPrompt)
+      } else {
+        // 存在，检查版本号
+        const comparison = compareVersions(defaultPrompt.version, existingPrompt.version)
+        if (comparison > 0) {
+          // 新版本更高，需要更新
+          promptsToUpdate.push({ ...defaultPrompt, id: existingPrompt.id })
+        }
+      }
+    }
+
+    return {
+      shouldUpdate: promptsToUpdate.length > 0,
+      promptsToUpdate
+    }
   } catch (error) {
-    console.error('检查现有提示词失败:', error)
-    return false
+    console.error('检查提示词更新失败:', error)
+    return { shouldUpdate: false, promptsToUpdate: [] }
   }
 }
 
-// 初始化默认提示词
+// 初始化/更新默认提示词
 export async function initializeDefaultPrompts(): Promise<boolean> {
   try {
-    // 检查是否需要初始化
-    if (!shouldInitializePromptDefaults()) {
-      // 已存在提示词，跳过初始化
+    console.log('检查默认提示词更新...')
+
+    // 检查是否需要更新
+    const { shouldUpdate, promptsToUpdate } = shouldUpdateDefaultPrompts()
+
+    if (!shouldUpdate) {
+      console.log('默认提示词已是最新，无需更新')
       return true
     }
 
-    console.log('开始初始化默认提示词...')
+    console.log(`开始更新默认提示词，共 ${promptsToUpdate.length} 个需要更新...`)
 
-    // 创建默认提示词
-    for (const promptData of DEFAULT_PROMPTS_DATA.prompts) {
+    // 更新或创建默认提示词
+    for (const promptData of promptsToUpdate) {
       try {
-        const prompt = await createPrompt({
-          name: promptData.name,
-          content: promptData.content,
-          category: promptData.category,
-          is_default: promptData.is_default,
-          description: promptData.description,
-          author: promptData.author,
-          version: promptData.version,
-          url: promptData.url
-        })
+        let prompt
 
-        console.log(`创建默认提示词: ${prompt.name} (${prompt.category})`)
+        if (promptData.id) {
+          // 更新现有提示词
+          prompt = updatePrompt(promptData.id, {
+            name: promptData.name,
+            content: promptData.content,
+            category: promptData.category,
+            is_default: promptData.is_default,
+            description: promptData.description,
+            author: promptData.author,
+            version: promptData.version,
+            url: promptData.url
+          })
+          console.log(`更新默认提示词: ${prompt.name} (${prompt.category}) v${promptData.version}`)
+        } else {
+          // 创建新提示词
+          prompt = createPrompt({
+            name: promptData.name,
+            content: promptData.content,
+            category: promptData.category,
+            is_default: promptData.is_default,
+            description: promptData.description,
+            author: promptData.author,
+            version: promptData.version,
+            url: promptData.url
+          })
+          console.log(`创建默认提示词: ${prompt.name} (${prompt.category}) v${promptData.version}`)
+        }
 
         // 如果是默认提示词，设置为该分类的选择
         if (promptData.is_default === 1) {
-          await setPromptSelection({
+          setPromptSelection({
             category: promptData.category,
             prompt_id: prompt.id
           })
           console.log(`设置默认选择: ${promptData.category} -> ${prompt.name}`)
         }
       } catch (error) {
-        console.error(`创建提示词 ${promptData.name} 失败:`, error)
-        // 继续处理其他提示词，不中断整个初始化过程
+        console.error(`处理提示词 ${promptData.name} 失败:`, error)
+        // 继续处理其他提示词，不中断整个更新过程
       }
     }
 
-    console.log('默认提示词初始化完成')
+    console.log('默认提示词更新完成')
     return true
 
   } catch (error) {
-    console.error('默认提示词初始化失败:', error)
+    console.error('默认提示词更新失败:', error)
     return false
   }
 }

@@ -16,7 +16,7 @@
       <div class="flex items-center justify-between mb-4">
         <div class="flex items-center gap-2">
           <button @click="showCreateModal = true"
-            class="flex items-center gap-1 px-3 py-1.5 text-sm bg-[var(--theme-bg)] text-white rounded-lg hover:bg-blue-700 transition-colors">
+            class="flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-lg transition-all duration-200 bg-[var(--theme-bg)] text-white shadow-sm hover:shadow active:scale-98">
             <Plus class="w-4 h-4" />
             <span>新增设定</span>
           </button>
@@ -27,10 +27,14 @@
           </div>
         </div>
         <div class="flex items-center gap-2">
-          <label class="flex items-center gap-1 text-sm text-[var(--text-secondary)]">
-            <input v-model="showStarredOnly" type="checkbox" class="rounded">
-            <span>仅显示星标</span>
-          </label>
+          <button @click="showStarredOnly = !showStarredOnly"
+            class="flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-lg transition-all duration-200 active:scale-98"
+            :class="showStarredOnly
+              ? 'bg-yellow-100 text-yellow-700 border border-yellow-300 shadow-sm'
+              : 'bg-[var(--bg-secondary)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] border border-[var(--border-color)]'">
+            <Star :class="showStarredOnly ? 'fill-current text-yellow-600' : ''" class="w-4 h-4 transition-colors" />
+            <span>{{ showStarredOnly ? '已星标' : '仅显示星标' }}</span>
+          </button>
         </div>
       </div>
 
@@ -67,7 +71,7 @@
 
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
-import { X, Plus, Search } from 'lucide-vue-next'
+import { X, Plus, Search, Star } from 'lucide-vue-next'
 import type { Setting } from '@/electron.d'
 import { useSettingsStore } from '@/stores/settings'
 import SettingCard from '../write/SettingCard.vue'

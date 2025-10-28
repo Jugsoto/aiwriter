@@ -1,6 +1,7 @@
 <template>
   <div
-    class="bg-[var(--bg-secondary)] rounded-lg border border-[var(--border-color)] hover:border-[var(--border-hover)] transition-colors flex flex-col max-h-64">
+    @click="$emit('edit', setting)"
+    class="bg-[var(--bg-secondary)] rounded-lg border border-[var(--border-color)] hover:border-[var(--border-hover)] hover:shadow-md transition-all cursor-pointer flex flex-col max-h-64">
     <!-- 上半部分：名称和操作按钮 -->
     <div class="p-3 border-b border-[var(--border-color)]">
       <div class="flex items-center justify-between">
@@ -8,17 +9,12 @@
           {{ setting.name }}
         </h4>
         <div class="flex items-center gap-1 ml-2">
-          <button @click="$emit('toggle-star', setting)" class="p-1 rounded-md transition-colors"
+          <button @click.stop="$emit('toggle-star', setting)" class="p-1 rounded-md transition-colors"
             :class="setting.starred ? 'text-yellow-500 hover:text-yellow-600' : 'text-[var(--text-secondary)] hover:text-yellow-500'"
             :title="setting.starred ? '取消星标' : '添加星标'">
             <Star :class="setting.starred ? 'fill-current' : ''" class="w-4 h-4" />
           </button>
-          <button @click="$emit('edit', setting)"
-            class="p-1 text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--hover-bg)] rounded-md transition-colors"
-            title="编辑">
-            <Edit class="w-4 h-4" />
-          </button>
-          <button @click="$emit('delete', setting)"
+          <button @click.stop="$emit('delete', setting)"
             class="p-1 text-[var(--text-secondary)] hover:text-red-500 hover:bg-[var(--hover-bg)] rounded-md transition-colors"
             title="删除">
             <Trash2 class="w-4 h-4" />
@@ -49,7 +45,7 @@
 </template>
 
 <script setup lang="ts">
-import { Star, Edit, Trash2 } from 'lucide-vue-next'
+import { Star, Trash2 } from 'lucide-vue-next'
 import type { Setting } from '@/electron.d'
 
 interface Props {
