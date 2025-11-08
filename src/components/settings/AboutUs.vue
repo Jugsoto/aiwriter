@@ -95,7 +95,7 @@ import { useToast } from '@/composables/useToast'
 import UpdateModal from '@/components/modal/UpdateModal.vue'
 
 // 响应式数据
-const appVersion = ref('0.9.0')
+const appVersion = ref('0.9.9')
 const isCheckingUpdates = ref(false)
 const showUpdateModal = ref(false)
 const updateInfo = ref<any>(null)
@@ -111,7 +111,7 @@ const getAppVersion = async () => {
     appVersion.value = version
   } catch (error) {
     console.error('获取应用版本失败:', error)
-    appVersion.value = '0.9.1'
+    appVersion.value = '0.9.9'
   }
 }
 
@@ -164,7 +164,7 @@ const openOfficialWebsite = async () => {
 // 打开使用教程
 const openTutorial = async () => {
   try {
-    await window.electronAPI.openExternal('https://shenbi.qgming.com/guide/what-is-the-app.html')
+    await window.electronAPI.openExternal('https://shenbi.qgming.com/software/introduction.html')
   } catch (error) {
     console.error('打开使用教程失败:', error)
   }

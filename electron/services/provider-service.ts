@@ -23,9 +23,7 @@ export class ProviderService {
       if (!data.name || data.name.trim() === '') {
         throw new Error('供应商名称不能为空')
       }
-      if (!data.url || data.url.trim() === '') {
-        throw new Error('供应商URL不能为空')
-      }
+      // 允许URL和Key为空，用户可以在右侧配置
       return createProvider(data)
     } catch (error) {
       throw new Error(`创建供应商失败: ${error instanceof Error ? error.message : '未知错误'}`)
