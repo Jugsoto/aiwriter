@@ -7,6 +7,7 @@ const BookView = () => import('@/views/BookView.vue')
 const Prompts = () => import('@/views/Prompts.vue')
 const Announcements = () => import('@/views/Announcements.vue')
 const Generator = () => import('@/views/Generator.vue')
+const Leaderboard = () => import('@/views/Leaderboard.vue')
 
 const router = createRouter({
   history: createWebHashHistory(),
@@ -42,6 +43,11 @@ const router = createRouter({
       name: 'Generator',
       component: Generator,
       props: route => ({ type: route.query.type })
+    },
+    {
+      path: '/leaderboard',
+      name: 'Leaderboard',
+      component: Leaderboard
     },
     {
       path: '/settings',
