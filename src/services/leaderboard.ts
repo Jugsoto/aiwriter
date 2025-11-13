@@ -3,8 +3,8 @@
 import type { Book, DecodedBook, RankListResponse, MainBoard, SubCategory } from '../types/leaderboard'
 import { decodeText } from '../utils/fanqieDecoder'
 
-// 男频分类列表
-const MALE_CATEGORIES: SubCategory[] = [
+// 男频分类列表（不含总榜）
+const MALE_CATEGORIES_BASE: SubCategory[] = [
   { id: 1141, name: '西方玄幻' },
   { id: 1140, name: '东方仙侠' },
   { id: 8, name: '科幻末世' },
@@ -26,8 +26,8 @@ const MALE_CATEGORIES: SubCategory[] = [
   { id: 1016, name: '男频衍生' }
 ]
 
-// 女频分类列表
-const FEMALE_CATEGORIES: SubCategory[] = [
+// 女频分类列表（不含总榜）
+const FEMALE_CATEGORIES_BASE: SubCategory[] = [
   { id: 1139, name: '古风世情' },
   { id: 8, name: '科幻末世' },
   { id: 746, name: '游戏体育' },
@@ -47,6 +47,15 @@ const FEMALE_CATEGORIES: SubCategory[] = [
   { id: 748, name: '豪门总裁' },
   { id: 1017, name: '民国言情' }
 ]
+
+// 总榜标识（使用特殊ID -1）
+const OVERALL_CATEGORY: SubCategory = { id: -1, name: '总榜' }
+
+// 男频分类列表（含总榜）
+const MALE_CATEGORIES: SubCategory[] = [OVERALL_CATEGORY, ...MALE_CATEGORIES_BASE]
+
+// 女频分类列表（含总榜）
+const FEMALE_CATEGORIES: SubCategory[] = [OVERALL_CATEGORY, ...FEMALE_CATEGORIES_BASE]
 
 // 四个主榜单
 export const MAIN_BOARDS: MainBoard[] = [
@@ -135,6 +144,49 @@ export async function fetchLeaderboard(
     return decodedBooks
   } catch (error) {
     console.error('Failed to fetch leaderboard:', error)
+    throw error
+  }
+}
+
+/**
+ * 获取总榜数据（所有分类合并，按阅读数量排序）
+ * @param gender 性别 0=女频, 1=男频
+ * @param type 类型 1=新书榜, 2=阅读榜
+ * @param limit 限制数量
+ * @returns 解码后的书籍列表，按阅读数量降序排列
+ */
+export async function fetchOverallLeaderboard(
+  gender: 0 | 1,
+  type: 1 | 2,
+  limit: number = 99
+): Promise<DecodedBook[]> {
+  try {
+    // 获取对应性别的所有分类
+    const categories = gender === 1 ? MALE_CATEGORIES_BASE : FEMALE_CATEGORIES_BASE
+
+    // 并发获取所有分类的数据（每个分类取完整的30本）
+    const allBooksPromises = categories.map(async category => {
+      const books = await fetchLeaderboard(gender, type, category.id, 0, 30)
+      // 为每本书添加分类信息
+      return books.map(book => ({
+        ...book,
+        category: category.name
+      }))
+    })
+
+    const allBooksArrays = await Promise.all(allBooksPromises)
+
+    // 合并所有书籍
+    const allBooks = allBooksArrays.flat()
+
+    // 按阅读数量降序排序，取前100本
+    const sortedBooks = allBooks
+      .sort((a, b) => b.readCount - a.readCount)
+      .slice(0, limit)
+
+    return sortedBooks
+  } catch (error) {
+    console.error('Failed to fetch overall leaderboard:', error)
     throw error
   }
 }

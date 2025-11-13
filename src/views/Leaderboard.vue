@@ -70,13 +70,14 @@
         <div
           v-for="(book, index) in books"
           :key="index"
+          @click="openBookDetail(book, index)"
           class="relative bg-[var(--bg-primary)] rounded-xl shadow-sm border border-[var(--border-color)] hover:shadow-lg hover:border-blue-400 transition-all duration-300 cursor-pointer group"
         >
           <!-- 排名徽章 - 移到卡片外层 -->
-          <div class="absolute -top-2 -left-2 z-10">
+          <div class="absolute -top-1.5 -left-1.5 z-10">
             <div
               :class="[
-                'w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold shadow-lg ring-2 ring-white dark:ring-gray-900',
+                'w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold shadow-md ring-2 ring-white dark:ring-gray-900',
                 index < 3
                   ? index === 0
                     ? 'bg-gradient-to-br from-yellow-400 to-yellow-600 text-white'
@@ -169,14 +170,25 @@
         </div>
       </div>
     </div>
+
+    <!-- 书籍详情模态框 -->
+    <BookDetailModal
+      :show="showModal"
+      :book="selectedBook"
+      :rank-index="selectedBookIndex"
+      :board-name="selectedBoard.name"
+      :category-name="selectedSubCategory.id === -1 ? selectedBook?.category : selectedSubCategory.name"
+      @close="closeModal"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { Trophy, Book, User, Eye, FileText, AlertCircle } from 'lucide-vue-next'
-import { fetchLeaderboard, MAIN_BOARDS } from '../services/leaderboard'
+import { fetchLeaderboard, fetchOverallLeaderboard, MAIN_BOARDS } from '../services/leaderboard'
 import type { DecodedBook, MainBoard, SubCategory } from '../types/leaderboard'
+import BookDetailModal from '../components/modal/BookDetailModal.vue'
 
 // 状态
 const mainBoards = ref(MAIN_BOARDS)
@@ -185,6 +197,11 @@ const selectedSubCategory = ref<SubCategory>(MAIN_BOARDS[0].subCategories[0]) //
 const books = ref<DecodedBook[]>([])
 const loading = ref(false)
 const error = ref<string | null>(null)
+
+// 模态框状态
+const showModal = ref(false)
+const selectedBook = ref<DecodedBook | null>(null)
+const selectedBookIndex = ref(0)
 
 // 选择主榜单
 const selectBoard = (board: MainBoard) => {
@@ -205,14 +222,25 @@ const loadLeaderboard = async () => {
   error.value = null
 
   try {
-    const data = await fetchLeaderboard(
-      selectedBoard.value.gender,
-      selectedBoard.value.type,
-      selectedSubCategory.value.id,
-      0,
-      30
-    )
-    books.value = data
+    // 如果是总榜（id为-1），使用总榜API
+    if (selectedSubCategory.value.id === -1) {
+      const data = await fetchOverallLeaderboard(
+        selectedBoard.value.gender,
+        selectedBoard.value.type,
+        99
+      )
+      books.value = data
+    } else {
+      // 否则使用普通分类API
+      const data = await fetchLeaderboard(
+        selectedBoard.value.gender,
+        selectedBoard.value.type,
+        selectedSubCategory.value.id,
+        0,
+        30
+      )
+      books.value = data
+    }
   } catch (err) {
     error.value = err instanceof Error ? err.message : '加载排行榜数据失败'
     books.value = []
@@ -235,6 +263,18 @@ const formatNumber = (num: number): string => {
 const handleImageError = (event: Event) => {
   const img = event.target as HTMLImageElement
   img.style.display = 'none'
+}
+
+// 打开书籍详情模态框
+const openBookDetail = (book: DecodedBook, index: number) => {
+  selectedBook.value = book
+  selectedBookIndex.value = index
+  showModal.value = true
+}
+
+// 关闭模态框
+const closeModal = () => {
+  showModal.value = false
 }
 
 // 组件挂载时加载数据
