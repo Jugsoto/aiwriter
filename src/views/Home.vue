@@ -1,16 +1,23 @@
 <template>
-  <div class="h-full flex flex-col">
-    <!-- 顶部栏 -->
-    <div class="flex items-center justify-between p-5 border-b border-[var(--border-color)]">
+  <div class="h-full overflow-y-auto p-5 bg-[var(--bg-secondary)]">
+    <!-- 页面标题和操作按钮 -->
+    <div class="flex items-center justify-between mb-6">
       <h1 class="text-2xl font-semibold text-[var(--text-primary)]">作品管理</h1>
       <div class="flex items-center gap-2">
+        <button
+          v-if="hasUpdate"
+          @click="handleUpdate"
+          class="flex items-center gap-2 px-3 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors animate-pulse">
+          <RefreshCw class="w-4 h-4" />
+          发现新版本
+        </button>
         <button @click="goToAnnouncements"
-          class="flex items-center gap-2 px-3 py-2 bg-[var(--bg-secondary)] text-[var(--text-primary)] border border-[var(--border-color)] rounded-xl hover:bg-[var(--hover-bg)] transition-colors">
+          class="flex items-center gap-2 px-3 py-2 bg-[var(--bg-primary)] text-[var(--text-primary)] border border-[var(--border-color)] rounded-xl hover:bg-[var(--hover-bg)] transition-colors">
           <Bell class="w-4 h-4" />
           公告
         </button>
         <button @click="openTutorial"
-          class="flex items-center gap-2 px-3 py-2 bg-[var(--bg-secondary)] text-[var(--text-primary)] border border-[var(--border-color)] rounded-xl hover:bg-[var(--hover-bg)] transition-colors">
+          class="flex items-center gap-2 px-3 py-2 bg-[var(--bg-primary)] text-[var(--text-primary)] border border-[var(--border-color)] rounded-xl hover:bg-[var(--hover-bg)] transition-colors">
           <BookOpenCheck class="w-4 h-4" />
           教程
         </button>
@@ -26,34 +33,31 @@
       </div>
     </div>
 
-    <!-- 主要内容区 -->
-    <div class="flex-1 overflow-auto p-5 bg-[var(--bg-secondary)]">
-      <!-- 加载状态 -->
-      <div v-if="booksStore.loading" class="flex items-center justify-center h-64">
-        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-      </div>
+    <!-- 加载状态 -->
+    <div v-if="booksStore.loading" class="flex items-center justify-center h-64">
+      <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+    </div>
 
-      <!-- 错误状态 -->
-      <div v-else-if="booksStore.error" class="text-center text-red-500">
-        <p class="mb-2">{{ booksStore.error }}</p>
-        <button @click="retryLoad"
-          class="px-4 py-2 bg-[var(--theme-bg)] text-white rounded-md hover:bg-blue-700 transition-colors">
-          重试
-        </button>
-      </div>
+    <!-- 错误状态 -->
+    <div v-else-if="booksStore.error" class="text-center text-red-500">
+      <p class="mb-2">{{ booksStore.error }}</p>
+      <button @click="retryLoad"
+        class="px-4 py-2 bg-[var(--theme-bg)] text-white rounded-md hover:bg-blue-700 transition-colors">
+        重试
+      </button>
+    </div>
 
-      <!-- 空状态 -->
-      <div v-else-if="booksStore.books.length === 0"
-        class="flex flex-col items-center justify-center h-64 text-gray-500">
-        <BookOpen class="w-16 h-16 mb-4 text-[var(--text-secondary)]" />
-        <p class="text-lg">暂无书籍，点击右上角按钮添加</p>
-      </div>
+    <!-- 空状态 -->
+    <div v-else-if="booksStore.books.length === 0"
+      class="flex flex-col items-center justify-center h-64 text-gray-500">
+      <BookOpen class="w-16 h-16 mb-4 text-[var(--text-secondary)]" />
+      <p class="text-lg">暂无书籍，点击右上角按钮添加</p>
+    </div>
 
-      <!-- 书籍网格 -->
-      <div v-else class="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6">
-        <BookCard v-for="book in booksStore.books" :key="book.id" :book="book" @edit="handleEdit"
-          @delete="handleDelete" />
-      </div>
+    <!-- 书籍网格 -->
+    <div v-else class="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6">
+      <BookCard v-for="book in booksStore.books" :key="book.id" :book="book" @edit="handleEdit"
+        @delete="handleDelete" />
     </div>
 
     <!-- 新增/编辑模态框 -->
@@ -66,26 +70,31 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useBooksStore } from '@/stores/books'
+import { useUpdateStore } from '@/stores/update'
 import { showConfirm, useToast } from '@/composables'
 import BookCard from '../components/BookCard.vue'
 import BookModal from '../components/modal/BookModal.vue'
 import Toast from '../components/shared/Toast.vue'
-import { BookOpen, Download, Bell, BookOpenCheck } from 'lucide-vue-next'
+import { BookOpen, Download, Bell, BookOpenCheck, RefreshCw } from 'lucide-vue-next'
 import type { Book } from '@/electron.d'
 
 const router = useRouter()
 
 const booksStore = useBooksStore()
+const updateStore = useUpdateStore()
 const { toastVisible, toastMessage, toastType, showToast } = useToast()
 const showAddModal = ref(false)
 const showEditModal = ref(false)
 const editingBook = ref<Book | null>(null)
 
+const hasUpdate = computed(() => updateStore.updateInfo.hasUpdate)
+
 onMounted(async () => {
   await booksStore.loadBooks()
+  await updateStore.checkForUpdates()
 })
 
 function handleEdit(book: Book) {
@@ -188,6 +197,19 @@ async function openTutorial() {
     console.error('打开教程失败:', error)
     showToast({
       message: '打开教程失败，请重试',
+      type: 'error'
+    })
+  }
+}
+
+// 处理更新
+async function handleUpdate() {
+  try {
+    await updateStore.openDownloadPage()
+  } catch (error) {
+    console.error('打开下载页面失败:', error)
+    showToast({
+      message: '打开下载页面失败，请重试',
       type: 'error'
     })
   }

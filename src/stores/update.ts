@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
-import { UpdateChecker, type UpdateInfo as RemoteUpdateInfo, type Announcement } from '@/services/updateChecker'
+import { UpdateChecker, type Announcement } from '@/services/updateChecker'
 
 export interface UpdateInfo {
   hasUpdate: boolean

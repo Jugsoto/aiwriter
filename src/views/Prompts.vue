@@ -17,30 +17,26 @@
     </div>
 
     <!-- 右侧内容区域 -->
-    <div class="flex-1 flex flex-col overflow-hidden">
-      <!-- 顶部操作栏 -->
-      <div class="bg-[var(--bg-primary)] border-b border-[var(--border-color)] p-5">
-        <div class="flex items-center justify-between">
-          <div>
-            <div class="flex items-center gap-2">
-              <h1 class="text-2xl font-semibold text-[var(--text-primary)]">
-                {{ getCurrentCategoryName() }}
-              </h1>
-              <button @click="showInfoModal = true"
-                class="text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors p-1 rounded-full hover:bg-[var(--hover-bg)]">
-                <HelpCircle :size="18" />
-              </button>
-            </div>
-          </div>
-          <button @click="showAddModal = true"
-            class="bg-[var(--theme-bg)] text-[var(--theme-text)] px-4 py-2 rounded-xl hover:opacity-90 transition-opacity flex items-center">
-            新增提示词
+    <div class="flex-1 overflow-y-auto p-5">
+      <!-- 页面标题和操作按钮 -->
+      <div class="flex items-center justify-between mb-6">
+        <div class="flex items-center gap-2">
+          <h1 class="text-2xl font-semibold text-[var(--text-primary)]">
+            {{ getCurrentCategoryName() }}
+          </h1>
+          <button @click="showInfoModal = true"
+            class="text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors p-1 rounded-full hover:bg-[var(--hover-bg)]">
+            <HelpCircle :size="18" />
           </button>
         </div>
+        <button @click="showAddModal = true"
+          class="bg-[var(--theme-bg)] text-[var(--theme-text)] px-4 py-2 rounded-xl hover:opacity-90 transition-opacity flex items-center">
+          新增提示词
+        </button>
       </div>
 
       <!-- 提示词列表区域 -->
-      <div class="flex-1 p-5 overflow-y-auto">
+      <div>
         <div v-if="!selectedCategory" class="text-[var(--text-secondary)] text-center">
           <div class="text-lg mb-2">请选择一个提示词类型</div>
           <div class="text-sm">点击左侧导航中的类型来查看对应的提示词</div>

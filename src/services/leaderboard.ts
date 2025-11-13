@@ -5,15 +5,8 @@ import { decodeText } from '../utils/fanqieDecoder'
 
 // 男频分类列表（不含总榜）
 const MALE_CATEGORIES_BASE: SubCategory[] = [
-  { id: 1141, name: '西方玄幻' },
-  { id: 1140, name: '东方仙侠' },
-  { id: 8, name: '科幻末世' },
-  { id: 261, name: '都市日常' },
-  { id: 124, name: '都市修真' },
   { id: 1014, name: '都市高武' },
-  { id: 273, name: '历史古代' },
-  { id: 27, name: '战神赘婿' },
-  { id: 263, name: '都市种田' },
+  { id: 8, name: '科幻末世' },
   { id: 258, name: '传统玄幻' },
   { id: 272, name: '历史脑洞' },
   { id: 539, name: '悬疑脑洞' },
@@ -22,6 +15,13 @@ const MALE_CATEGORIES_BASE: SubCategory[] = [
   { id: 751, name: '悬疑灵异' },
   { id: 504, name: '抗战谍战' },
   { id: 746, name: '游戏体育' },
+  { id: 1141, name: '西方玄幻' },
+  { id: 1140, name: '东方仙侠' },
+  { id: 261, name: '都市日常' },
+  { id: 124, name: '都市修真' },
+  { id: 273, name: '历史古代' },
+  { id: 27, name: '战神赘婿' },
+  { id: 263, name: '都市种田' },
   { id: 718, name: '动漫衍生' },
   { id: 1016, name: '男频衍生' }
 ]
@@ -29,6 +29,8 @@ const MALE_CATEGORIES_BASE: SubCategory[] = [
 // 女频分类列表（不含总榜）
 const FEMALE_CATEGORIES_BASE: SubCategory[] = [
   { id: 1139, name: '古风世情' },
+    { id: 749, name: '青春甜宠' },
+  { id: 745, name: '星光璀璨' },
   { id: 8, name: '科幻末世' },
   { id: 746, name: '游戏体育' },
   { id: 1015, name: '女频衍生' },
@@ -40,8 +42,6 @@ const FEMALE_CATEGORIES_BASE: SubCategory[] = [
   { id: 539, name: '悬疑脑洞' },
   { id: 253, name: '古言脑洞' },
   { id: 24, name: '快穿' },
-  { id: 749, name: '青春甜宠' },
-  { id: 745, name: '星光璀璨' },
   { id: 747, name: '女频悬疑' },
   { id: 750, name: '职场婚恋' },
   { id: 748, name: '豪门总裁' },
