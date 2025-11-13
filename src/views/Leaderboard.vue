@@ -1,8 +1,18 @@
 <template>
   <div class="h-full overflow-y-auto p-5 bg-[var(--bg-secondary)]">
     <div class="max-w-7xl mx-auto">
-      <!-- 页面标题 -->
-      <h1 class="text-2xl font-semibold text-[var(--text-primary)] mb-6">番茄小说排行榜</h1>
+      <!-- 页面标题栏 -->
+      <div class="flex items-center justify-between mb-6">
+        <h1 class="text-2xl font-semibold text-[var(--text-primary)]">番茄小说排行榜</h1>
+        <button
+          @click="openAnalysisModal"
+          :disabled="books.length === 0 || loading"
+          class="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium bg-blue-500 text-white hover:bg-blue-600 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          <TrendingUp :size="18" />
+          榜单分析
+        </button>
+      </div>
 
       <!-- 主榜单选择 -->
       <div class="mb-5">
@@ -180,15 +190,25 @@
       :category-name="selectedSubCategory.id === -1 ? selectedBook?.category : selectedSubCategory.name"
       @close="closeModal"
     />
+
+    <!-- 榜单分析模态框 -->
+    <LeaderboardAnalysisModal
+      :show="showAnalysisModal"
+      :books="books"
+      :board-name="selectedBoard.name"
+      :category-name="selectedSubCategory.id === -1 ? '总榜' : selectedSubCategory.name"
+      @close="closeAnalysisModal"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { Trophy, Book, User, Eye, FileText, AlertCircle } from 'lucide-vue-next'
+import { Trophy, Book, User, Eye, FileText, AlertCircle, TrendingUp } from 'lucide-vue-next'
 import { fetchLeaderboard, fetchOverallLeaderboard, MAIN_BOARDS } from '../services/leaderboard'
 import type { DecodedBook, MainBoard, SubCategory } from '../types/leaderboard'
 import BookDetailModal from '../components/modal/BookDetailModal.vue'
+import LeaderboardAnalysisModal from '../components/modal/LeaderboardAnalysisModal.vue'
 
 // 状态
 const mainBoards = ref(MAIN_BOARDS)
@@ -202,6 +222,9 @@ const error = ref<string | null>(null)
 const showModal = ref(false)
 const selectedBook = ref<DecodedBook | null>(null)
 const selectedBookIndex = ref(0)
+
+// 榜单分析模态框状态
+const showAnalysisModal = ref(false)
 
 // 选择主榜单
 const selectBoard = (board: MainBoard) => {
@@ -275,6 +298,16 @@ const openBookDetail = (book: DecodedBook, index: number) => {
 // 关闭模态框
 const closeModal = () => {
   showModal.value = false
+}
+
+// 打开榜单分析模态框
+const openAnalysisModal = () => {
+  showAnalysisModal.value = true
+}
+
+// 关闭榜单分析模态框
+const closeAnalysisModal = () => {
+  showAnalysisModal.value = false
 }
 
 // 组件挂载时加载数据

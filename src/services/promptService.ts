@@ -187,12 +187,6 @@ export const PROMPT_CATEGORIES = [
     icon: 'FastForward'
   },
   {
-    key: 'chapter_review',
-    name: '章节评估',
-    description: '用于评估章节质量的提示词',
-    icon: 'Award'
-  },
-  {
     key: 'idea_generator',
     name: '脑洞生成器',
     description: '用于生成创意脑洞和灵感的提示词',
