@@ -8,6 +8,8 @@ export interface Book {
   creationStatus: string
   bookId?: string
   category?: string
+  abstract?: string
+  thumbUri?: string
 }
 
 export interface DecodedBook {
@@ -18,6 +20,8 @@ export interface DecodedBook {
   status: '连载中' | '已完结'
   bookId?: string
   category?: string
+  abstract?: string
+  thumbUri?: string
 }
 
 export interface RankListResponse {

@@ -117,6 +117,8 @@ export async function fetchLeaderboard(
       const readCount = parseInt(book.read_count.replace(/,/g, '')) || 0
       const wordCount = parseInt((book.wordNumber || '0').replace(/,/g, '')) || 0
       const status = book.creationStatus === '1' ? '连载中' : '已完结'
+      const abstract = book.abstract ? decodeText(book.abstract) : undefined
+      const thumbUri = book.thumbUri || undefined
 
       return {
         bookName,
@@ -124,7 +126,9 @@ export async function fetchLeaderboard(
         readCount,
         wordCount,
         status,
-        bookId: book.bookId
+        bookId: book.bookId,
+        abstract,
+        thumbUri
       }
     })
 

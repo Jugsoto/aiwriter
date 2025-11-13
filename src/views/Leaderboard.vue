@@ -65,87 +65,96 @@
         </div>
       </div>
 
-      <!-- 排行榜列表 -->
-      <div v-else-if="books.length > 0" class="bg-[var(--bg-primary)] rounded-xl shadow-sm border border-[var(--border-color)] overflow-hidden">
-        <!-- 表头 -->
-        <div class="grid grid-cols-12 gap-4 px-4 py-3 border-b border-[var(--border-color)] text-sm font-medium text-[var(--text-secondary)] bg-[var(--bg-secondary)]">
-          <div class="col-span-1 text-center">排名</div>
-          <div class="col-span-4">书名</div>
-          <div class="col-span-2">作者</div>
-          <div class="col-span-2 text-right">在读数</div>
-          <div class="col-span-2 text-right">字数</div>
-          <div class="col-span-1 text-center">状态</div>
-        </div>
+      <!-- 排行榜列表 - 卡片网格布局 -->
+      <div v-else-if="books.length > 0" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+        <div
+          v-for="(book, index) in books"
+          :key="index"
+          class="relative bg-[var(--bg-primary)] rounded-xl shadow-sm border border-[var(--border-color)] hover:shadow-lg hover:border-blue-400 transition-all duration-300 cursor-pointer group"
+        >
+          <!-- 排名徽章 - 移到卡片外层 -->
+          <div class="absolute -top-2 -left-2 z-10">
+            <div
+              :class="[
+                'w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold shadow-lg ring-2 ring-white dark:ring-gray-900',
+                index < 3
+                  ? index === 0
+                    ? 'bg-gradient-to-br from-yellow-400 to-yellow-600 text-white'
+                    : index === 1
+                    ? 'bg-gradient-to-br from-gray-300 to-gray-500 text-white'
+                    : 'bg-gradient-to-br from-orange-400 to-orange-600 text-white'
+                  : 'bg-[var(--bg-primary)] text-[var(--text-primary)] border-2 border-[var(--border-color)]'
+              ]"
+            >
+              {{ index + 1 }}
+            </div>
+          </div>
 
-        <!-- 书籍列表 -->
-        <div class="divide-y divide-[var(--border-color)]">
-          <div
-            v-for="(book, index) in books"
-            :key="index"
-            class="grid grid-cols-12 gap-4 px-4 py-3.5 hover:bg-[var(--hover-bg)] transition-all duration-150 cursor-pointer"
-          >
-            <!-- 排名 -->
-            <div class="col-span-1 flex items-center justify-center">
-              <div
-                :class="[
-                  'w-7 h-7 rounded-full flex items-center justify-center text-sm font-semibold',
-                  index < 3
-                    ? index === 0
-                      ? 'bg-gradient-to-br from-yellow-400 to-yellow-600 text-white shadow-sm'
-                      : index === 1
-                      ? 'bg-gradient-to-br from-gray-300 to-gray-500 text-white shadow-sm'
-                      : 'bg-gradient-to-br from-orange-400 to-orange-600 text-white shadow-sm'
-                    : 'bg-[var(--bg-secondary)] text-[var(--text-secondary)]'
-                ]"
-              >
-                {{ index + 1 }}
+          <!-- 卡片内容 - 横向布局 -->
+          <div class="flex h-full p-3 gap-3">
+            <!-- 左侧：封面图片 (3:4 比例) -->
+            <div class="relative w-28 flex-shrink-0 rounded-lg overflow-hidden bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-900 shadow-sm">
+              <!-- 封面图片 -->
+              <img
+                v-if="book.thumbUri"
+                :src="book.thumbUri"
+                :alt="book.bookName"
+                class="w-full h-full object-cover"
+                @error="handleImageError"
+              />
+              <!-- 无封面占位 -->
+              <div v-else class="w-full h-full flex items-center justify-center">
+                <Book :size="40" class="text-gray-400 dark:text-gray-600" />
               </div>
             </div>
 
-            <!-- 书名 -->
-            <div class="col-span-4 flex items-center min-w-0">
-              <div class="flex items-center gap-2 min-w-0">
-                <Book :size="16" class="text-[var(--text-tertiary)] flex-shrink-0" />
-                <span class="text-sm font-medium text-[var(--text-primary)] truncate">{{ book.bookName }}</span>
-              </div>
-            </div>
+            <!-- 右侧：书籍信息 -->
+            <div class="flex-1 flex flex-col min-w-0 py-1">
+              <!-- 书名 -->
+              <h3 class="text-[15px] font-semibold text-[var(--text-primary)] mb-2 line-clamp-2 leading-snug group-hover:text-blue-500 transition-colors">
+                {{ book.bookName }}
+              </h3>
 
-            <!-- 作者 -->
-            <div class="col-span-2 flex items-center min-w-0">
-              <div class="flex items-center gap-2 min-w-0">
-                <User :size="14" class="text-[var(--text-tertiary)] flex-shrink-0" />
-                <span class="text-sm text-[var(--text-secondary)] truncate">{{ book.author }}</span>
+              <!-- 作者 -->
+              <div class="flex items-center gap-1.5 mb-2">
+                <User :size="13" class="text-[var(--text-tertiary)] flex-shrink-0" />
+                <span class="text-[13px] text-[var(--text-secondary)] truncate">{{ book.author }}</span>
               </div>
-            </div>
 
-            <!-- 在读数 -->
-            <div class="col-span-2 flex items-center justify-end">
-              <div class="flex items-center gap-1.5">
-                <Eye :size="14" class="text-[var(--text-tertiary)]" />
-                <span class="text-sm text-[var(--text-secondary)]">{{ formatNumber(book.readCount) }}</span>
+              <!-- 简介 -->
+              <p v-if="book.abstract" class="text-[11px] text-[var(--text-secondary)] line-clamp-2 leading-relaxed mb-auto">
+                {{ book.abstract }}
+              </p>
+
+              <!-- 状态信息区域 -->
+              <div class="space-y-2 mt-3">
+                <!-- 状态和统计信息 - 合并为一行 -->
+                <div class="flex items-center justify-between gap-2">
+                  <!-- 状态标签 -->
+                  <span
+                    :class="[
+                      'px-2 py-0.5 rounded text-[11px] font-medium flex-shrink-0',
+                      book.status === '连载中'
+                        ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+                        : 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
+                    ]"
+                  >
+                    {{ book.status }}
+                  </span>
+
+                  <!-- 统计信息 -->
+                  <div class="flex items-center gap-3 text-[11px] text-[var(--text-secondary)]">
+                    <div class="flex items-center gap-1">
+                      <Eye :size="12" class="text-[var(--text-tertiary)]" />
+                      <span>{{ formatNumber(book.readCount) }}</span>
+                    </div>
+                    <div class="flex items-center gap-1">
+                      <FileText :size="12" class="text-[var(--text-tertiary)]" />
+                      <span>{{ formatNumber(book.wordCount) }}</span>
+                    </div>
+                  </div>
+                </div>
               </div>
-            </div>
-
-            <!-- 字数 -->
-            <div class="col-span-2 flex items-center justify-end">
-              <div class="flex items-center gap-1.5">
-                <FileText :size="14" class="text-[var(--text-tertiary)]" />
-                <span class="text-sm text-[var(--text-secondary)]">{{ formatNumber(book.wordCount) }}</span>
-              </div>
-            </div>
-
-            <!-- 状态 -->
-            <div class="col-span-1 flex items-center justify-center">
-              <span
-                :class="[
-                  'px-2 py-0.5 rounded-md text-xs font-medium',
-                  book.status === '连载中'
-                    ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
-                    : 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
-                ]"
-              >
-                {{ book.status }}
-              </span>
             </div>
           </div>
         </div>
@@ -220,6 +229,12 @@ const formatNumber = (num: number): string => {
     return (num / 10000).toFixed(1) + '万'
   }
   return num.toString()
+}
+
+// 处理图片加载错误
+const handleImageError = (event: Event) => {
+  const img = event.target as HTMLImageElement
+  img.style.display = 'none'
 }
 
 // 组件挂载时加载数据
