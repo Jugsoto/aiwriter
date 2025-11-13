@@ -1,8 +1,13 @@
 <template>
-  <div v-if="visible" class="fixed inset-0 flex items-center justify-center z-50">
-    <div class="fixed inset-0" @click="handleCancel"></div>
-    <div
-      class="bg-[var(--bg-primary)] rounded-xl p-6 w-full max-w-2xl mx-4 max-h-[80vh] flex flex-col border-2 border-[var(--border-color)] shadow-lg relative">
+  <Teleport to="body">
+    <Transition name="modal">
+      <div
+        v-if="visible"
+        class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
+        @click.self="handleCancel"
+      >
+        <div
+          class="bg-[var(--bg-primary)] rounded-2xl p-6 w-full max-w-2xl mx-4 max-h-[80vh] flex flex-col border border-[var(--border-color)] shadow-2xl">
       <h3 class="text-lg font-semibold text-[var(--text-primary)] mb-4">
         {{ isEdit ? '编辑设定' : '新增设定' }}
       </h3>
@@ -46,8 +51,10 @@
           保存
         </button>
       </div>
-    </div>
-  </div>
+        </div>
+      </div>
+    </Transition>
+  </Teleport>
 </template>
 
 <script setup lang="ts">
@@ -140,3 +147,27 @@ watch(() => formData.value.name, () => {
   }
 })
 </script>
+
+<style scoped>
+/* 模态框过渡动画 */
+.modal-enter-active,
+.modal-leave-active {
+  transition: opacity 0.3s ease;
+}
+
+.modal-enter-active > div,
+.modal-leave-active > div {
+  transition: transform 0.3s ease, opacity 0.3s ease;
+}
+
+.modal-enter-from,
+.modal-leave-to {
+  opacity: 0;
+}
+
+.modal-enter-from > div,
+.modal-leave-to > div {
+  transform: scale(0.95);
+  opacity: 0;
+}
+</style>

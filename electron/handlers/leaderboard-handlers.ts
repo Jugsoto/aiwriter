@@ -22,8 +22,6 @@ export function registerLeaderboardHandlers(): void {
     try {
       const { gender, type, categoryId, offset, limit } = params
 
-      console.log('Fetching leaderboard with params:', { gender, type, categoryId, offset, limit })
-
       const url = new URL('https://fanqienovel.com/api/rank/category/list')
       url.searchParams.append('app_id', '2503')
       url.searchParams.append('rank_list_type', '3')
@@ -33,8 +31,6 @@ export function registerLeaderboardHandlers(): void {
       url.searchParams.append('rank_version', '')
       url.searchParams.append('gender', gender.toString())
       url.searchParams.append('rankMold', type.toString())
-
-      console.log('Request URL:', url.toString())
 
       const options = {
         hostname: url.hostname,

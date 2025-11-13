@@ -1,11 +1,13 @@
 <template>
-  <div v-if="visible" class="fixed inset-0 z-50 flex items-center justify-center">
-    <!-- 背景遮罩 -->
-    <div class="absolute inset-0 " @click="handleBackdropClick"></div>
-
-    <!-- 模态窗 -->
-    <div
-      class="relative bg-[var(--bg-primary)] rounded-xl shadow-2xl w-full max-w-md mx-4 border border-[var(--border-color)]">
+  <Teleport to="body">
+    <Transition name="modal">
+      <div
+        v-if="visible"
+        class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
+        @click.self="handleBackdropClick"
+      >
+        <div
+          class="bg-[var(--bg-primary)] rounded-2xl shadow-2xl w-full max-w-md mx-4 border border-[var(--border-color)]">
       <!-- 标题栏 -->
       <div class="flex items-center justify-between px-6 py-4 border-b border-[var(--border-color)]">
         <div class="flex items-center gap-3">
@@ -79,8 +81,10 @@
           </button>
         </div>
       </div>
-    </div>
-  </div>
+        </div>
+      </div>
+    </Transition>
+  </Teleport>
 </template>
 
 <script setup lang="ts">
@@ -151,3 +155,27 @@ const handleUpdate = async () => {
   }
 }
 </script>
+
+<style scoped>
+/* 模态框过渡动画 */
+.modal-enter-active,
+.modal-leave-active {
+  transition: opacity 0.3s ease;
+}
+
+.modal-enter-active > div,
+.modal-leave-active > div {
+  transition: transform 0.3s ease, opacity 0.3s ease;
+}
+
+.modal-enter-from,
+.modal-leave-to {
+  opacity: 0;
+}
+
+.modal-enter-from > div,
+.modal-leave-to > div {
+  transform: scale(0.95);
+  opacity: 0;
+}
+</style>

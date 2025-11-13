@@ -1,7 +1,13 @@
 <template>
-  <div v-if="visible" class="fixed inset-0 flex items-center justify-center z-50">
-    <div
-      class="bg-[var(--bg-primary)] rounded-xl border border-[var(--border-color)] p-6 w-full max-w-2xl max-h-[80vh] flex flex-col">
+  <Teleport to="body">
+    <Transition name="modal">
+      <div
+        v-if="visible"
+        class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
+        @click.self="$emit('close')"
+      >
+        <div
+          class="bg-[var(--bg-primary)] rounded-2xl border border-[var(--border-color)] p-6 w-full max-w-2xl max-h-[80vh] flex flex-col shadow-2xl">
       <div class="flex items-center justify-between mb-4">
         <h3 class="text-lg font-semibold text-[var(--text-primary)]">获取模型列表</h3>
         <button @click="$emit('close')"
@@ -34,8 +40,10 @@
           关闭
         </button>
       </div>
-    </div>
-  </div>
+        </div>
+      </div>
+    </Transition>
+  </Teleport>
 </template>
 
 <script setup lang="ts">
@@ -90,3 +98,27 @@ const handleModelAction = (model: string) => {
   }
 }
 </script>
+
+<style scoped>
+/* 模态框过渡动画 */
+.modal-enter-active,
+.modal-leave-active {
+  transition: opacity 0.3s ease;
+}
+
+.modal-enter-active > div,
+.modal-leave-active > div {
+  transition: transform 0.3s ease, opacity 0.3s ease;
+}
+
+.modal-enter-from,
+.modal-leave-to {
+  opacity: 0;
+}
+
+.modal-enter-from > div,
+.modal-leave-to > div {
+  transform: scale(0.95);
+  opacity: 0;
+}
+</style>

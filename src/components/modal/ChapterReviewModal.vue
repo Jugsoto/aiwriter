@@ -1,11 +1,13 @@
 <template>
-  <div v-if="visible" class="fixed inset-0 flex items-center justify-center z-50">
-    <!-- 背景遮罩 -->
-    <div class="absolute inset-0 bg-black/50" @click="handleCancel"></div>
-
-    <!-- 模态窗口内容 -->
-    <div
-      class="bg-[var(--bg-primary)] rounded-xl p-6 w-full max-w-4xl mx-4 max-h-[90vh] min-h-[400px] flex flex-col border-2 border-[var(--border-color)] shadow-lg relative z-10">
+  <Teleport to="body">
+    <Transition name="modal">
+      <div
+        v-if="visible"
+        class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
+        @click.self="handleCancel"
+      >
+        <div
+          class="bg-[var(--bg-primary)] rounded-2xl p-6 w-full max-w-4xl mx-4 max-h-[90vh] min-h-[400px] flex flex-col border border-[var(--border-color)] shadow-2xl">
 
       <!-- 标题栏 -->
       <div class="flex items-center justify-between mb-6">
@@ -214,8 +216,10 @@
           重新评估
         </button>
       </div>
-    </div>
-  </div>
+        </div>
+      </div>
+    </Transition>
+  </Teleport>
 </template>
 
 <script setup lang="ts">
@@ -528,5 +532,27 @@ const getScoreComment = (score: number): string => {
 
 ::-webkit-scrollbar-thumb:hover {
   background: var(--text-secondary);
+}
+
+/* 模态框过渡动画 */
+.modal-enter-active,
+.modal-leave-active {
+  transition: opacity 0.3s ease;
+}
+
+.modal-enter-active > div,
+.modal-leave-active > div {
+  transition: transform 0.3s ease, opacity 0.3s ease;
+}
+
+.modal-enter-from,
+.modal-leave-to {
+  opacity: 0;
+}
+
+.modal-enter-from > div,
+.modal-leave-to > div {
+  transform: scale(0.95);
+  opacity: 0;
 }
 </style>
