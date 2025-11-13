@@ -24,7 +24,7 @@
             </div>
 
             <!-- 基本信息 -->
-            <div class="flex-1 min-w-0 flex flex-col">
+            <div class="flex-1 min-w-0 flex flex-col justify-between">
               <div class="space-y-2">
                 <!-- 书名 -->
                 <h2 class="text-xl font-bold text-[var(--text-primary)] leading-tight line-clamp-2">
@@ -37,13 +37,15 @@
                   <span class="text-sm text-[var(--text-secondary)]">{{ book?.author }}</span>
                 </div>
 
-                <!-- 排行榜信息 -->
-                <div v-if="boardName">
-                  <span class="inline-flex items-center px-2.5 py-1 rounded text-sm font-medium bg-[var(--bg-secondary)] text-[var(--text-secondary)] border border-[var(--border-color)]">
+                <!-- 分类和排名信息 -->
+                <div class="flex items-center gap-3 text-sm text-[var(--text-secondary)]">
+                  <span v-if="categoryName">{{ categoryName }}</span>
+                  <span v-if="categoryName && boardName" class="text-[var(--text-tertiary)]">·</span>
+                  <span v-if="boardName">
                     {{ boardName }} · 第
                     <span
                       :class="[
-                        'font-semibold ml-0.5',
+                        'font-semibold',
                         rankIndex < 3
                           ? rankIndex === 0
                             ? 'text-yellow-600 dark:text-yellow-500'
@@ -56,13 +58,6 @@
                       {{ rankIndex + 1 }}
                     </span>
                     名
-                  </span>
-                </div>
-
-                <!-- 分类信息 -->
-                <div v-if="categoryName">
-                  <span class="inline-flex items-center px-2.5 py-1 rounded text-sm font-medium bg-[var(--bg-secondary)] text-[var(--text-secondary)] border border-[var(--border-color)]">
-                    {{ categoryName }}
                   </span>
                 </div>
 
@@ -79,6 +74,17 @@
                     {{ book?.status }}
                   </span>
                 </div>
+              </div>
+
+              <!-- 开始阅读按钮 -->
+              <div>
+                <button
+                  @click="openBook"
+                  class="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium bg-blue-600 hover:bg-blue-700 text-white transition-colors"
+                >
+                  <Book :size="16" />
+                  开始阅读
+                </button>
               </div>
             </div>
 
@@ -121,14 +127,6 @@
                 {{ book.abstract }}
               </p>
             </div>
-
-            <!-- 书籍ID -->
-            <div v-if="book?.bookId">
-              <h3 class="text-base font-semibold text-[var(--text-primary)] mb-3">书籍ID</h3>
-              <p class="text-sm text-[var(--text-secondary)] font-mono bg-[var(--bg-secondary)] px-3 py-2 rounded border border-[var(--border-color)]">
-                {{ book.bookId }}
-              </p>
-            </div>
           </div>
         </div>
       </div>
@@ -148,7 +146,7 @@ interface Props {
   categoryName?: string
 }
 
-defineProps<Props>()
+const props = defineProps<Props>()
 
 const emit = defineEmits<{
   close: []
@@ -173,6 +171,14 @@ const handleImageError = (event: Event) => {
 // 关闭模态框
 const handleClose = () => {
   emit('close')
+}
+
+// 打开书籍阅读页面
+const openBook = () => {
+  if (props.book?.bookId) {
+    const url = `https://fanqienovel.com/page/${props.book.bookId}`
+    window.open(url, '_blank')
+  }
 }
 </script>
 

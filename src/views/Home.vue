@@ -4,6 +4,16 @@
     <div class="flex items-center justify-between p-5 border-b border-[var(--border-color)]">
       <h1 class="text-2xl font-semibold text-[var(--text-primary)]">作品管理</h1>
       <div class="flex items-center gap-2">
+        <button @click="goToAnnouncements"
+          class="flex items-center gap-2 px-3 py-2 bg-[var(--bg-secondary)] text-[var(--text-primary)] border border-[var(--border-color)] rounded-xl hover:bg-[var(--hover-bg)] transition-colors">
+          <Bell class="w-4 h-4" />
+          公告
+        </button>
+        <button @click="openTutorial"
+          class="flex items-center gap-2 px-3 py-2 bg-[var(--bg-secondary)] text-[var(--text-primary)] border border-[var(--border-color)] rounded-xl hover:bg-[var(--hover-bg)] transition-colors">
+          <BookOpenCheck class="w-4 h-4" />
+          教程
+        </button>
         <button @click="handleImport"
           class="flex items-center gap-2 px-4 py-2 bg-gray-600 text-white rounded-xl hover:bg-gray-700 transition-colors">
           <Download class="w-4 h-4" />
@@ -57,13 +67,16 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { useBooksStore } from '@/stores/books'
 import { showConfirm, useToast } from '@/composables'
 import BookCard from '../components/BookCard.vue'
 import BookModal from '../components/modal/BookModal.vue'
 import Toast from '../components/shared/Toast.vue'
-import { BookOpen, Download } from 'lucide-vue-next'
+import { BookOpen, Download, Bell, BookOpenCheck } from 'lucide-vue-next'
 import type { Book } from '@/electron.d'
+
+const router = useRouter()
 
 const booksStore = useBooksStore()
 const { toastVisible, toastMessage, toastType, showToast } = useToast()
@@ -160,5 +173,23 @@ async function handleImport() {
 // 添加重试机制
 function retryLoad() {
   booksStore.loadBooks()
+}
+
+// 跳转到公告页面
+function goToAnnouncements() {
+  router.push('/announcements')
+}
+
+// 打开教程页面（在浏览器中打开）
+async function openTutorial() {
+  try {
+    await window.electronAPI.openExternal('https://shenbi.qgming.com/software/introduction')
+  } catch (error) {
+    console.error('打开教程失败:', error)
+    showToast({
+      message: '打开教程失败，请重试',
+      type: 'error'
+    })
+  }
 }
 </script>

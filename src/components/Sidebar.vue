@@ -25,6 +25,13 @@
 
     <div class="flex flex-col gap-2">
       <button
+        v-if="hasUpdate"
+        class="flex items-center justify-center p-2 text-white no-underline rounded-lg mx-2 transition-all duration-200 cursor-pointer border-none bg-blue-600 text-sm font-medium w-9 h-9 hover:bg-blue-700 animate-pulse"
+        @click="handleUpdate"
+        title="有新版本可用，点击升级">
+        <Download :size="20" />
+      </button>
+      <button
         class="flex items-center justify-center p-2 text-gray-600 dark:text-gray-400 no-underline rounded-lg mx-2 transition-all duration-200 cursor-pointer border-none bg-transparent text-sm font-medium w-9 h-9 hover:bg-gray-200 hover:text-gray-700 dark:hover:bg-gray-900 dark:hover:text-gray-300"
         @click="toggleDarkMode" title="深色模式">
         <Moon v-if="isDark" :size="20" class="text-[var(--icon-color)] dark:text-[var(--icon-color-dark)]" />
@@ -40,16 +47,29 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
-import { Home, Store, Settings, Moon, Sun, Sparkle, Trophy } from 'lucide-vue-next'
+import { computed, onMounted } from 'vue'
+import { Home, Store, Settings, Moon, Sun, Sparkle, Trophy, Download } from 'lucide-vue-next'
 import { useThemeStore } from '@/stores/theme'
+import { useUpdateStore } from '@/stores/update'
 
 const themeStore = useThemeStore()
+const updateStore = useUpdateStore()
+
 const isDark = computed(() => themeStore.isDark)
+const hasUpdate = computed(() => updateStore.updateInfo.hasUpdate)
 
 const toggleDarkMode = () => {
   themeStore.toggleTheme()
 }
+
+const handleUpdate = async () => {
+  await updateStore.openDownloadPage()
+}
+
+// 组件挂载时检查更新
+onMounted(async () => {
+  await updateStore.checkForUpdates()
+})
 </script>
 
 <style scoped>
