@@ -121,6 +121,9 @@ declare global {
       // 应用信息相关API
       getAppVersion: () => Promise<string>
       openExternal: (url: string) => Promise<void>
+
+      // 排行榜相关API
+      fetchLeaderboard: (params: { gender: 0 | 1; type: 1 | 2; categoryId: number; offset: number; limit: number }) => Promise<any>
     }
   }
 }

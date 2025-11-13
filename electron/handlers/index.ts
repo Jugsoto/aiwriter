@@ -8,6 +8,7 @@ import { registerPromptHandlers } from './prompt-handlers'
 import { registerUsageHandlers } from './usage-handlers'
 import { registerSystemHandlers } from './system-handlers'
 import { registerWindowHandlers } from './window-handlers'
+import { registerLeaderboardHandlers } from './leaderboard-handlers'
 
 /**
  * 注册所有IPC处理器
@@ -25,6 +26,7 @@ export function registerAllHandlers(): void {
   registerUsageHandlers()
   registerSystemHandlers()
   registerWindowHandlers()
+  registerLeaderboardHandlers()
 
   console.log('All IPC handlers registered successfully')
 }

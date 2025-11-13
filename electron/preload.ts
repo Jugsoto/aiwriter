@@ -109,7 +109,11 @@ const api = {
   
   // 应用信息相关API
   getAppVersion: () => ipcRenderer.invoke('get-app-version'),
-  openExternal: (url: string) => ipcRenderer.invoke('open-external', url)
+  openExternal: (url: string) => ipcRenderer.invoke('open-external', url),
+
+  // 排行榜相关API
+  fetchLeaderboard: (params: { gender: 0 | 1; type: 1 | 2; categoryId: number; offset: number; limit: number }) =>
+    ipcRenderer.invoke('leaderboard:fetch', params)
 }
 
 contextBridge.exposeInMainWorld('electronAPI', api)
