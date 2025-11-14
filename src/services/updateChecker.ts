@@ -89,7 +89,7 @@ export class UpdateChecker {
   }> {
     const localVersion = await this.getLocalVersion()
     const updateData = await this.fetchLatestVersion()
-    
+
     if (!updateData) {
       return {
         hasUpdate: false,
@@ -98,10 +98,12 @@ export class UpdateChecker {
         announcements: []
       }
     }
-    
+
     const { updateInfo, announcements } = updateData
+    // 只有当远程版本大于本地版本时才认为有更新
+    // 当本地版本 >= 远程版本时，认为已是最新版本
     const hasUpdate = updateInfo.versionCode > localVersion.versionCode
-    
+
     return {
       hasUpdate,
       localVersion,

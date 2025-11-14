@@ -85,6 +85,9 @@
   <!-- 更新模态窗 -->
   <UpdateModal v-model:visible="showUpdateModal" :localVersion="appVersion" :updateInfo="updateInfo"
     :isForcedUpdate="isForcedUpdate" @update="handleUpdate" />
+
+  <!-- Toast 提示 -->
+  <Toast :visible="toastVisible" :message="toastMessage" :type="toastType" @update:visible="toastVisible = $event" />
 </template>
 
 <script setup lang="ts">
@@ -93,6 +96,7 @@ import { Globe, BookOpen, PenTool, Download, RefreshCw, Tag } from 'lucide-vue-n
 import { UpdateChecker } from '@/services/updateChecker'
 import { useToast } from '@/composables/useToast'
 import UpdateModal from '@/components/modal/UpdateModal.vue'
+import Toast from '@/components/shared/Toast.vue'
 
 // 响应式数据
 const appVersion = ref('0.9.9')
@@ -102,7 +106,7 @@ const updateInfo = ref<any>(null)
 const isForcedUpdate = ref(false)
 
 // Toast功能
-const { showToast } = useToast()
+const { toastVisible, toastMessage, toastType, showToast } = useToast()
 
 // 获取应用版本信息
 const getAppVersion = async () => {
