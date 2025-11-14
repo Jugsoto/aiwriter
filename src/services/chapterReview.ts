@@ -75,9 +75,9 @@ export async function getChapterReviewConfig(): Promise<FeatureConfig> {
     await featureConfigsStore.loadFeatureConfigs()
   }
 
-  const config = featureConfigsStore.getConfigByFeatureName('chapter_review')
+  const config = featureConfigsStore.getConfigByFeatureName('flagship_model')
   if (!config) {
-    throw new Error('章节评估功能配置未找到，请先在设置中配置')
+    throw new Error('旗舰模型配置未找到，请先在设置中配置')
   }
 
   return config

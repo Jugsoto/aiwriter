@@ -4,6 +4,7 @@ import {
   createModel,
   getFeatureConfigByName,
   createFeatureConfig,
+  deleteFeatureConfig,
   getModelsByProviderId
 } from '../database'
 
@@ -167,10 +168,10 @@ const DEFAULT_FEATURE_CONFIGS_DATA = {
       model_name: 'gemini-2.5-pro'
     },
     {
-      feature_name: 'chapter_review',
+      feature_name: 'flagship_model',
       temperature: 0.7,
       provider_name: '神笔AI',
-      model_name: 'deepseek-v3.2'
+      model_name: 'gemini-2.5-pro'
     },
     {
       feature_name: 'embedding_model',
@@ -183,12 +184,6 @@ const DEFAULT_FEATURE_CONFIGS_DATA = {
       temperature: 0.6,
       provider_name: '神笔AI',
       model_name: 'shenbi-base'
-    },
-    {
-      feature_name: 'generator',
-      temperature: 0.8,
-      provider_name: '神笔AI',
-      model_name: 'gemini-2.5-flash'
     }
   ]
 }
@@ -326,6 +321,64 @@ export async function initializeDefaultProviders(): Promise<boolean> {
   } catch (error) {
     console.error('默认供应商初始化失败:', error)
     return false
+  }
+}
+
+// 迁移旧的功能配置到新的旗舰模型
+export function migrateToFlagshipModel(): void {
+  try {
+    // 检查是否存在 chapter_review 或 generator 配置
+    const chapterReviewConfig = getFeatureConfigByName('chapter_review')
+    const generatorConfig = getFeatureConfigByName('generator')
+
+    // 如果已经存在 flagship_model 配置，则不需要迁移
+    const flagshipConfig = getFeatureConfigByName('flagship_model')
+    if (flagshipConfig) {
+      // 删除旧的配置
+      if (chapterReviewConfig) {
+        deleteFeatureConfig('chapter_review')
+        console.log('已删除旧的 chapter_review 配置')
+      }
+      if (generatorConfig) {
+        deleteFeatureConfig('generator')
+        console.log('已删除旧的 generator 配置')
+      }
+      return
+    }
+
+    // 如果存在 chapter_review 配置，使用它作为 flagship_model 的基础
+    if (chapterReviewConfig) {
+      createFeatureConfig({
+        feature_name: 'flagship_model',
+        provider_id: chapterReviewConfig.provider_id,
+        model_id: chapterReviewConfig.model_id,
+        temperature: chapterReviewConfig.temperature
+      })
+      console.log('已从 chapter_review 迁移到 flagship_model')
+
+      // 删除旧配置
+      deleteFeatureConfig('chapter_review')
+      if (generatorConfig) {
+        deleteFeatureConfig('generator')
+      }
+    }
+    // 如果只存在 generator 配置，使用它作为 flagship_model 的基础
+    else if (generatorConfig) {
+      createFeatureConfig({
+        feature_name: 'flagship_model',
+        provider_id: generatorConfig.provider_id,
+        model_id: generatorConfig.model_id,
+        temperature: generatorConfig.temperature
+      })
+      console.log('已从 generator 迁移到 flagship_model')
+
+      // 删除旧配置
+      deleteFeatureConfig('generator')
+    }
+
+    console.log('功能配置迁移完成')
+  } catch (error) {
+    console.error('功能配置迁移失败:', error)
   }
 }
 

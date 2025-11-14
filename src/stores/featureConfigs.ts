@@ -10,46 +10,61 @@ export const useFeatureConfigsStore = defineStore('featureConfigs', () => {
   // 功能名称映射和默认配置
   const featureNames = {
     'basic_model': '基础模型',
+    'flagship_model': '旗舰模型',
+    'embedding_model': '嵌入模型',
     'chapter_planning': '章节细纲',
     'content_writing': '正文写作',
-    'chapter_review': '章节评估',
     'setting_maintenance': '设定维护',
-    'embedding_model': '嵌入模型',
-    'generator': '生成器',
-    
   }
 
   // 功能默认参数配置
   const featureDefaults = {
     'basic_model': {
       temperature: 0.7,
-      description: '用于基础操作，如章节梗概，方向建议，工具页面等'
+      description: [
+        '章节梗概生成'
+      ]
     },
     'chapter_planning': {
       temperature: 0.8,
-      description: '用于书籍章节的结构规划和内容设计'
+      description: [
+        '章节细纲生成',
+        '写作助手对话'
+      ]
     },
     'content_writing': {
       temperature: 0.8,
-      description: '用于创作书籍的正文内容'
+      description: [
+        '正文创作',
+        '章节扩写'
+      ]
     },
-    'chapter_review': {
+    'flagship_model': {
       temperature: 0.7,
-      description: '用于内容的评价、校对和审核工作'
+      description: [
+        '章节评估',
+        '榜单分析',
+        '脑洞生成器',
+        '书名生成器',
+        '简介生成器'
+      ]
     },
     'setting_maintenance': {
       temperature: 0.7,
-      description: '用于维护和管理设定卡片的信息，包括更新、整理和优化设定内容'
+      description: [
+        '设定卡片更新',
+        '人物设定维护',
+        '世界观设定管理'
+      ]
     },
     'embedding_model': {
       temperature: 0.1,
-      description: '用于文本嵌入和语义搜索任务'
+      description: [
+        '章节内容检索',
+        '设定卡片搜索',
+        '记忆相似度匹配'
+      ]
     },
-    'generator': {
-      temperature: 0.8,
-      description: '用于生成创意脑洞、书名和简介等内容'
-    },
-
   }
 
   // 获取所有功能配置
@@ -102,13 +117,13 @@ export const useFeatureConfigsStore = defineStore('featureConfigs', () => {
   function getFeatureDefaults(featureName: string) {
     return featureDefaults[featureName as keyof typeof featureDefaults] || {
       temperature: 0.7,
-      description: ''
+      description: []
     }
   }
 
   // 获取功能描述
-  function getFeatureDescription(featureName: string): string {
-    return featureDefaults[featureName as keyof typeof featureDefaults]?.description || ''
+  function getFeatureDescription(featureName: string): string[] {
+    return featureDefaults[featureName as keyof typeof featureDefaults]?.description || []
   }
 
   // 获取所有功能名称

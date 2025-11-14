@@ -62,10 +62,10 @@ export async function getLeaderboardAnalysisConfig(): Promise<FeatureConfig> {
     await featureConfigsStore.loadFeatureConfigs()
   }
 
-  // 使用章节评估的配置
-  const config = featureConfigsStore.getConfigByFeatureName('chapter_review')
+  // 使用旗舰模型的配置
+  const config = featureConfigsStore.getConfigByFeatureName('flagship_model')
   if (!config) {
-    throw new Error('章节评估功能配置未找到，请先在设置中配置')
+    throw new Error('旗舰模型配置未找到，请先在设置中配置')
   }
 
   return config

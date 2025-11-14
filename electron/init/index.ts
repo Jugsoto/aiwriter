@@ -4,7 +4,7 @@
  */
 
 import { initializeDatabase } from '../database'
-import { initializeDefaultProviders } from './provider-init'
+import { initializeDefaultProviders, migrateToFlagshipModel } from './provider-init'
 import { initializeDefaultPrompts } from './prompt-init'
 
 /**
@@ -28,6 +28,11 @@ export async function initializeSystem(): Promise<void> {
     } else {
       console.log('默认供应商初始化跳过或失败')
     }
+
+    // 2.5. 迁移旧的功能配置到新的旗舰模型
+    console.log('检查并迁移功能配置...')
+    migrateToFlagshipModel()
+    console.log('功能配置迁移检查完成')
 
     // 3. 初始化默认提示词
     console.log('初始化默认提示词...')

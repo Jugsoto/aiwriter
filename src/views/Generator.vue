@@ -367,9 +367,9 @@ const handleSendMessage = async () => {
   try {
     // 获取功能配置
     const featureConfigs = await window.electronAPI.getFeatureConfigs()
-    const featureConfig = featureConfigs.find(config => config.feature_name === 'generator')
+    const featureConfig = featureConfigs.find(config => config.feature_name === 'flagship_model')
     if (!featureConfig) {
-      throw new Error('未找到生成器功能配置，请在功能设置中配置生成器参数')
+      throw new Error('未找到旗舰模型配置，请在功能设置中配置旗舰模型参数')
     }
 
     // 创建中止控制器
@@ -570,9 +570,9 @@ const handleRegenerateMessage = async (message: Message) => {
   try {
     // 获取功能配置
     const featureConfigs = await window.electronAPI.getFeatureConfigs()
-    const featureConfig = featureConfigs.find(config => config.feature_name === 'generator')
+    const featureConfig = featureConfigs.find(config => config.feature_name === 'flagship_model')
     if (!featureConfig) {
-      throw new Error('未找到生成器功能配置，请在功能设置中配置生成器参数')
+      throw new Error('未找到旗舰模型配置，请在功能设置中配置旗舰模型参数')
     }
 
     // 创建中止控制器

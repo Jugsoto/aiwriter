@@ -57,10 +57,13 @@
 
       <!-- 功能说明卡片 -->
       <div v-if="selectedFeatureName"
-        class="bg-[var(--bg-primary)] p-4 rounded-xl border border-[var(--border-color)] mb-6">
-        <div class="space-y-2">
-          <div class="text-base text-[var(--text-primary)] leading-relaxed">
-            {{ getCurrentFeatureDescription() }}
+        class="bg-[var(--bg-primary)] p-5 rounded-xl border border-[var(--border-color)] mb-6">
+        <div class="text-sm font-medium text-[var(--text-secondary)] mb-3">功能用途</div>
+        <div class="grid grid-cols-2 gap-3">
+          <div v-for="(item, index) in getCurrentFeatureDescription()" :key="index"
+            class="flex items-center space-x-2 bg-[var(--bg-secondary)] px-3 py-2.5 rounded-lg border border-[var(--border-color)]">
+            <div class="w-1.5 h-1.5 bg-[var(--theme-bg)] rounded-sm flex-shrink-0"></div>
+            <span class="text-sm text-[var(--text-primary)]">{{ item }}</span>
           </div>
         </div>
       </div>
@@ -176,8 +179,8 @@ function getFeatureDisplayName(featureName: string): string {
 }
 
 // 获取当前功能描述
-function getCurrentFeatureDescription(): string {
-  if (!selectedFeatureName.value) return ''
+function getCurrentFeatureDescription(): string[] {
+  if (!selectedFeatureName.value) return []
   return featureConfigsStore.getFeatureDescription(selectedFeatureName.value)
 }
 
