@@ -59,11 +59,10 @@
       <div v-if="selectedFeatureName"
         class="bg-[var(--bg-primary)] p-5 rounded-xl border border-[var(--border-color)] mb-6">
         <div class="text-sm font-medium text-[var(--text-secondary)] mb-3">功能用途</div>
-        <div class="grid grid-cols-2 gap-3">
+        <div class="flex flex-wrap gap-2">
           <div v-for="(item, index) in getCurrentFeatureDescription()" :key="index"
-            class="flex items-center space-x-2 bg-[var(--bg-secondary)] px-3 py-2.5 rounded-lg border border-[var(--border-color)]">
-            <div class="w-1.5 h-1.5 bg-[var(--theme-bg)] rounded-sm flex-shrink-0"></div>
-            <span class="text-sm text-[var(--text-primary)]">{{ item }}</span>
+            class="inline-flex items-center bg-[var(--bg-secondary)] px-3 py-2 rounded-lg border border-[var(--border-color)]">
+            <span class="text-sm text-[var(--text-primary)] whitespace-nowrap">{{ item }}</span>
           </div>
         </div>
       </div>

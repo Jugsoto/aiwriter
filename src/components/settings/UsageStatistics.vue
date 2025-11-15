@@ -299,16 +299,17 @@ const processDailyData = () => {
 
 // 处理功能数据（使用所有历史数据，不受时间筛选影响）
 const processFeatureData = () => {
-  const featureMap = new Map<string, { inputTokens: number, outputTokens: number, totalTokens: number }>()
+  const featureMap = new Map<string, { inputTokens: number, outputTokens: number, totalTokens: number, count: number }>()
 
   // 使用所有历史数据进行功能统计，不受时间筛选影响
   allUsageStatistics.value.forEach(stat => {
     // 使用中文功能名称
     const featureName = featureConfigsStore.getFeatureDisplayName(stat.feature_name) || stat.feature_name || '未知功能'
-    const existing = featureMap.get(featureName) || { inputTokens: 0, outputTokens: 0, totalTokens: 0 }
+    const existing = featureMap.get(featureName) || { inputTokens: 0, outputTokens: 0, totalTokens: 0, count: 0 }
     existing.inputTokens += stat.input_tokens
     existing.outputTokens += stat.output_tokens
     existing.totalTokens += stat.total_tokens
+    existing.count += 1
     featureMap.set(featureName, existing)
   })
 
@@ -317,8 +318,34 @@ const processFeatureData = () => {
     name,
     value: data.totalTokens,
     inputTokens: data.inputTokens,
-    outputTokens: data.outputTokens
+    outputTokens: data.outputTokens,
+    count: data.count,
+    avgTokens: Math.round(data.totalTokens / data.count) // 平均每次调用的Token数
   })).sort((a, b) => b.value - a.value)
+
+  // 如果功能数量超过8个，将较小的功能合并为"其他"
+  if (featureData.length > 8) {
+    const mainFeatures = featureData.slice(0, 7)
+    const otherFeatures = featureData.slice(7)
+
+    const otherTotal = otherFeatures.reduce((sum, item) => ({
+      value: sum.value + item.value,
+      inputTokens: sum.inputTokens + item.inputTokens,
+      outputTokens: sum.outputTokens + item.outputTokens,
+      count: sum.count + item.count
+    }), { value: 0, inputTokens: 0, outputTokens: 0, count: 0 })
+
+    mainFeatures.push({
+      name: '其他功能',
+      value: otherTotal.value,
+      inputTokens: otherTotal.inputTokens,
+      outputTokens: otherTotal.outputTokens,
+      count: otherTotal.count,
+      avgTokens: Math.round(otherTotal.value / otherTotal.count)
+    })
+
+    return mainFeatures
+  }
 
   return featureData
 }
@@ -500,8 +527,20 @@ const initTokenTypeChart = () => {
   const featureData = processFeatureData() // 使用所有历史数据
   const colors = getThemeColors()
 
-  // 生成颜色数组
-  const colorList = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4', '#84cc16', '#f97316']
+  // 优化的颜色数组 - 更适合中文界面的配色方案
+  const colorList = [
+    '#3b82f6', // 蓝色 - 基础模型
+    '#10b981', // 绿色 - 章节细纲
+    '#f59e0b', // 橙色 - 正文写作
+    '#ef4444', // 红色 - 旗舰模型
+    '#8b5cf6', // 紫色 - 设定维护
+    '#06b6d4', // 青色 - 嵌入模型
+    '#84cc16', // 黄绿 - 其他功能
+    '#f97316'  // 深橙 - 备用
+  ]
+
+  // 计算总Token数用于百分比显示
+  const totalTokens = featureData.reduce((sum, item) => sum + item.value, 0)
 
   const option: echarts.EChartsOption = {
     backgroundColor: 'transparent',
@@ -509,35 +548,92 @@ const initTokenTypeChart = () => {
       trigger: 'item',
       backgroundColor: colors.backgroundColor,
       borderColor: colors.gridColor,
-      textStyle: { color: colors.textColor },
+      textStyle: {
+        color: colors.textColor,
+        fontSize: 13
+      },
+      padding: [10, 15],
       formatter: (params: any) => {
         const data = params.data
-        return `${params.name}<br/>总Token: ${formatNumber(data.value)}<br/>输入Token: ${formatNumber(data.inputTokens)}<br/>输出Token: ${formatNumber(data.outputTokens)}<br/>占比: ${params.percent}%`
+        const percent = params.percent.toFixed(1)
+        return `
+          <div style="font-weight: bold; margin-bottom: 8px; font-size: 14px;">${params.name}</div>
+          <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+            <span>总Token：</span>
+            <span style="font-weight: bold; margin-left: 20px;">${formatNumber(data.value)}</span>
+          </div>
+          <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+            <span>输入Token：</span>
+            <span style="color: #f59e0b; margin-left: 20px;">${formatNumber(data.inputTokens)}</span>
+          </div>
+          <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+            <span>输出Token：</span>
+            <span style="color: #ef4444; margin-left: 20px;">${formatNumber(data.outputTokens)}</span>
+          </div>
+          <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+            <span>调用次数：</span>
+            <span style="margin-left: 20px;">${data.count || 0} 次</span>
+          </div>
+          <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+            <span>平均Token：</span>
+            <span style="margin-left: 20px;">${formatNumber(data.avgTokens || 0)}</span>
+          </div>
+          <div style="display: flex; justify-content: space-between; margin-top: 8px; padding-top: 8px; border-top: 1px solid ${colors.gridColor};">
+            <span>占比：</span>
+            <span style="font-weight: bold; margin-left: 20px;">${percent}%</span>
+          </div>
+        `.trim()
       }
     },
     legend: {
       top: '5%',
       left: 'center',
-      textStyle: { color: colors.textColor },
+      textStyle: {
+        color: colors.textColor,
+        fontSize: 12
+      },
+      itemGap: 15,
       formatter: (name: string) => {
         const item = featureData.find(item => item.name === name)
-        return item ? `${name} (${formatNumber(item.value)})` : name
+        if (item) {
+          const percent = ((item.value / totalTokens) * 100).toFixed(1)
+          return `${name} (${percent}%)`
+        }
+        return name
       }
     },
     series: [
       {
         name: '功能Token分布',
         type: 'pie',
-        radius: ['40%', '70%'],
-        avoidLabelOverlap: false,
+        radius: ['45%', '70%'],
+        center: ['50%', '58%'],
+        avoidLabelOverlap: true,
         itemStyle: {
-          borderRadius: 10,
+          borderRadius: 8,
           borderColor: colors.backgroundColor,
           borderWidth: 2
         },
-        label: { show: false, position: 'center' },
+        label: {
+          show: false,
+          position: 'center'
+        },
         emphasis: {
-          label: { show: true, fontSize: '16', fontWeight: 'bold', color: colors.textColor }
+          label: {
+            show: true,
+            fontSize: '14',
+            fontWeight: 'bold',
+            color: colors.textColor,
+            formatter: (params: any) => {
+              const percent = params.percent.toFixed(1)
+              return `${params.name}\n${percent}%\n${formatNumber(params.value)} Token`
+            }
+          },
+          itemStyle: {
+            shadowBlur: 10,
+            shadowOffsetX: 0,
+            shadowColor: 'rgba(0, 0, 0, 0.3)'
+          }
         },
         labelLine: { show: false },
         data: featureData.map((item, index) => ({
@@ -545,6 +641,8 @@ const initTokenTypeChart = () => {
           name: item.name,
           inputTokens: item.inputTokens,
           outputTokens: item.outputTokens,
+          count: item.count,
+          avgTokens: item.avgTokens,
           itemStyle: { color: colorList[index % colorList.length] }
         }))
       }
