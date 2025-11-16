@@ -74,6 +74,15 @@ const pageTools = ref<Tool[]>([
 // 外部网站工具
 const websiteTools = ref<Tool[]>([
   {
+    id: 'shenbi-channel',
+    name: '官方社区',
+    icon: 'Users',
+    description: '神笔写作官方频道',
+    target: 'https://pd.qq.com/g/shenbixiezuo0',
+    color: 'bg-blue-100 dark:bg-blue-900',
+    type: 'website'
+  },
+  {
     id: 'zhuque-ai',
     name: '朱雀AI检测',
     icon: 'Shield',

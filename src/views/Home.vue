@@ -16,6 +16,11 @@
           <Bell class="w-4 h-4" />
           公告
         </button>
+        <button @click="openCommunity"
+          class="flex items-center gap-2 px-3 py-2 bg-[var(--bg-primary)] text-[var(--text-primary)] border border-[var(--border-color)] rounded-xl hover:bg-[var(--hover-bg)] transition-colors">
+          <Users class="w-4 h-4" />
+          社区
+        </button>
         <button @click="openTutorial"
           class="flex items-center gap-2 px-3 py-2 bg-[var(--bg-primary)] text-[var(--text-primary)] border border-[var(--border-color)] rounded-xl hover:bg-[var(--hover-bg)] transition-colors">
           <BookOpenCheck class="w-4 h-4" />
@@ -78,7 +83,7 @@ import { showConfirm, useToast } from '@/composables'
 import BookCard from '../components/BookCard.vue'
 import BookModal from '../components/modal/BookModal.vue'
 import Toast from '../components/shared/Toast.vue'
-import { BookOpen, Download, Bell, BookOpenCheck, RefreshCw } from 'lucide-vue-next'
+import { BookOpen, Download, Bell, BookOpenCheck, RefreshCw, Users } from 'lucide-vue-next'
 import type { Book } from '@/electron.d'
 
 const router = useRouter()
@@ -197,6 +202,19 @@ async function openTutorial() {
     console.error('打开教程失败:', error)
     showToast({
       message: '打开教程失败，请重试',
+      type: 'error'
+    })
+  }
+}
+
+// 打开社区频道（在浏览器中打开）
+async function openCommunity() {
+  try {
+    await window.electronAPI.openExternal('https://pd.qq.com/g/shenbixiezuo0')
+  } catch (error) {
+    console.error('打开社区失败:', error)
+    showToast({
+      message: '打开社区失败，请重试',
       type: 'error'
     })
   }

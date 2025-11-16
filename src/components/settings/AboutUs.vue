@@ -65,6 +65,19 @@
           </button>
         </div>
 
+        <!-- 官方社区 -->
+        <div
+          class="flex items-center justify-between p-4 bg-[var(--bg-secondary)] rounded-lg border border-[var(--border-color)]">
+          <div class="flex items-center">
+            <Users class="w-5 h-5 text-[var(--text-secondary)] mr-3" />
+            <span class="text-[var(--text-primary)] font-medium">官方社区</span>
+          </div>
+          <button @click="openCommunity"
+            class="flex items-center gap-2 px-3 py-1.5 bg-[var(--bg-secondary)] text-[var(--text-primary)] border border-[var(--border-color)] rounded-full hover:bg-[var(--hover-bg)] transition-all duration-200">
+            <span class="text-sm font-medium">加入</span>
+          </button>
+        </div>
+
         <!-- 神笔AI -->
         <div
           class="flex items-center justify-between p-4 bg-[var(--bg-secondary)] rounded-lg border border-[var(--border-color)]">
@@ -92,7 +105,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { Globe, BookOpen, PenTool, Download, RefreshCw, Tag } from 'lucide-vue-next'
+import { Globe, BookOpen, PenTool, Download, RefreshCw, Tag, Users } from 'lucide-vue-next'
 import { UpdateChecker } from '@/services/updateChecker'
 import { useToast } from '@/composables/useToast'
 import UpdateModal from '@/components/modal/UpdateModal.vue'
@@ -171,6 +184,15 @@ const openTutorial = async () => {
     await window.electronAPI.openExternal('https://shenbi.qgming.com/software/introduction.html')
   } catch (error) {
     console.error('打开使用教程失败:', error)
+  }
+}
+
+// 打开官方社区
+const openCommunity = async () => {
+  try {
+    await window.electronAPI.openExternal('https://pd.qq.com/g/shenbixiezuo0')
+  } catch (error) {
+    console.error('打开官方社区失败:', error)
   }
 }
 

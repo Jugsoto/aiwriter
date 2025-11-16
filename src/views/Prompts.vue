@@ -29,10 +29,17 @@
             <HelpCircle :size="18" />
           </button>
         </div>
-        <button @click="showAddModal = true"
-          class="bg-[var(--theme-bg)] text-[var(--theme-text)] px-4 py-2 rounded-xl hover:opacity-90 transition-opacity flex items-center">
-          新增提示词
-        </button>
+        <div class="flex items-center gap-2">
+          <button @click="openPromptCommunity"
+            class="flex items-center gap-2 px-3 py-2 bg-[var(--bg-primary)] text-[var(--text-primary)] border border-[var(--border-color)] rounded-xl hover:bg-[var(--hover-bg)] transition-colors">
+            <Globe class="w-4 h-4" />
+            提示词社区
+          </button>
+          <button @click="showAddModal = true"
+            class="bg-[var(--theme-bg)] text-[var(--theme-text)] px-4 py-2 rounded-xl hover:opacity-90 transition-opacity flex items-center">
+            新增提示词
+          </button>
+        </div>
       </div>
 
       <!-- 提示词列表区域 -->
@@ -74,7 +81,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { FileText, PenTool, FastForward, HelpCircle, Lightbulb, BookOpen } from 'lucide-vue-next'
+import { FileText, PenTool, FastForward, HelpCircle, Lightbulb, BookOpen, Globe } from 'lucide-vue-next'
 import PromptCard from '../components/PromptCard.vue'
 import PromptEditModal from '../components/modal/PromptEditModal.vue'
 import InfoModal from '../components/shared/InfoModal.vue'
@@ -233,6 +240,15 @@ const closeModal = () => {
   showAddModal.value = false
   showEditModal.value = false
   editingPrompt.value = null
+}
+
+// 打开提示词社区
+const openPromptCommunity = async () => {
+  try {
+    await window.electronAPI.openExternal('https://pd.qq.com/g/shenbixiezuo0')
+  } catch (error) {
+    console.error('打开提示词社区失败:', error)
+  }
 }
 
 // 初始化
