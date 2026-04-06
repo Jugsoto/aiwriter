@@ -1,11 +1,10 @@
 import { createRouter, createWebHashHistory } from 'vue-router'
-// 使用动态导入实现路由级别的代码分割
+
 const Home = () => import('@/views/Home.vue')
 const Tools = () => import('@/views/Tools.vue')
 const Settings = () => import('@/views/Settings.vue')
 const BookView = () => import('@/views/BookView.vue')
 const Prompts = () => import('@/views/Prompts.vue')
-const Announcements = () => import('@/views/Announcements.vue')
 const Generator = () => import('@/views/Generator.vue')
 const Leaderboard = () => import('@/views/Leaderboard.vue')
 
@@ -28,15 +27,10 @@ const router = createRouter({
       name: 'Tools',
       component: Tools
     },
-        {
+    {
       path: '/prompts',
       name: 'Prompts',
       component: Prompts
-    },
-    {
-      path: '/announcements',
-      name: 'Announcements',
-      component: Announcements
     },
     {
       path: '/generator',

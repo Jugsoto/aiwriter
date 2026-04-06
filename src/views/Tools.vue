@@ -1,14 +1,9 @@
 <template>
   <div class="p-5 h-full overflow-y-auto bg-[var(--bg-secondary)]">
-    <!-- 页面标题 -->
     <h1 class="text-2xl font-semibold text-[var(--text-primary)] mb-6">应用中心</h1>
 
-    <!-- 工具卡片网格布局 -->
     <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6">
-      <!-- 内部页面工具卡片 -->
       <ToolCard v-for="tool in pageTools" :key="tool.id" :tool="tool" type="page" @click="handleToolClick" />
-
-      <!-- 外部网站工具卡片 -->
       <ToolCard v-for="tool in websiteTools" :key="tool.id" :tool="tool" type="website" @click="handleToolClick" />
     </div>
   </div>
@@ -24,24 +19,14 @@ interface Tool {
   name: string
   icon: string
   description?: string
-  target?: string // 页面路由或外部URL
-  color?: string // 图标背景色
-  type?: 'page' | 'website' // 添加类型字段
+  target?: string
+  color?: string
+  type?: 'page' | 'website'
 }
 
 const router = useRouter()
 
-// 内部页面工具
 const pageTools = ref<Tool[]>([
-  {
-    id: 'announcements',
-    name: '公告中心',
-    icon: 'Megaphone',
-    description: '查看最新公告和通知',
-    target: '/announcements',
-    color: 'bg-red-100 dark:bg-red-900',
-    type: 'page'
-  },
   {
     id: 'idea-generator',
     name: '脑洞生成器',
@@ -68,10 +53,9 @@ const pageTools = ref<Tool[]>([
     target: '/generator?type=summary',
     color: 'bg-purple-100 dark:bg-purple-900',
     type: 'page'
-  },
+  }
 ])
 
-// 外部网站工具
 const websiteTools = ref<Tool[]>([
   {
     id: 'shenbi-channel',
@@ -131,22 +115,19 @@ const websiteTools = ref<Tool[]>([
 
 const handleToolClick = (tool: Tool & { type: 'page' | 'website' }) => {
   if (tool.type === 'page') {
-    // 内部页面跳转
     router.push(tool.target as string)
-  } else if (tool.type === 'website') {
-    // 外部网站打开
-    if (window.electronAPI && window.electronAPI.openExternal) {
-      window.electronAPI.openExternal(tool.target as string)
-    } else {
-      // 浏览器环境
-      window.open(tool.target as string, '_blank')
-    }
+    return
+  }
+
+  if (window.electronAPI && window.electronAPI.openExternal) {
+    window.electronAPI.openExternal(tool.target as string)
+  } else {
+    window.open(tool.target as string, '_blank')
   }
 }
 </script>
 
 <style scoped>
-/* 自定义滚动条样式 */
 ::-webkit-scrollbar {
   width: 8px;
 }

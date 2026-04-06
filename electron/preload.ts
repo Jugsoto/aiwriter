@@ -5,17 +5,17 @@ const api = {
   minimize: () => ipcRenderer.invoke('window-minimize'),
   maximize: () => ipcRenderer.invoke('window-maximize'),
   close: () => ipcRenderer.invoke('window-close'),
-  
+
   // 书籍相关API
   getBooks: () => ipcRenderer.invoke('get-books'),
   createBook: (data: { name: string }) => ipcRenderer.invoke('create-book', data),
   updateBook: (id: number, data: { name?: string; global_settings?: string }) => ipcRenderer.invoke('update-book', id, data),
   deleteBook: (id: number) => ipcRenderer.invoke('delete-book', id),
-  
+
   // 书籍导入导出API
   exportBook: (bookId: number) => ipcRenderer.invoke('export-book', bookId),
   importBook: () => ipcRenderer.invoke('import-book'),
-  
+
   // 章节相关API
   getChapters: (bookId: number) => ipcRenderer.invoke('get-chapters', bookId),
   getChapter: (id: number) => ipcRenderer.invoke('get-chapter', id),
@@ -23,7 +23,7 @@ const api = {
   updateChapter: (id: number, data: { title?: string; content?: string; summary?: string; review_data?: string; order_index?: number }) => ipcRenderer.invoke('update-chapter', id, data),
   updateChapterOrder: (id: number, orderIndex: number) => ipcRenderer.invoke('update-chapter-order', id, orderIndex),
   deleteChapter: (id: number) => ipcRenderer.invoke('delete-chapter', id),
-  
+
   // 设定相关API
   getSettings: (bookId: number) => ipcRenderer.invoke('get-settings', bookId),
   getSettingsByType: (bookId: number, type: string) => ipcRenderer.invoke('get-settings-by-type', bookId, type),
@@ -32,21 +32,21 @@ const api = {
   updateSetting: (id: number, data: { type?: string; name?: string; content?: string; status?: string; starred?: boolean }) => ipcRenderer.invoke('update-setting', id, data),
   deleteSetting: (id: number) => ipcRenderer.invoke('delete-setting', id),
   toggleSettingStar: (id: number) => ipcRenderer.invoke('toggle-setting-star', id),
-  
+
   // 供应商相关API
   getProviders: () => ipcRenderer.invoke('get-providers'),
   getProvider: (id: number) => ipcRenderer.invoke('get-provider', id),
   createProvider: (data: { name: string; url: string; key: string; is_builtin?: number }) => ipcRenderer.invoke('create-provider', data),
   updateProvider: (id: number, data: { name?: string; url?: string; key?: string; is_builtin?: number }) => ipcRenderer.invoke('update-provider', id, data),
   deleteProvider: (id: number) => ipcRenderer.invoke('delete-provider', id),
-  
+
   // 模型相关API
   getModels: (providerId: number) => ipcRenderer.invoke('get-models', providerId),
   getModel: (id: number) => ipcRenderer.invoke('get-model', id),
   createModel: (data: { provider_id: number; model: string; tags?: string }) => ipcRenderer.invoke('create-model', data),
   updateModel: (id: number, data: { provider_id?: number; model?: string; tags?: string }) => ipcRenderer.invoke('update-model', id, data),
   deleteModel: (id: number) => ipcRenderer.invoke('delete-model', id),
-  
+
   // 数据设置相关API
   getAppDataPath: () => ipcRenderer.invoke('get-app-data-path'),
   openFolder: (folderPath: string) => ipcRenderer.invoke('open-folder', folderPath),
@@ -55,12 +55,12 @@ const api = {
   resetData: () => ipcRenderer.invoke('reset-data'),
   backupData: () => ipcRenderer.invoke('backup-data'),
   restoreData: () => ipcRenderer.invoke('restore-data'),
-  
+
   // 功能配置相关API
   getFeatureConfigs: () => ipcRenderer.invoke('get-feature-configs'),
   updateFeatureConfig: (featureName: string, data: { provider_id?: number; model_id?: number; temperature?: number }) =>
     ipcRenderer.invoke('update-feature-config', featureName, data),
-  
+
   // 用量统计相关API
   createUsageStatistic: (data: { provider_id: number; model_id: number; feature_name: string; mode: string; input_tokens?: number; output_tokens?: number; total_tokens?: number }) =>
     ipcRenderer.invoke('create-usage-statistic', data),
@@ -91,7 +91,7 @@ const api = {
   deleteSettingVectorsByBookId: (bookId: number) => ipcRenderer.invoke('delete-setting-vectors-by-book-id', bookId),
   searchSimilarSettingVectors: (bookId: number, queryEmbedding: Uint8Array, limit: number) =>
     ipcRenderer.invoke('search-similar-setting-vectors', bookId, queryEmbedding, limit),
-  
+
   // 提示词相关API
   getPrompts: () => ipcRenderer.invoke('get-prompts'),
   getPromptsByCategory: (category: string) => ipcRenderer.invoke('get-prompts-by-category', category),
@@ -106,9 +106,18 @@ const api = {
   getDefaultPromptByCategory: (category: string) => ipcRenderer.invoke('get-default-prompt-by-category', category),
   getSelectedPromptByCategory: (category: string) => ipcRenderer.invoke('get-selected-prompt-by-category', category),
   setDefaultPromptForCategory: (category: string, promptId: number) => ipcRenderer.invoke('set-default-prompt-for-category', category, promptId),
-  
+
   // 应用信息相关API
   getAppVersion: () => ipcRenderer.invoke('get-app-version'),
+  getAppUpdateState: () => ipcRenderer.invoke('app-update:get-state'),
+  checkForAppUpdates: () => ipcRenderer.invoke('app-update:check'),
+  downloadAppUpdate: () => ipcRenderer.invoke('app-update:download'),
+  installAppUpdate: () => ipcRenderer.invoke('app-update:install'),
+  onAppUpdateStateChanged: (callback: (state: any) => void) => {
+    const listener = (_event: unknown, state: any) => callback(state)
+    ipcRenderer.on('app-update:state-changed', listener)
+    return () => ipcRenderer.removeListener('app-update:state-changed', listener)
+  },
   openExternal: (url: string) => ipcRenderer.invoke('open-external', url),
 
   // 排行榜相关API

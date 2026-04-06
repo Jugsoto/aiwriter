@@ -1,3 +1,26 @@
+export type AppUpdateStatus =
+  | 'idle'
+  | 'checking'
+  | 'available'
+  | 'downloading'
+  | 'downloaded'
+  | 'not-available'
+  | 'error'
+
+export interface AppUpdateState {
+  status: AppUpdateStatus
+  currentVersion: string
+  availableVersion: string | null
+  releaseDate: string | null
+  releaseNotes: string[]
+  checkedAt: string | null
+  downloadPercent: number
+  transferredBytes: number
+  totalBytes: number
+  bytesPerSecond: number
+  errorMessage: string | null
+}
+
 declare global {
   interface Window {
     electronAPI: {
@@ -120,6 +143,11 @@ declare global {
       
       // 应用信息相关API
       getAppVersion: () => Promise<string>
+      getAppUpdateState: () => Promise<AppUpdateState>
+      checkForAppUpdates: () => Promise<AppUpdateState>
+      downloadAppUpdate: () => Promise<AppUpdateState>
+      installAppUpdate: () => Promise<AppUpdateState>
+      onAppUpdateStateChanged: (callback: (state: AppUpdateState) => void) => () => void
       openExternal: (url: string) => Promise<void>
 
       // 排行榜相关API

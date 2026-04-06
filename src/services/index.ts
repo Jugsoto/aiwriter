@@ -40,5 +40,3 @@ export * from './settingUpdateTools'
 // 工具调用服务
 export * from './toolCalling'
 
-// 更新检查服务
-export * from './updateChecker'

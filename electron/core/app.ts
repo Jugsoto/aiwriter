@@ -3,6 +3,7 @@ import { createMainWindow } from './window'
 import { closeDatabase } from '../database'
 import { initializeSystem } from '../init'
 import { registerAllHandlers, removeAllHandlers } from '../handlers'
+import { updateService } from '../services/update-service'
 
 /**
  * 应用程序类
@@ -28,12 +29,16 @@ export class ElectronApp {
       console.log('Creating main window...')
       createMainWindow()
 
+      // 初始化应用更新服务
+      updateService.initialize()
+
       this.isInitialized = true
       console.log('Electron application initialized successfully')
     } catch (error) {
       console.error('Failed to initialize application:', error)
       // 即使初始化失败，也尝试创建窗口
       createMainWindow()
+      updateService.initialize()
     }
   }
 

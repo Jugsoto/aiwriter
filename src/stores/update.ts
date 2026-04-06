@@ -1,100 +1,86 @@
+import { computed, ref } from 'vue'
 import { defineStore } from 'pinia'
-import { ref } from 'vue'
-import { UpdateChecker, type Announcement } from '@/services/updateChecker'
+import type { AppUpdateState } from '@/electron.d'
 
-export interface UpdateInfo {
-  hasUpdate: boolean
-  latestVersion: string
-  currentVersion: string
-  downloadUrl: string
-  releaseNotes: string[]
-  isForced: boolean
+function createInitialState(currentVersion = '0.0.0'): AppUpdateState {
+  return {
+    status: 'idle',
+    currentVersion,
+    availableVersion: null,
+    releaseDate: null,
+    releaseNotes: [],
+    checkedAt: null,
+    downloadPercent: 0,
+    transferredBytes: 0,
+    totalBytes: 0,
+    bytesPerSecond: 0,
+    errorMessage: null
+  }
 }
 
 export const useUpdateStore = defineStore('update', () => {
-  const updateInfo = ref<UpdateInfo>({
-    hasUpdate: false,
-    latestVersion: '',
-    currentVersion: '',
-    downloadUrl: '',
-    releaseNotes: [],
-    isForced: false
-  })
+  const state = ref<AppUpdateState>(createInitialState())
+  const initialized = ref(false)
+  let unsubscribe: (() => void) | null = null
 
-  const announcements = ref<Announcement[]>([])
-  const isChecking = ref(false)
+  const hasUpdate = computed(() => ['available', 'downloading', 'downloaded'].includes(state.value.status))
+  const isChecking = computed(() => state.value.status === 'checking')
+  const isDownloading = computed(() => state.value.status === 'downloading')
+  const isDownloaded = computed(() => state.value.status === 'downloaded')
 
-  /**
-   * 检查更新
-   */
-  const checkForUpdates = async () => {
-    try {
-      isChecking.value = true
-
-      // 使用 UpdateChecker 服务检查更新
-      const result = await UpdateChecker.checkForUpdates()
-
-      if (result.hasUpdate && result.remoteVersion) {
-        updateInfo.value = {
-          hasUpdate: true,
-          latestVersion: result.remoteVersion.version,
-          currentVersion: result.localVersion.version,
-          downloadUrl: result.remoteVersion.downloadUrl,
-          releaseNotes: result.remoteVersion.releaseNotes,
-          isForced: result.remoteVersion.isForced
-        }
-      } else {
-        updateInfo.value = {
-          hasUpdate: false,
-          latestVersion: result.localVersion.version,
-          currentVersion: result.localVersion.version,
-          downloadUrl: '',
-          releaseNotes: [],
-          isForced: false
-        }
-      }
-
-      announcements.value = result.announcements
-
-      return updateInfo.value
-    } catch (error) {
-      console.error('检查更新失败:', error)
-      return null
-    } finally {
-      isChecking.value = false
+  async function initialize() {
+    if (initialized.value) {
+      return
     }
+
+    state.value = await window.electronAPI.getAppUpdateState()
+    unsubscribe = window.electronAPI.onAppUpdateStateChanged((nextState) => {
+      state.value = nextState
+    })
+    initialized.value = true
   }
 
-  /**
-   * 打开下载页面
-   */
-  const openDownloadPage = async () => {
-    if (updateInfo.value.downloadUrl) {
-      await UpdateChecker.openDownloadUrl(updateInfo.value.downloadUrl)
-    }
+  async function refreshState() {
+    await initialize()
+    state.value = await window.electronAPI.getAppUpdateState()
+    return state.value
   }
 
-  /**
-   * 清除更新信息
-   */
-  const clearUpdateInfo = () => {
-    updateInfo.value = {
-      hasUpdate: false,
-      latestVersion: '',
-      currentVersion: '',
-      downloadUrl: '',
-      releaseNotes: [],
-      isForced: false
-    }
-    announcements.value = []
+  async function checkForUpdates() {
+    await initialize()
+    state.value = await window.electronAPI.checkForAppUpdates()
+    return state.value
+  }
+
+  async function downloadUpdate() {
+    await initialize()
+    state.value = await window.electronAPI.downloadAppUpdate()
+    return state.value
+  }
+
+  async function installUpdate() {
+    await initialize()
+    state.value = await window.electronAPI.installAppUpdate()
+    return state.value
+  }
+
+  function dispose() {
+    unsubscribe?.()
+    unsubscribe = null
+    initialized.value = false
   }
 
   return {
-    updateInfo,
-    announcements,
+    state,
+    hasUpdate,
     isChecking,
+    isDownloading,
+    isDownloaded,
+    initialize,
+    refreshState,
     checkForUpdates,
-    openDownloadPage,
-    clearUpdateInfo
+    downloadUpdate,
+    installUpdate,
+    dispose
   }
 })

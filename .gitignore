@@ -28,3 +28,6 @@ dist-electron
 # Custom ignores
 CLAUDE.md
 .claude/
+# Local release secrets
+.publish.env.ps1
+

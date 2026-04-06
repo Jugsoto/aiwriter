@@ -3,6 +3,7 @@ import fs from 'fs'
 import path from 'path'
 import { BackupService } from '../services/backup-service'
 import { VectorService } from '../services/vector-service'
+import { updateService } from '../services/update-service'
 
 export function registerSystemHandlers(): void {
   console.log('Registering system handlers...')
@@ -13,6 +14,46 @@ export function registerSystemHandlers(): void {
       return app.getVersion()
     } catch (error) {
       console.error('Error in get-app-version handler:', error)
+      throw error
+    }
+  })
+
+  // 获取应用更新状态
+  ipcMain.handle('app-update:get-state', () => {
+    try {
+      return updateService.getState()
+    } catch (error) {
+      console.error('Error in app-update:get-state handler:', error)
+      throw error
+    }
+  })
+
+  // 手动检查更新
+  ipcMain.handle('app-update:check', async () => {
+    try {
+      return await updateService.checkForUpdates(true)
+    } catch (error) {
+      console.error('Error in app-update:check handler:', error)
+      throw error
+    }
+  })
+
+  // 下载更新
+  ipcMain.handle('app-update:download', async () => {
+    try {
+      return await updateService.downloadUpdate()
+    } catch (error) {
+      console.error('Error in app-update:download handler:', error)
+      throw error
+    }
+  })
+
+  // 安装更新
+  ipcMain.handle('app-update:install', () => {
+    try {
+      return updateService.installUpdate()
+    } catch (error) {
+      console.error('Error in app-update:install handler:', error)
       throw error
     }
   })
