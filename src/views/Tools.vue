@@ -119,15 +119,6 @@ const websiteTools = ref<Tool[]>([
     type: 'website'
   },
   {
-    id: 'shenbi-ai',
-    name: '神笔AI',
-    icon: 'Wand2',
-    description: 'AI写作辅助工具',
-    target: 'https://ai.qgming.com',
-    color: 'bg-purple-100 dark:bg-purple-900',
-    type: 'website'
-  },
-  {
     id: 'shenbi-write',
     name: '写作教程',
     icon: 'Pen',

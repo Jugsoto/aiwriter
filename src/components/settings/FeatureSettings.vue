@@ -212,7 +212,6 @@ function getCurrentProviderLogo(): string {
     'AiHubMix': 'aihubmix',
     'OpenRouter': 'openrouter',
     '硅基流动': 'siliconflow',
-    '神笔AI': 'shenbi'
   }
 
   const matchedIcon = iconMap[provider.name] || 'other'

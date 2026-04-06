@@ -5,6 +5,7 @@
 
 import { initializeDatabase } from '../database'
 import { initializeDefaultProviders, migrateToFlagshipModel } from './provider-init'
+import { cleanupDeprecatedProviders } from './provider-cleanup'
 import { initializeDefaultPrompts } from './prompt-init'
 
 /**
@@ -33,6 +34,10 @@ export async function initializeSystem(): Promise<void> {
     console.log('检查并迁移功能配置...')
     migrateToFlagshipModel()
     console.log('功能配置迁移检查完成')
+
+    console.log('清理停服供应商...')
+    cleanupDeprecatedProviders()
+    console.log('停服供应商清理完成')
 
     // 3. 初始化默认提示词
     console.log('初始化默认提示词...')

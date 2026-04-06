@@ -77,19 +77,6 @@
             <span class="text-sm font-medium">加入</span>
           </button>
         </div>
-
-        <!-- 神笔AI -->
-        <div
-          class="flex items-center justify-between p-4 bg-[var(--bg-secondary)] rounded-lg border border-[var(--border-color)]">
-          <div class="flex items-center">
-            <PenTool class="w-5 h-5 text-[var(--text-secondary)] mr-3" />
-            <span class="text-[var(--text-primary)] font-medium">神笔AI</span>
-          </div>
-          <button @click="openShenbiAI"
-            class="flex items-center gap-2 px-3 py-1.5 bg-[var(--bg-secondary)] text-[var(--text-primary)] border border-[var(--border-color)] rounded-full hover:bg-[var(--hover-bg)] transition-all duration-200">
-            <span class="text-sm font-medium">了解</span>
-          </button>
-        </div>
       </div>
     </div>
 
@@ -105,7 +92,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { Globe, BookOpen, PenTool, Download, RefreshCw, Tag, Users } from 'lucide-vue-next'
+import { Globe, BookOpen, Download, RefreshCw, Tag, Users } from 'lucide-vue-next'
 import { UpdateChecker } from '@/services/updateChecker'
 import { useToast } from '@/composables/useToast'
 import UpdateModal from '@/components/modal/UpdateModal.vue'
@@ -196,14 +183,6 @@ const openCommunity = async () => {
   }
 }
 
-// 打开神笔AI
-const openShenbiAI = async () => {
-  try {
-    await window.electronAPI.openExternal('https://ai.qgming.com')
-  } catch (error) {
-    console.error('打开神笔AI失败:', error)
-  }
-}
 
 // 组件挂载时初始化数据
 onMounted(async () => {

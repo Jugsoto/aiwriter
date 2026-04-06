@@ -12,20 +12,6 @@ import {
 const DEFAULT_PROVIDERS_DATA = {
   providers: [
     {
-      name: "神笔AI",
-      url: "https://ai.qgming.com/v1",
-      key: "",
-      models: [
-        { model: "shenbi-base", tags: "tool" },
-        { model: "shenbi-embedding", tags: "embedding" },
-        { model: "gemini-2.5-flash", tags: "tool,eye,think" },
-        { model: "gemini-2.5-pro", tags: "tool,eye,think" },
-        { model: "deepseek-v3.2", tags: "tool" },
-        { model: "gpt-5-mini", tags: "tool" },
-        { model: "gpt-5", tags: "tool,think" }
-      ]
-    },
-    {
       name: "DeepSeek",
       url: "https://api.deepseek.com/v1",
       key: "",
@@ -152,38 +138,38 @@ const DEFAULT_FEATURE_CONFIGS_DATA = {
     {
       feature_name: 'basic_model',
       temperature: 0.7,
-      provider_name: '神笔AI',
-      model_name: 'shenbi-base'
+      provider_name: 'DeepSeek',
+      model_name: 'deepseek-chat'
     },
     {
       feature_name: 'chapter_planning',
       temperature: 0.8,
-      provider_name: '神笔AI',
-      model_name: 'deepseek-v3.2'
+      provider_name: 'DeepSeek',
+      model_name: 'deepseek-reasoner'
     },
     {
       feature_name: 'content_writing',
       temperature: 0.8,
-      provider_name: '神笔AI',
-      model_name: 'gemini-2.5-pro'
+      provider_name: 'Kimi',
+      model_name: 'kimi-k2-0905-preview'
     },
     {
       feature_name: 'flagship_model',
       temperature: 0.7,
-      provider_name: '神笔AI',
-      model_name: 'gemini-2.5-pro'
+      provider_name: 'AiHubMix',
+      model_name: 'gpt-5'
     },
     {
       feature_name: 'embedding_model',
       temperature: 0.7,
-      provider_name: '神笔AI',
-      model_name: 'shenbi-embedding'
+      provider_name: '硅基流动',
+      model_name: 'BAAI/bge-m3'
     },
     {
       feature_name: 'setting_maintenance',
       temperature: 0.6,
-      provider_name: '神笔AI',
-      model_name: 'shenbi-base'
+      provider_name: 'DeepSeek',
+      model_name: 'deepseek-chat'
     }
   ]
 }
@@ -264,6 +250,10 @@ function initializeFeatureConfigsWithDefaults(): void {
     console.error('功能配置初始化失败:', error)
     throw error
   }
+}
+
+export function ensureDefaultFeatureConfigs(): void {
+  initializeFeatureConfigsWithDefaults()
 }
 
 // 初始化默认供应商和模型

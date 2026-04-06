@@ -45,7 +45,7 @@
       </div>
 
       <div v-else class="space-y-6">
-        <!-- 特殊供应商卡片 - 神笔AI、硅基流动、Deepseek -->
+        <!-- 特殊供应商卡片 - 硅基流动、DeepSeek -->
         <div v-if="isSpecialProvider"
           class="bg-[var(--bg-primary)] p-6 rounded-xl border border-[var(--border-color)] relative">
           <!-- 问号图标 - 右上角 -->
@@ -264,17 +264,16 @@ const sortedModels = computed(() => {
   })
 })
 
-// 计算是否为特殊供应商（神笔AI、硅基流动、Deepseek）
+// 计算是否为特殊供应商（硅基流动、DeepSeek）
 const isSpecialProvider = computed(() => {
   if (!currentProvider.value.name) return false
-  const specialProviders = ['神笔AI', '硅基流动', 'DeepSeek']
+  const specialProviders = ['硅基流动', 'DeepSeek']
   return specialProviders.includes(currentProvider.value.name)
 })
 
 // 获取特殊供应商的官网链接
 const getOfficialWebsiteUrl = (providerName: string): string => {
   const urlMap: Record<string, string> = {
-    '神笔AI': 'https://ai.qgming.com/',
     '硅基流动': 'https://cloud.siliconflow.cn/i/BT2o4ohd',
     'DeepSeek': 'https://platform.deepseek.com/'
   }
@@ -284,7 +283,6 @@ const getOfficialWebsiteUrl = (providerName: string): string => {
 // 获取特殊供应商的充值链接
 const getRechargeUrl = (providerName: string): string => {
   const urlMap: Record<string, string> = {
-    '神笔AI': 'https://ai.qgming.com/console/topup',
     '硅基流动': 'https://cloud.siliconflow.cn/me/expensebill',
     'DeepSeek': 'https://platform.deepseek.com/top_up'
   }
@@ -320,7 +318,6 @@ const getInfoModalMessage = (): string => {
   if (!currentProvider.value.name) return '暂无介绍信息'
 
   const infoMap: Record<string, string> = {
-    '神笔AI': '神笔AI是专为神笔写作开发的AI模型服务平台，支持软件所需的所有全球顶尖AI模型，提供稳定的Gemini-2.5系列模型服务，对比官网节省80%，为用户提供高性价比高质量的AI服务。',
     '硅基流动': '硅基流动是一个专业的AI模型服务平台，支持Qwen、Deepseek、Kimi等国内开源模型，提供稳定可靠的AI模型调用服务，支持多种应用场景。',
     'DeepSeek': 'DeepSeek是深度求索公司开发的AI模型平台，官方API直供，稳定性高，速度快，提供强大的语言模型服务，支持多种自然语言处理任务。'
   }
@@ -344,7 +341,6 @@ const getProviderIcon = (providerName: string | undefined): string => {
     'AiHubMix': 'aihubmix',
     'OpenRouter': 'openrouter',
     '硅基流动': 'siliconflow',
-    '神笔AI': 'shenbi'
   }
 
   // 直接查找匹配的图标
