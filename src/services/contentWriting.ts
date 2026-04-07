@@ -1,3 +1,4 @@
+
 import { streamChatCompletion, type ChatMessage } from './chat'
 import type { FeatureConfig } from '@/electron.d'
 import { useFeatureConfigsStore } from '@/stores/featureConfigs'
@@ -13,6 +14,12 @@ export interface ContentWritingContext {
     status: string
     type: string
   }> // 选择的设定
+  selectedReferences?: Array<{
+    id: number
+    title: string
+    content: string
+    tags: string[]
+  }> // 选择的资料库
   globalSettings?: string // 前局设定（全局设定）
   vectorSearchResults?: {
     textChunks: Array<{
@@ -29,7 +36,14 @@ export interface ContentWritingContext {
       settingType?: string
       starred?: boolean
     }>
-  } // 向量搜索结果
+    referenceChunks?: Array<{
+      title: string
+      content: string
+      similarity: number
+      tags?: string[]
+      starred?: boolean
+    }>
+  }
 }
 
 export interface ContentWritingOptions {
@@ -65,7 +79,7 @@ export async function getContentWritingConfig(): Promise<FeatureConfig> {
  * 注意：所有上下文信息将拼接到系统提示词后面，不作为用户消息发送
  */
 export function buildContentWritingPrompt(context: ContentWritingContext): string {
-  const { globalSettings, previousChapterContent, recentChapterSummaries, selectedSettings, vectorSearchResults } = context
+  const { globalSettings, previousChapterContent, recentChapterSummaries, selectedSettings, selectedReferences, vectorSearchResults } = context
 
   let prompt = '<背景资料>\n'
 
@@ -113,6 +127,27 @@ ${recentChapterSummaries.join('\n\n')}
       prompt += `${index + 1}. [${chineseType}] ${setting.name}
 当前状态：${setting.status}
 ${setting.content}
+
+`
+    })
+  }
+
+  // 选择的资料库
+  if (selectedReferences && selectedReferences.length > 0) {
+    prompt += `【资料库参考】
+用户提供的参考资料，包含其他作品的剧情片段和写作手法。AI可以学习这些资料中的：
+1. 剧情结构和节奏把控
+2. 人物塑造和对话技巧
+3. 场景描写和氛围营造
+4. 情感表达和叙述方式
+但请注意：只能学习写作技巧和表现手法，不得直接照搬具体情节、人物名称或原创内容。
+`
+    selectedReferences.forEach((reference, index) => {
+      const tagsInfo = reference.tags && reference.tags.length > 0
+        ? `\n标签：${reference.tags.join('、')}`
+        : ''
+      prompt += `${index + 1}. ${reference.title}${tagsInfo}
+${reference.content}
 
 `
     })

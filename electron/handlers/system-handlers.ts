@@ -1,4 +1,4 @@
-import { ipcMain, app, shell } from 'electron'
+import { ipcMain, app, shell, dialog } from 'electron'
 import fs from 'fs'
 import path from 'path'
 import { BackupService } from '../services/backup-service'
@@ -64,6 +64,36 @@ export function registerSystemHandlers(): void {
       await shell.openExternal(url)
     } catch (error) {
       console.error('Error in open-external handler:', error)
+      throw error
+    }
+  })
+
+  // 显示打开文件对话框
+  ipcMain.handle('show-open-dialog', async (_event, options: {
+    title?: string;
+    filters?: Array<{ name: string; extensions: string[] }>;
+    properties?: string[];
+  }) => {
+    try {
+      const result = await dialog.showOpenDialog({
+        title: options.title || '选择文件',
+        filters: options.filters || [],
+        properties: options.properties || ['openFile']
+      })
+      return result
+    } catch (error) {
+      console.error('Error in show-open-dialog handler:', error)
+      throw error
+    }
+  })
+
+  // 读取文件内容
+  ipcMain.handle('read-file', async (_event, filePath: string) => {
+    try {
+      const content = await fs.promises.readFile(filePath, 'utf-8')
+      return content
+    } catch (error) {
+      console.error('Error in read-file handler:', error)
       throw error
     }
   })

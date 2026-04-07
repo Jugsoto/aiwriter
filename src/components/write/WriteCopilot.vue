@@ -9,11 +9,11 @@
       @start-writing="handleStartWriting" @regenerate-message="handleRegenerateMessage" ref="messageListRef" />
 
     <InputArea :disabled="isLoading" :starred-settings="starredSettings" :settings-loading="settingsLoading"
-      :book-id="bookId" :selected-settings="selectedSettings" :messages="messages" @send-message="handleSendMessage"
+      :book-id="bookId" :selected-settings="selectedSettings" :selected-references="selectedReferences" :messages="messages" @send-message="handleSendMessage"
       @at-resource="handleAtResource" @clear-conversation="handleClearConversation"
       @stop-conversation="handleStopConversation" @entry-setting="handleEntrySetting" @worldview="handleWorldview"
       @character-profile="handleCharacterProfile" @settings-updated="loadStarredSettings"
-      @settings-selected="handleSettingsSelected" ref="inputAreaRef" />
+      @settings-selected="handleSettingsSelected" @references-selected="handleReferencesSelected" ref="inputAreaRef" />
   </div>
 </template>
 
@@ -34,6 +34,7 @@ import { useBooksStore } from '@/stores/books'
 import { ConversationStorage } from '../../utils/conversationStorage'
 import { CopilotSettingsStorage } from '../../utils/copilotSettingsStorage'
 import type { Setting } from '@/electron.d'
+import type { ReferenceLibrary } from '@/electron.d'
 
 // Props定义
 const props = defineProps<{
@@ -55,6 +56,8 @@ const currentConversation = ref<Conversation | null>(null)
 const starredSettings = ref<Setting[]>([])
 const settingsLoading = ref(false)
 const selectedSettings = ref<Setting[]>([])
+// 资料库管理
+const selectedReferences = ref<ReferenceLibrary[]>([])
 
 // Copilot配置
 const copilotSettings = ref<CopilotSettings>({
@@ -87,7 +90,22 @@ const handleSendMessage = async (content: string | EnhancedMessageContext, query
         content: setting.content,
         status: setting.status,
         type: setting.type
-      }))
+      })),
+      selectedReferences: selectedReferences.value.map(reference => {
+        // 解析标签
+        let tags: string[] = []
+        try {
+          tags = JSON.parse(reference.tags)
+        } catch {
+          tags = []
+        }
+        return {
+          id: reference.id,
+          title: reference.title,
+          content: reference.content,
+          tags
+        }
+      })
     }
   } else {
     enhancedContext = content
@@ -264,7 +282,8 @@ const buildGenerationContext = async (enhancedContext?: EnhancedMessageContext) 
     recentChapterSummaries,
     globalSettings,
     selectedSettings: enhancedContext?.selectedSettings || [],
-    vectorSearchResults: enhancedContext?.vectorSearchResults
+		selectedReferences: enhancedContext?.selectedReferences || [],
+		vectorSearchResults: enhancedContext?.vectorSearchResults
   }
 
 }
@@ -458,6 +477,11 @@ const handleCharacterProfile = () => {
 const handleSettingsSelected = (settings: Setting[]) => {
   selectedSettings.value = settings
 }
+
+  // 资料库选择
+  const handleReferencesSelected = (references: ReferenceLibrary[]) => {
+  	selectedReferences.value = references
+  }
 
 // 清空对话
 const handleClearConversation = () => {

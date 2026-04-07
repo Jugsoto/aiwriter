@@ -33,6 +33,16 @@ const api = {
   deleteSetting: (id: number) => ipcRenderer.invoke('delete-setting', id),
   toggleSettingStar: (id: number) => ipcRenderer.invoke('toggle-setting-star', id),
 
+  // 资料库相关API
+  getReferences: (bookId: number) => ipcRenderer.invoke('get-references', bookId),
+  getReference: (id: number) => ipcRenderer.invoke('get-reference', id),
+  createReference: (data: { book_id: number; title: string; content: string; file_type?: string; source_type?: 'manual' | 'import' | 'chapter'; source_path?: string; tags?: string[]; starred?: boolean; metadata?: Record<string, any> }) => ipcRenderer.invoke('create-reference', data),
+  updateReference: (id: number, data: { title?: string; content?: string; file_type?: string; source_type?: 'manual' | 'import' | 'chapter'; source_path?: string; tags?: string[]; starred?: boolean; metadata?: Record<string, any> }) => ipcRenderer.invoke('update-reference', id, data),
+  deleteReference: (id: number) => ipcRenderer.invoke('delete-reference', id),
+  toggleReferenceStar: (id: number) => ipcRenderer.invoke('toggle-reference-star', id),
+  searchReferences: (bookId: number, query: string, fileType?: string, starredOnly?: boolean) => ipcRenderer.invoke('search-references', bookId, query, fileType, starredOnly),
+  batchCreateReferences: (references: Array<{ book_id: number; title: string; content: string; file_type?: string; source_type?: 'manual' | 'import' | 'chapter'; source_path?: string; tags?: string[]; starred?: boolean; metadata?: Record<string, any> }>) => ipcRenderer.invoke('batch-create-references', references),
+
   // 供应商相关API
   getProviders: () => ipcRenderer.invoke('get-providers'),
   getProvider: (id: number) => ipcRenderer.invoke('get-provider', id),
@@ -119,6 +129,10 @@ const api = {
     return () => ipcRenderer.removeListener('app-update:state-changed', listener)
   },
   openExternal: (url: string) => ipcRenderer.invoke('open-external', url),
+
+  // 文件操作相关API
+  showOpenDialog: (options: { title?: string; filters?: Array<{ name: string; extensions: string[] }>; properties?: string[] }) => ipcRenderer.invoke('show-open-dialog', options),
+  readFile: (filePath: string) => ipcRenderer.invoke('read-file', filePath),
 
   // 排行榜相关API
   fetchLeaderboard: (params: { gender: 0 | 1; type: 1 | 2; categoryId: number; offset: number; limit: number }) =>

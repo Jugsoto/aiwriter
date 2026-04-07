@@ -37,6 +37,7 @@ export interface InputAreaProps {
   settingsLoading?: boolean
   bookId?: number
   selectedSettings?: any[]
+  selectedReferences?: any[]
   messages?: Message[]
 }
 
@@ -49,6 +50,13 @@ export interface EnhancedMessageContext {
     content: string
     status: string
     type: string
+  }>
+  selectedReferences?: Array<{
+    id: number
+    title: string
+    content: string
+    tags: string[]
+    similarity?: number
   }>
   vectorSearchResults?: {
     textChunks: Array<{
@@ -63,6 +71,13 @@ export interface EnhancedMessageContext {
       content: string
       similarity: number
       settingType?: string
+      starred?: boolean
+    }>
+    referenceChunks?: Array<{
+      title: string
+      content: string
+      similarity: number
+      tags?: string[]
       starred?: boolean
     }>
   }

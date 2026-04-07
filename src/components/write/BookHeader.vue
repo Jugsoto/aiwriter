@@ -13,6 +13,11 @@
 
     <!-- 右侧：功能按钮 -->
     <div class="flex items-center gap-2">
+      <button @click="$emit('open-reference-library')"
+        class="flex items-center gap-1 px-3 py-1.5 text-sm border border-[var(--border-color)] bg-[var(--bg-primary)] rounded-full hover:bg-[var(--bg-secondary)] transition-colors">
+        <Library class="w-4 h-4" />
+        <span>资料库</span>
+      </button>
       <button @click="$emit('open-settings', 'character')"
         class="flex items-center gap-1 px-3 py-1.5 text-sm border border-[var(--border-color)] bg-[var(--bg-primary)] rounded-full hover:bg-[var(--bg-secondary)] transition-colors">
         <User class="w-4 h-4" />
@@ -38,7 +43,7 @@
 </template>
 
 <script setup lang="ts">
-import { ChevronLeft, Settings, User, Globe, FileText } from 'lucide-vue-next'
+import { ChevronLeft, Settings, User, Globe, FileText, Library } from 'lucide-vue-next'
 
 defineProps<{
   bookName?: string
@@ -48,5 +53,6 @@ defineEmits<{
   (e: 'back'): void
   (e: 'global-settings'): void
   (e: 'open-settings', type: 'character' | 'worldview' | 'entry'): void
+  (e: 'open-reference-library'): void
 }>()
 </script>

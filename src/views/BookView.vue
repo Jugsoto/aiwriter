@@ -1,7 +1,7 @@
 <template>
   <div class="h-full flex flex-col">
     <BookHeader :book-name="book?.name" @back="goBack" @global-settings="showGlobalSettingsModal = true"
-      @open-settings="handleOpenSettings" />
+      @open-settings="handleOpenSettings" @open-reference-library="showReferenceLibraryModal = true" />
 
     <!-- 主要内容区 - 三栏布局 -->
     <div class="flex-1 flex overflow-hidden">
@@ -42,6 +42,9 @@
     <!-- 设定管理模态框 -->
     <SettingsModal v-model:visible="showSettingsModal" :book-id="bookId" :setting-type="currentSettingType" />
 
+    <!-- 资料库模态框 -->
+    <ReferenceLibraryModal v-model:visible="showReferenceLibraryModal" :book-id="bookId" />
+
     <!-- 错误模态框 -->
     <ErrorModal :visible="errorModalVisible" :title="errorModalTitle" :message="errorModalMessage"
       :error-details="errorModalDetails" @update:visible="errorModalVisible = $event" @close="hideErrorModal" />
@@ -60,6 +63,7 @@ import WriteCopilot from '@/components/write/WriteCopilot.vue'
 import BookHeader from '@/components/write/BookHeader.vue'
 import GlobalSettingsModal from '@/components/modal/GlobalSettingsModal.vue'
 import SettingsModal from '@/components/modal/SettingsModal.vue'
+import ReferenceLibraryModal from '@/components/modal/ReferenceLibraryModal.vue'
 import ErrorModal from '@/components/shared/ErrorModal.vue'
 
 const route = useRoute()
@@ -72,6 +76,7 @@ const loading = ref(false)
 const error = ref('')
 const showGlobalSettingsModal = ref(false)
 const showSettingsModal = ref(false)
+const showReferenceLibraryModal = ref(false)
 const currentSettingType = ref<'character' | 'worldview' | 'entry'>('character')
 const editorRef = ref<InstanceType<typeof Editor>>()
 

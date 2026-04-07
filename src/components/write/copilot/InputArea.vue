@@ -28,6 +28,24 @@
       </div>
     </div>
 
+    <!-- 资料显示区域 -->
+    <div v-if="selectedReferences && selectedReferences.length > 0" class="px-3 pt-2">
+      <div class="flex flex-wrap gap-2">
+        <div v-for="reference in selectedReferences" :key="reference.id"
+          class="inline-flex items-center px-2 py-1 text-xs border rounded-full hover:bg-[var(--bg-secondary)] transition-colors relative group"
+          :style="{ borderColor: '#8b5cf6' }" :title="reference.content">
+          <Library class="w-3 h-3 mr-1" />
+          <span class="truncate max-w-[100px]">{{ reference.title }}</span>
+          <!-- 删除按钮 -->
+          <button @click.stop="removeReference(reference)"
+            class="ml-1 p-1 text-[var(--text-secondary)] hover:text-red-500 hover:bg-[var(--hover-bg)] rounded-md transition-colors"
+            title="移除资料">
+            <X class="w-3 h-3" />
+          </button>
+        </div>
+      </div>
+    </div>
+
     <!-- 输入区域 -->
     <div class="p-3 pb-0">
       <div class="relative">
@@ -64,6 +82,11 @@
               <User class="w-4 h-4" />
               人物档案
             </button>
+            <button @click="handleReferenceLibrary"
+              class="flex items-center gap-2 px-3 py-2 text-sm text-left hover:bg-[var(--bg-secondary)] rounded transition-colors">
+              <Library class="w-4 h-4" />
+              资料库
+            </button>
           </div>
         </div>
         <button @click="handleClear" title="清空对话内容"
@@ -87,18 +110,24 @@
     <!-- 设定选择模态窗 -->
     <SettingSelectionModal v-if="bookId" v-model:visible="showSettingSelectionModal" :book-id="bookId"
       :setting-type="currentSettingType" :selected-settings="selectedSettings" @confirm="handleSettingsSelected" />
+
+    <!-- 资料库选择模态窗 -->
+    <ReferenceSelectionModal v-if="bookId" v-model:visible="showReferenceSelectionModal" :book-id="bookId"
+      :selected-references="selectedReferences" @confirm="handleReferencesSelected" />
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, watch, onMounted, onUnmounted, nextTick, computed } from 'vue'
-import { AtSign, Trash2, Square, Send, User, Globe, FileText, ChevronUp, ChevronDown, X, Pause } from 'lucide-vue-next'
+import { AtSign, Trash2, Square, Send, User, Globe, FileText, ChevronUp, ChevronDown, X, Pause, Library } from 'lucide-vue-next'
 import type { InputAreaProps, EnhancedMessageContext } from '../../../utils/types'
 import type { Setting } from '@/electron.d'
+import type { ReferenceLibrary } from '@/electron.d'
 import SettingSelectionModal from '@/components/modal/SettingSelectionModal.vue'
+import ReferenceSelectionModal from '@/components/modal/ReferenceSelectionModal.vue'
 
 const props = defineProps<InputAreaProps>()
-const emit = defineEmits(['send-message', 'at-resource', 'clear-conversation', 'stop-conversation', 'entry-setting', 'worldview', 'character-profile', 'settings-updated', 'settings-selected'])
+const emit = defineEmits(['send-message', 'at-resource', 'clear-conversation', 'stop-conversation', 'entry-setting', 'worldview', 'character-profile', 'settings-updated', 'settings-selected', 'reference-library', 'references-selected'])
 
 // 计算属性：检查是否有消息正在流式输出
 const isStreaming = computed(() => {
@@ -114,8 +143,10 @@ const expanded = ref(false)
 const settingsContainerRef = ref<HTMLElement>()
 const showExpandButton = ref(false)
 const showSettingSelectionModal = ref(false)
+const showReferenceSelectionModal = ref(false)
 const currentSettingType = ref<'character' | 'worldview' | 'entry'>('entry')
 const selectedSettings = ref<Setting[]>([])
+const selectedReferences = ref<ReferenceLibrary[]>([])
 
 // 监听设定数量变化，检查是否需要显示展开按钮
 watch(() => props.selectedSettings, async () => {
@@ -178,7 +209,22 @@ const handleSend = () => {
         content: setting.content,
         status: setting.status,
         type: setting.type
-      }))
+      })),
+      selectedReferences: selectedReferences.value.map(reference => {
+        // 解析标签
+        let tags: string[] = []
+        try {
+          tags = JSON.parse(reference.tags)
+        } catch {
+          tags = []
+        }
+        return {
+          id: reference.id,
+          title: reference.title,
+          content: reference.content,
+          tags
+        }
+      })
     }
 
     emit('send-message', enhancedContext, inputText.value.trim())
@@ -197,10 +243,30 @@ const handleCharacterProfile = () => {
   showAtModal.value = false
 }
 
+const handleReferenceLibrary = () => {
+  showReferenceSelectionModal.value = true
+  showAtModal.value = false
+}
+
 // 处理设定选择
 const handleSettingsSelected = (settings: Setting[]) => {
   selectedSettings.value = settings
   emit('settings-selected', settings)
+}
+
+// 处理资料选择
+const handleReferencesSelected = (references: ReferenceLibrary[]) => {
+  selectedReferences.value = references
+  emit('references-selected', references)
+}
+
+// 移除资料
+const removeReference = (reference: ReferenceLibrary) => {
+  const index = selectedReferences.value.findIndex(r => r.id === reference.id)
+  if (index > -1) {
+    selectedReferences.value.splice(index, 1)
+    emit('references-selected', selectedReferences.value)
+  }
 }
 
 // 移除设定

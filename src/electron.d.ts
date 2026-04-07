@@ -55,6 +55,16 @@ declare global {
       updateSetting: (id: number, data: { type?: string; name?: string; content?: string; status?: string; starred?: boolean }) => Promise<Setting>
       deleteSetting: (id: number) => Promise<{ success: boolean }>
       toggleSettingStar: (id: number) => Promise<Setting>
+
+      // 资料库相关API
+      getReferences: (bookId: number) => Promise<ReferenceLibrary[]>
+      getReference: (id: number) => Promise<ReferenceLibrary | undefined>
+      createReference: (data: { book_id: number; title: string; content: string; file_type?: string; source_type?: 'manual' | 'import' | 'chapter'; source_path?: string; tags?: string[]; starred?: boolean; metadata?: Record<string, any> }) => Promise<ReferenceLibrary>
+      updateReference: (id: number, data: { title?: string; content?: string; file_type?: string; source_type?: 'manual' | 'import' | 'chapter'; source_path?: string; tags?: string[]; starred?: boolean; metadata?: Record<string, any> }) => Promise<ReferenceLibrary>
+      deleteReference: (id: number) => Promise<{ success: boolean }>
+      toggleReferenceStar: (id: number) => Promise<ReferenceLibrary>
+      searchReferences: (bookId: number, query: string, fileType?: string, starredOnly?: boolean) => Promise<ReferenceLibrary[]>
+      batchCreateReferences: (references: Array<{ book_id: number; title: string; content: string; file_type?: string; source_type?: 'manual' | 'import' | 'chapter'; source_path?: string; tags?: string[]; starred?: boolean; metadata?: Record<string, any> }>) => Promise<ReferenceLibrary[]>
       
       // 供应商相关API
       getProviders: () => Promise<Provider[]>
@@ -150,6 +160,10 @@ declare global {
       onAppUpdateStateChanged: (callback: (state: AppUpdateState) => void) => () => void
       openExternal: (url: string) => Promise<void>
 
+      // 文件操作相关API
+      showOpenDialog: (options: { title?: string; filters?: Array<{ name: string; extensions: string[] }>; properties?: string[] }) => Promise<{ canceled: boolean; filePaths: string[] }>
+      readFile: (filePath: string) => Promise<string>
+
       // 排行榜相关API
       fetchLeaderboard: (params: { gender: 0 | 1; type: 1 | 2; categoryId: number; offset: number; limit: number }) => Promise<any>
     }
@@ -211,6 +225,22 @@ export interface Setting {
   content: string
   status: string
   starred: boolean
+  created_at: string
+  updated_at: string
+}
+
+// 资料库类型定义
+export interface ReferenceLibrary {
+  id: number
+  book_id: number
+  title: string
+  content: string
+  file_type: string
+  source_type: 'manual' | 'import' | 'chapter'
+  source_path: string
+  tags: string // JSON array string
+  starred: boolean
+  metadata: string // JSON string
   created_at: string
   updated_at: string
 }

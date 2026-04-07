@@ -144,6 +144,38 @@ const TABLE_SCHEMAS = [
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (prompt_id) REFERENCES prompts (id) ON DELETE CASCADE
+  )`,
+
+  // 创建资料库表
+  `CREATE TABLE IF NOT EXISTS reference_library (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    book_id INTEGER NOT NULL,
+    title TEXT NOT NULL,
+    content TEXT NOT NULL,
+    file_type TEXT DEFAULT 'txt',
+    source_type TEXT DEFAULT 'manual',
+    source_path TEXT DEFAULT '',
+    tags TEXT DEFAULT '',
+    starred INTEGER DEFAULT 0,
+    metadata TEXT DEFAULT '',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (book_id) REFERENCES books (id) ON DELETE CASCADE
+  )`,
+
+  // 创建资料库向量存储表
+  `CREATE TABLE IF NOT EXISTS reference_vectors (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    book_id INTEGER NOT NULL,
+    reference_id INTEGER NOT NULL,
+    reference_content TEXT NOT NULL,
+    embedding BLOB NOT NULL,
+    token_count INTEGER DEFAULT 0,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (book_id) REFERENCES books (id) ON DELETE CASCADE,
+    FOREIGN KEY (reference_id) REFERENCES reference_library (id) ON DELETE CASCADE,
+    UNIQUE(book_id, reference_id)
   )`
 ]
 
@@ -167,7 +199,12 @@ const INDEX_SCHEMAS = [
   'CREATE INDEX IF NOT EXISTS idx_setting_vectors_book_id ON setting_vectors (book_id)',
   'CREATE INDEX IF NOT EXISTS idx_setting_vectors_setting_id ON setting_vectors (setting_id)',
   'CREATE INDEX IF NOT EXISTS idx_prompts_category ON prompts (category)',
-  'CREATE INDEX IF NOT EXISTS idx_prompts_is_default ON prompts (category, is_default)'
+  'CREATE INDEX IF NOT EXISTS idx_prompts_is_default ON prompts (category, is_default)',
+  'CREATE INDEX IF NOT EXISTS idx_reference_library_book_id ON reference_library (book_id)',
+  'CREATE INDEX IF NOT EXISTS idx_reference_library_starred ON reference_library (book_id, starred)',
+  'CREATE INDEX IF NOT EXISTS idx_reference_library_file_type ON reference_library (book_id, file_type)',
+  'CREATE INDEX IF NOT EXISTS idx_reference_vectors_book_id ON reference_vectors (book_id)',
+  'CREATE INDEX IF NOT EXISTS idx_reference_vectors_reference_id ON reference_vectors (reference_id)'
 ]
 
 // 初始化数据库表结构
